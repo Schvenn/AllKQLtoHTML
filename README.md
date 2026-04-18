@@ -18,9 +18,7 @@ If you wish to use an export from the Azure Webshell in our environment, you wil
 To acquire your **Subscription ID**, you can run the following command in Azure Cloudshell:
 
 		az account show --query id -o tsv
-
 To acquire your **Resource Group** and **Workspace** names, navigate in Sentinel to the Overview page.
-
 Once you have these values you can add them to the PSD1 file for future reference.
 
 ## Using the -merge switch:
