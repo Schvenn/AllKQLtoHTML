@@ -12,13 +12,17 @@ loadconfiguration
 
 if ($help) {Write-Host -f darkcyan "`nThis script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference."
 Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-merge>"
-Write-Host -f yellow "`nFile1 defaults to:`t" -n; Write-Host -f white "Azure_Sentinel_analytics_rules.json" -n; Write-Host -f cyan "`t(This is the Sentinel UI export default filename.)"
-Write-Host -f yellow "Outfile detaults to:`t" -n; Write-Host -f white "AllSentinelRules.html" -n; Write-Host -f cyan "`t`t`t(As with all the files, a user-provided name can be provided, instead.)"
-Write-Host -f yellow "File2 defaults to:`t" -n; Write-Host -f white "All_Azure_Sentinel_rules.json" -n; Write-Host -f cyan "`t`t(More details on this filename are provided below.)"
-Write-Host -f darkcyan "`n----- Using the -merge switch: -----"
-Write-Host -f cyan "If you provide the -merge switch, you should also provide a second JSON file.`nWithout the -merge switch, the second JSON file is ignored.`n"
-Write-Host -f cyan "If you wish to use an export from the Azure Webshell in our environment, you will need to run PowerShell from " -n; Write-Host -f blue "portal.azure.com" -n; Write-Host -f cyan " and enter the following commmand:"
+Write-Host -f yellow "`nFile1 defaults to:`t" -n; Write-Host -f white "Azure_Sentinel_analytics_rules.json" -n; Write-Host -f cyan "`tThis is the Sentinel UI export default filename."
+Write-Host -f yellow "Outfile detaults to:`t" -n; Write-Host -f white "AllSentinelRules.html" -n; Write-Host -f cyan "`t`t`tAs with all the files, a user-provided name can be provided, instead."
+Write-Host -f yellow "File2 defaults to:`t" -n; Write-Host -f white "All_Azure_Sentinel_rules.json" -n; Write-Host -f cyan "`t`tMore details on this filename are provided below."
+Write-Host -f darkcyan "`nAzure Webshell JSON export (PowerShell version):"
+Write-Host -f cyan "If you wish to use an export from the Azure Webshell, you will need to run PowerShell from " -n; Write-Host -f blue "portal.azure.com" -n; Write-Host -f cyan " and enter the following commmand:"
 Write-Host -f darkgreen "az sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"
+Write-Host -f yellow "`nTo acquire your Subscription ID for this command, you can run the following command in Azure Cloudshell:"
+Write-Host -f darkgreen "az account show --query id -o tsv"
+Write-Host -f yellow "To acquire your Resource Group and Workspace names, navigate in Sentinel to the Overview page.`nOnce you have these values you can add them to the PSD1 file for future reference."
+Write-Host -f darkcyan "`nUsing the -merge switch:"
+Write-Host -f cyan "If you provide the -merge switch, you should also provide a second JSON file.`nWithout the -merge switch, the second JSON file is ignored."
 Write-Host -f cyan "`nWhen merging, the two files can be any combination of an Azure WebShell export or Sentinel UI export, because the script is designed to handle both JSON formats, interchangeably.`nIf you need to merge more than 2 files, it is best that you merge the files of similar JSON format manually first, and then run the script to complete the remaining tasks.`n"
 return}
 
