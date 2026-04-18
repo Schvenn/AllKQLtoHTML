@@ -11,7 +11,7 @@ This script will read Sentinel JSON files containing Analytics rules and create 
 |File2 defaults to:|All_Azure_Sentinel_rules.json|More details on this filename are provided below.|
 
 ## Azure Webshell JSON export (PowerShell version):
-If you wish to use an export from the Azure Webshell in our environment, you will need to run PowerShell from portal.azure.com and enter the following commmand:
+If you wish to use an export from the Azure Webshell, you will need to run PowerShell from portal.azure.com and enter the following commmand:
 
     az sentinel alert-rule list --resource-group 'RG-<env>-<region>-<service>' --workspace-name 'LAW-<env>-<region>-<workload>' --subscription 'ffffffff-ffff-ffff-ffff-ffffffffffff' -o json > All_Azure_Sentinel_rules.json
 
