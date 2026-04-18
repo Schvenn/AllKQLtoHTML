@@ -21,6 +21,8 @@ To acquire your **Subscription ID**, you can run the following command in Azure 
 
 To acquire your **Resource Group** and **Workspace** names, navigate in Sentinel to the Overview page.
 
+Once you have these values you can add them to the PSD1 file for future reference.
+
 ## Using the -merge switch:
 If you provide the -merge switch, you should also provide a second JSON file.
 Without the -merge switch, the second JSON file is ignored.
