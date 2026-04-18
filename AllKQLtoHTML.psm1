@@ -1,4 +1,4 @@
-function AllKQLtoHTML ([string]$InputFile  = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F
+function AllKQLtoHTML ([string]$InputFile  = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
