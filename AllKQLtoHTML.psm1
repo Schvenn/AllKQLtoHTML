@@ -324,6 +324,9 @@ Invoke-Item $OutputFile}
 
 Set-Alias SentinelRules AllKQLtoHTML
 
+Export-ModuleMember -Function allkqltohtml
+Export-ModuleMember -Alias sentinelrules
+
 # Helptext.
 <#
 ## Overview
