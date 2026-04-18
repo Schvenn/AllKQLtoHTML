@@ -1,5 +1,5 @@
 @{RootModule = 'AllKQLtoHTML.psm1'
-ModuleVersion = '1.0'
+ModuleVersion = '1.5'
 GUID = '1717dd23-d91a-4ed2-bd4b-a03c847cc238'
 Author = 'Craig Plath'
 CompanyName = 'Plath Consulting Incorporated'
