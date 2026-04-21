@@ -258,27 +258,65 @@ function writepage {$html = @"
 <title>Azure Sentinel Analytics Rules</title>
 
 <style>
-body {font-family: Arial, sans-serif; margin: 20px;}
-table {width: 100%; border-collapse: collapse; table-layout: fixed;}
-th, td {border: 1px solid #ccc; padding: 8px; vertical-align: top;}
-th {background: #f4f4f4;}
-pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: #fafafa; padding: 8px; border: 1px solid #eee;}
-.stat-green {color: #1b7f1b;}
-.stat-red {color: #c00000;}
-.stat-yellow {color: #b8860b;}
-.kv {margin-bottom: 4px;}
-.kv .val {margin-left: 6px;}
+/* BASE FALLBACK (used before JS / old browsers) */
+:root {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #995599; --link-hover: #ff0000; --link-visited: #6b84c4; --link-active: #44ff44;}
+
+/* BASE STYLES */
+body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
+
+table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
+th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
+th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
+tr:nth-child(even) td {background: var(--row-even);}
+tr:hover td {background: var(--row-hover);}
+
+pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
+
+.stat-green  {color: var(--green);}
+.stat-red    {color: var(--red);}
+.stat-yellow {color: var(--yellow);}
+.kv { margin-bottom: 4px; }
+.kv .val {margin-left: 6px; color: var(--text-muted);}
+
 .toc ul {column-count: 3; column-gap: 30px;}
-.enabled-true {font-size: 16px; color: green; font-weight: bold;}
-.enabled-false {font-size: 16px; color: red; font-weight: bold;}
-.description {font-size: 16px; color: #555;}
-#backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #050; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 1000;}
-#backToTop:hover {background-color: #3A3;}
+
+.enabled-true {font-size: 16px; color: var(--green); font-weight: bold;}
+.enabled-false {font-size: 16px; color: var(--red); font-weight: bold;}
+
+.description {font-size: 16px; color: var(--text-muted);}
+
+/* BACK TO TOP */
+#backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #064; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 1000;}
+#backToTop:hover {background-color: #0a6;}
+
+/* LINKS (privacy-safe + status-safe) */
+a {text-decoration: none;}
+a:visited {color: var(--link-visited);}
+a:hover {color: var(--red); text-decoration: underline;}
+a:active {color: var(--link-active); text-decoration: underline;}
+
+/* Force enabled-false to NEVER change */
+a.enabled-false {text-decoration: none;}
+a.enabled-false:visited {color: #bb4444}
+a.enabled-false:hover {text-decoration: underline;}
+a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
+
+/* Theme toggle */
+#themeToggle {position: fixed; top: 20px; right: 20px; padding: 6px 10px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; z-index: 1001;}
+
+/* Manual override beats system preference */
+:root[data-theme="light"] {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #0000FF; --link-hover: #ff0000; --link-visited: #000088; --link-active: #009900; color-scheme: light;}
+
+:root[data-theme="dark"] {--bg-main: #0e0e0e; --bg-panel: #141414; --bg-header: #1f1f1f; --bg-code: #161616; --border-main: #2a2a2a; --text-main: #e6e6e6; --text-muted: #aaa; --green: #6ddf7c; --red: #ff6b6b; --yellow: #ffd166; --row-even: #222222; --row-hover: #303055; --link-normal: #aabbee; --link-hover: #995599; --link-visited: #6666bb; --link-active: #ffff00; color-scheme: dark;}
 </style>
+
+<meta name="color-scheme" content="light dark">
 </head>
 
 <body>
 <h1>Azure Sentinel Analytics Rules</h1>
+
+<button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 
 <h2>Table of Contents</h2>
 
@@ -303,6 +341,7 @@ $script:rows
 <div id="backToTop" onclick="scrollToTop()">↑ Back to top ↑</div>
 <script>
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
+
 function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
 const ease = 1 - Math.pow(1 - progress, 3);
 window.scrollTo(0, start * (1 - ease));
@@ -311,6 +350,17 @@ requestAnimationFrame(animateScroll);}
 window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
+
+(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;   // <-- prevents silent failure
+const root = document.documentElement;
+const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
+else {root.setAttribute('data-theme', 'dark');}
+
+function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';}
+
+toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
+
+updateIcon();})();
 </script>
 
 </body></html>
@@ -357,7 +407,7 @@ To acquire your Resource Group and Workspace names, navigate in Sentinel to the 
 If you provide the -merge switch, you should also provide a second JSON file. Without the -merge switch, the second JSON file is ignored.
 
 When merging, the two files can be any combination of an Azure WebShell export or Sentinel UI export, because the script is designed to handle both JSON formats, interchangeably. If you need to merge more than 2 files, it is best that you merge the files of similar JSON format manually first, and then run the script to complete the remaining tasks.
-## Using the -concat(enate) switch
+## Using the concat(enate) switch
 Concatenation in this case is not the same as merge. It is used exclusively for Sentinel UI exports of the ARM formatted JSON files.
 
 When using the Sentinel UI, you will only be able to export a maximum of 50 rules at a time. Using this feature you can combine multiple files into a single ARM JSON file with ease. Simply select all rules, export the contents, navigate to the next page and do the same. Do not change the file name. Let Windows append the usual suffix (1), (2), and so on, until you're done. This script is designed to read those file names and merge them for you, after which it will proceed with the remaining tasks and file generation.
