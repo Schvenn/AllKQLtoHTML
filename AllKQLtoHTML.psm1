@@ -143,6 +143,10 @@ function Escape-Html {param ([string]$Text)
 if ($null -eq $Text) {return ""}
 return $Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'}
 
+function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {return $text}
+try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
+catch {re}}
+
 function Format-Properties {param ($Properties)
 $exclude = @('displayName', 'query', 'description', 'enabled')
 $out = ""
@@ -218,8 +222,8 @@ function buildrows {$script:rows = ""; $script:toc = ""
 foreach ($r in $script:rules) {if (-not ($r.displayName -and $r.query)) {continue}
 $name = Escape-Html $r.displayName
 $id   = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
-$qry  = Escape-Html $r.query
-$desc = Escape-Html $r.description
+$qry  = Escape-Html (Normalize-UnicodeDecorations $r.query)
+$desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
 $enabled = $r.enabled
 if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>true</span>"}
 else {$enabledText = "<span class='enabled-false'>false (Disabled)</span>"}
