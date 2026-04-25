@@ -1,4 +1,4 @@
-function AllKQLtoHTML ([string]$InputFile  = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
+function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
@@ -51,9 +51,9 @@ $position = 0}
 while ($true) {cls; Write-Host -f cyan "$(Get-ChildItem (Split-Path $PSCommandPath) | Where-Object {$_.FullName -ieq $PSCommandPath} | Select-Object -ExpandProperty BaseName) Help Sections:`n"
 
 if ($sections.Count -gt 7) {$half = [Math]::Ceiling($sections.Count / 2)
-for ($i = 0; $i -lt $half; $i++) {$leftIndex = $i; $rightIndex = $i + $half; $leftNumber  = "{0,2}." -f ($leftIndex + 1); $leftLabel   = " $($sections[$leftIndex].Groups[1].Value)"; $leftOutput  = [string]::Empty
+for ($i = 0; $i -lt $half; $i++) {$leftIndex = $i; $rightIndex = $i + $half; $leftNumber = "{0,2}." -f ($leftIndex + 1); $leftLabel = " $($sections[$leftIndex].Groups[1].Value)"; $leftOutput = [string]::Empty
 
-if ($rightIndex -lt $sections.Count) {$rightNumber = "{0,2}." -f ($rightIndex + 1); $rightLabel  = " $($sections[$rightIndex].Groups[1].Value)"; Write-Host -f cyan $leftNumber -n; Write-Host -f white $leftLabel -n; $pad = 40 - ($leftNumber.Length + $leftLabel.Length)
+if ($rightIndex -lt $sections.Count) {$rightNumber = "{0,2}." -f ($rightIndex + 1); $rightLabel = " $($sections[$rightIndex].Groups[1].Value)"; Write-Host -f cyan $leftNumber -n; Write-Host -f white $leftLabel -n; $pad = 40 - ($leftNumber.Length + $leftLabel.Length)
 if ($pad -gt 0) {Write-Host (" " * $pad) -n}; Write-Host -f cyan $rightNumber -n; Write-Host -f white $rightLabel}
 else {Write-Host -f cyan $leftNumber -n; Write-Host -f white $leftLabel}}}
 
@@ -61,7 +61,7 @@ else {for ($i = 0; $i -lt $sections.Count; $i++) {Write-Host -f cyan ("{0,2}. " 
 
 # Display Header.
 line yellow 100
-if ($lines.Count -gt 0) {Write-Host  -f yellow $lines[0]}
+if ($lines.Count -gt 0) {Write-Host -f yellow $lines[0]}
 else {Write-Host "Choose a section to view." -f darkgray}
 line yellow 100
 
@@ -73,7 +73,7 @@ for ($i = $position; $i -lt $end; $i++) {Write-Host -f white $wrappedLines[$i]}
 for ($j = 0; $j -lt ($pageSize - ($end - $position)); $j++) {Write-Host ""}
 
 # Display menu options.
-line yellow 100; Write-Host -f white "[↑/↓]  [PgUp/PgDn]  [Home/End]  |  [#] Select section  |  [Q] Quit  " -n; if ($inputBuffer.length -gt 0) {Write-Host -f cyan "section: $inputBuffer" -n}; $key = [System.Console]::ReadKey($true)
+line yellow 100; Write-Host -f white "[↑/↓] [PgUp/PgDn] [Home/End] | [#] Select section | [Q] Quit " -n; if ($inputBuffer.length -gt 0) {Write-Host -f cyan "section: $inputBuffer" -n}; $key = [System.Console]::ReadKey($true)
 
 # Define interaction.
 switch ($key.Key) {'UpArrow' {if ($position -gt 0) {$position--}; $inputBuffer = ""}
@@ -103,7 +103,7 @@ if ($help) {help; return}
 if ($concat) {$directory = Split-Path $InputFile -Parent
 if (-not $directory) {$directory = Get-Location}
 
-$baseName  = [IO.Path]::GetFileNameWithoutExtension($InputFile)
+$baseName = [IO.Path]::GetFileNameWithoutExtension($InputFile)
 $extension = [IO.Path]::GetExtension($InputFile)
 
 # Find Windows-style copies: file.json, file (1).json, etc.
@@ -209,7 +209,7 @@ $script:rules = $ruleMap.Values}
 mergedata
 
 # Calculate statistics.
-function statistics {$script:ruleCount     = $script:rules.Count
+function statistics {$script:ruleCount = $script:rules.Count
 $script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
 $script:nrtCount = ($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
 $script:templateVersionCount = ($script:rules | Where-Object {$_.templateVersion}).Count
@@ -242,8 +242,8 @@ $script:rules = $script:rules | Sort-Object -Property displayName -Culture en-US
 function buildrows {$script:rows = ""; $script:toc = ""
 foreach ($r in $script:rules) {if (-not ($r.displayName -and $r.query)) {continue}
 $name = Escape-Html $r.displayName
-$id   = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
-$qry  = Escape-Html (Normalize-UnicodeDecorations $r.query)
+$id = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
+$qry = Escape-Html (Normalize-UnicodeDecorations $r.query)
 $desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
 
 $enabled = $r.enabled
@@ -283,24 +283,25 @@ if (-not $script:rows) {Write-Host -f red "Nothing to write.`nExiting.`n";return
 
 # Build TOC statistics block
 function buildstats {$script:statsBlock = @"
-<div class="toc-stats-grid"><div class="stats-left">
-<strong><span class="stats-header">Rule Overview:</span><br>
+<table class="stats-table" aria-hidden="false">
+<tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
 <span class="stat-green">Rule Count: $ruleCount</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br>
 
-<span id="clearFilters" class="toggle clear-filters" style="display:none;">
-❎ Clear Filters</span></strong></div>
+<span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
+<span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
+<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong></td>
 
-<div class="stats-middle"><strong>
-<span class="stats-header">Severity Breakdown:</span><br>
+<td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: $severityLow</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
-<span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong></div>
+<span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br>
+<br><span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span></td>
 
-<div class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></div></div>
+<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td></tr></table>
 "@}
 buildstats
 
@@ -327,26 +328,32 @@ tr:hover td {background: var(--row-hover);}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
-.toc-stats-grid {display: grid; grid-template-columns: auto 140px auto; gap: 24px; max-width: 700px; margin: 0 0 20px 0; align-items: start;}
-.stats-left, .stats-middle {white-space: nowrap;}
-.stats-right {display: flex; justify-content: right; align-items: right;}
+.stats-table {width: auto; table-layout: auto; border-collapse: separate; background: none;}
+.stats-table td {border: none; padding-right: 24px; vertical-align: top; white-space: nowrap;}
+.stats-table tr:hover td {background: unset;}
+.hidden {visibility: hidden; pointer-events: none;}
 
 .stat-green {color: var(--green);}
 .stat-red {color: var(--red);}
 .stat-gray {color: #888;}
+.stat-muted {color: var(--text-muted);}
 
-.clear-filters {margin-top: 6px; display: block; color: var(--text-muted);}
+.filter-header {font-weight: bold; margin-top: 20px; display: block; cursor: default;}
+.reverse-filter {color: #666;}
+.reverse-filter.active {font-weight: bold; font-style: italic; text-decoration: underline;}
+.clear-filters {margin-top: 0px; display: block; color: var(--text-muted);}
 .clear-filters:hover {color: var(--text-main);}
 
-.sev-info { color: var(--text-main); }
-.sev-low { color: #ff8c00; }
-.sev-medium { color: var(--yellow); }
-.sev-high { color: var(--red); }
+.sev-info {color: var(--text-main);}
+.sev-low {color: #ff8c00;}
+.sev-medium {color: var(--yellow);}
+.sev-high {color: var(--red);}
 .stat-yellow {color: var(--yellow);}
 
 .toggle {cursor: pointer; user-select: none;}
 .toggle:hover {text-decoration: underline; cursor: pointer;}
 .toggle.active {font-weight: bold; font-style: italic; text-decoration: none;}
+.toggle:hover.active {text-decoration: underline;}
 
 .severity-donut {position: relative; width: 120px; height: 120px; margin-top: 6px;}
 .donut {position: relative; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ffffff 0deg 45deg, #ff8c00 45deg 135deg,#ffd166 135deg 260deg, #d32f2f 260deg 360deg);}
@@ -405,7 +412,7 @@ $statsBlock
 
 <br>
 
-<table>
+<table id="rulesTable">
 <colgroup><col style="width:15%;"><col style="width:42.5%;"><col style="width:42.5%;"></colgroup>
 
 <thead>
@@ -418,6 +425,7 @@ $script:rows
 </table>
 
 <div id="backToTop" onclick="scrollToTop()">↑ Back to top ↑</div>
+
 <script>
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
 
@@ -430,7 +438,7 @@ window.addEventListener('scroll', function () {const btn = document.getElementBy
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
 
-(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;   // <-- prevents silent failure
+(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return; // <-- prevents silent failure
 const root = document.documentElement;
 const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
 else {root.setAttribute('data-theme', 'dark');}
@@ -438,43 +446,63 @@ else {root.setAttribute('data-theme', 'dark');}
 function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';}
 
 toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
-
 updateIcon();})();
 
-(function () {const toggles = document.querySelectorAll('.toggle'); 
-const rows = document.querySelectorAll('tbody tr');
-const activeFilters = new Set();
+(function () {const toggles = document.querySelectorAll('.toggle');
+const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]');
+const rows = document.querySelectorAll('#rulesTable tbody tr');
 const clearBtn = document.getElementById('clearFilters');
+const reverseBtn = document.getElementById('reverseFilters');
+const filterHeader = document.getElementById('filterHeader');
+const visibleCountEl = document.getElementById('visibleRuleCount');
+const activeFilters = new Set();
+let reverseMode = false;
 
-function applyFilters() {rows.forEach(row => {let visible = true;
+function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode;
+if (!hasFilters) {rows.forEach(r => {r.style.display = '';});}
+else {rows.forEach(row => {let visible = true;
 
-activeFilters.forEach(filter => {switch (filter) {case 'disabled':
-if (row.dataset.enabled !== 'False') visible = false; break;
+activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled !== 'False') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
-case 'template': if (!row.dataset.templateVersion) visible = false; break
+case 'template': if (!row.dataset.templateVersion) visible = false; break;
 case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
 case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
-row.style.display = visible ? '' : 'none';});
 
-/* Show/Hide Clear Filters */
-if (activeFilters.size > 0) {clearBtn.style.display = 'block';}
-else {clearBtn.style.display = 'none';}}
+if (reverseMode) {visible = !visible;}
+row.style.display = visible ? '' : 'none';});}
 
-/* Toggle handlers */
+const showControls = activeFilters.size > 0; clearBtn.classList.toggle('hidden', !showControls); 
+if (reverseBtn) reverseBtn.classList.toggle('hidden', !showControls);
+if (filterHeader) filterHeader.classList.toggle('hidden', !showControls);
+if (visibleCountEl) {const visibleRows = Array.from(rows)
+.filter(r => r.style.display !== 'none')
+.length;
+visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}}
+
+/* Filter toggle handlers */
 toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
+if (!filter) return; const isSeverity = filter.indexOf('sev-') === 0;
 if (activeFilters.has(filter)) {activeFilters.delete(filter); t.classList.remove('active');}
-else {activeFilters.add(filter); t.classList.add('active');}
+else {if (isSeverity) {severityToggles.forEach(st => {const sevFilter = st.dataset.filter;
+if (activeFilters.has(sevFilter)) {activeFilters.delete(sevFilter); st.classList.remove('active');}});}
+activeFilters.add(filter); t.classList.add('active');}
 applyFilters();});});
 
-/* Clear Filters handler */
-clearBtn.addEventListener('click', () => {activeFilters.clear();
-toggles.forEach(t => t.classList.remove('active'));
-rows.forEach(r => (r.style.display = ''));
-clearBtn.style.display = 'none';});})();
-</script>
+/* Reverse Filters handler */
+if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0) return;
+reverseMode = !reverseMode; reverseBtn.classList.toggle('active', reverseMode); applyFilters();});}
 
+/* Clear Filters handler */
+clearBtn.addEventListener('click', () => {activeFilters.clear(); reverseMode = false;
+toggles.forEach(t => t.classList.remove('active'));
+if (reverseBtn) reverseBtn.classList.remove('active'); rows.forEach(r => (r.style.display = '')); 
+
+clearBtn.classList.add('hidden');
+if (reverseBtn) reverseBtn.classList.add('hidden');
+if (filterHeader) filterHeader.classList.add('hidden');});})();
+</script>
 </body></html>
 "@
 
@@ -496,13 +524,13 @@ This script will read Sentinel JSON files containing Analytics rules and create 
 
 Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-usage> <-help>
 
-File1 defaults to:      Azure_Sentinel_analytics_rules.json
+File1 defaults to: Azure_Sentinel_analytics_rules.json
 This is the Sentinel UI export default filename.
 
 Outfile detaults to:	AllSentinelRules.html
 As with all of these files, a user-provided name can be provided, instead.
 
-File2 defaults to:	    All_Azure_Sentinel_rules.json
+File2 defaults to:	 All_Azure_Sentinel_rules.json
 This is the default name the script expects for a Webshell export.
 
 ## Azure Webshell JSON export (PowerShell version)
