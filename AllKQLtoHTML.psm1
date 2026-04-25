@@ -48,7 +48,7 @@ else {$wrappedLines = @()}
 $position = 0}
 
 # Display Table of Contents.
-while ($true) {cls; Write-Host -f cyan "$(Get-ChildItem (Split-Path $PSCommandPath) | Where-Object { $_.FullName -ieq $PSCommandPath } | Select-Object -ExpandProperty BaseName) Help Sections:`n"
+while ($true) {cls; Write-Host -f cyan "$(Get-ChildItem (Split-Path $PSCommandPath) | Where-Object {$_.FullName -ieq $PSCommandPath} | Select-Object -ExpandProperty BaseName) Help Sections:`n"
 
 if ($sections.Count -gt 7) {$half = [Math]::Ceiling($sections.Count / 2)
 for ($i = 0; $i -lt $half; $i++) {$leftIndex = $i; $rightIndex = $i + $half; $leftNumber  = "{0,2}." -f ($leftIndex + 1); $leftLabel   = " $($sections[$leftIndex].Groups[1].Value)"; $leftOutput  = [string]::Empty
@@ -76,8 +76,8 @@ for ($j = 0; $j -lt ($pageSize - ($end - $position)); $j++) {Write-Host ""}
 line yellow 100; Write-Host -f white "[↑/↓]  [PgUp/PgDn]  [Home/End]  |  [#] Select section  |  [Q] Quit  " -n; if ($inputBuffer.length -gt 0) {Write-Host -f cyan "section: $inputBuffer" -n}; $key = [System.Console]::ReadKey($true)
 
 # Define interaction.
-switch ($key.Key) {'UpArrow' {if ($position -gt 0) { $position-- }; $inputBuffer = ""}
-'DownArrow' {if ($position -lt ($wrappedLines.Count - $pageSize)) { $position++ }; $inputBuffer = ""}
+switch ($key.Key) {'UpArrow' {if ($position -gt 0) {$position--}; $inputBuffer = ""}
+'DownArrow' {if ($position -lt ($wrappedLines.Count - $pageSize)) {$position++}; $inputBuffer = ""}
 'PageUp' {$position -= 30; if ($position -lt 0) {$position = 0}; $inputBuffer = ""}
 'PageDown' {$position += 30; $maxStart = [Math]::Max(0, $wrappedLines.Count - $pageSize); if ($position -gt $maxStart) {$position = $maxStart}; $inputBuffer = ""}
 'Home' {$position = 0; $inputBuffer = ""}
@@ -101,7 +101,7 @@ if ($help) {help; return}
 
 # Concat(enate).
 if ($concat) {$directory = Split-Path $InputFile -Parent
-if (-not $directory) { $directory = Get-Location }
+if (-not $directory) {$directory = Get-Location}
 
 $baseName  = [IO.Path]::GetFileNameWithoutExtension($InputFile)
 $extension = [IO.Path]::GetExtension($InputFile)
@@ -111,7 +111,7 @@ $files = Get-ChildItem -Path $directory -File | Where-Object {$_.Name -match "^$
 if ($files.Count -lt 2) {Write-Host -f Cyan "`nNo files were found to concatenate.`n"
 return}
 $outFile = Join-Path $directory "$baseName`_combined$extension"
-if (Test-Path $outFile) { Remove-Item $outFile -Force }
+if (Test-Path $outFile) {Remove-Item $outFile -Force}
 
 Write-Host -f Cyan "`nConcatenating $($files.Count) files:`n"
 
@@ -148,7 +148,7 @@ try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).G
 catch {re}}
 
 function Format-Properties {param ($Properties)
-$exclude = @('displayName', 'query', 'description', 'enabled')
+$exclude = @('displayName', 'query', 'description', 'enabled', 'severity')
 $out = ""
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name
@@ -194,7 +194,7 @@ if ($Merge) {if ($mergeJson.resources) {$mergeRules = $mergeJson.resources}
 elseif ($mergeJson.value) {$mergeRules = $mergeJson.value}
 elseif ($mergeJson -is [Array]) {$mergeRules = $mergeJson}
 else {throw "Unsupported JSON format in merge file"}
-$mergeRules = $mergeRules | ForEach-Object { Normalize-RuleObject $_ }}}
+$mergeRules = $mergeRules | ForEach-Object {Normalize-RuleObject $_}}}
 loadandnormalize
 
 # Merge using Sentinel rule GUID.
@@ -208,11 +208,31 @@ if ($uid -and -not $ruleMap.ContainsKey($uid)) {$ruleMap[$uid] = $r}}
 $script:rules = $ruleMap.Values}
 mergedata
 
-# Caclulate statistics.
-function statistics {$script:ruleCount = $script:rules.Count
-$script:disabledCount = ($script:rules | Where-Object { $_.enabled -eq $false }).Count
-$script:nrtCount      = ($script:rules | Where-Object { $_.kind -eq 'NRT' }).Count}
+# Calculate statistics.
+function statistics {$script:ruleCount     = $script:rules.Count
+$script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
+$script:nrtCount = ($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
+
+# Severity counts (case-insensitive, safe for missing values)
+$script:severityInfo = ($script:rules | Where-Object {$_.severity -match '^Informational$'}).Count
+$script:severityLow = ($script:rules | Where-Object {$_.severity -match '^Low$'}).Count
+$script:severityMedium = ($script:rules | Where-Object {$_.severity -match '^Medium$'}).Count
+$script:severityHigh = ($script:rules | Where-Object {$_.severity -match '^High$'}).Count}
 statistics
+
+# Donut chart math (degrees for conic-gradient)
+function builddonut {$script:severityTotal = $severityInfo + $severityLow + $severityMedium + $severityHigh
+if ($severityTotal -gt 0) {$degInfo = ($severityInfo / $severityTotal) * 360
+$degLow = ($severityLow / $severityTotal) * 360
+$degMedium = ($severityMedium / $severityTotal) * 360
+$degHigh = ($severityHigh / $severityTotal) * 360}
+else {$degInfo = $degLow = $degMedium = $degHigh = 0}
+
+# Cumulative angles (required for conic-gradient)
+$script:degInfoEnd = [Math]::Round($degInfo, 1)
+$script:degLowEnd = [Math]::Round($degInfo + $degLow, 1)
+$script:degMediumEnd = [Math]::Round($degInfo + $degLow + $degMedium, 1)}
+builddonut
 
 # Sort rules alphabetically.
 $script:rules = $script:rules | Sort-Object -Property displayName -Culture en-US
@@ -225,16 +245,23 @@ $id   = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
 $qry  = Escape-Html (Normalize-UnicodeDecorations $r.query)
 $desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
 $enabled = $r.enabled
-if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>true</span>"}
-else {$enabledText = "<span class='enabled-false'>false (Disabled)</span>"}
+if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>✅ true</span>"}
+else {$enabledText = "<span class='enabled-false'>❌ false (Disabled)</span>"}
+$severity = $r.severity
+switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Informational</strong></span>"}
+'^Low$' {$severityHtml = "<span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>"}
+'^Medium$' {$severityHtml = "<span>Severity:</span> <span class='sev-medium'><strong>🟡 Medium</strong></span>"}
+'^High$' {$severityHtml = "<span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>"}
+default {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>"}}
 $props = Format-Properties $r
 if ($r.enabled -eq $true) {$script:toc += "<li><a href='#$id'>$name</a></li>`n"}
 else {$script:toc += "<li><a href='#$id' class='enabled-false'>$name</a></li>`n"}
 $script:rows += @"
-<tr id="$id">
+<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)">
 <td class="rulename"><strong>$name</strong><br><br>
 <span class="description">$desc</span><br><br>
-<span>Enabled: $enabledText</span>
+<span>Enabled: $enabledText</span><br>
+$severityHtml
 </td>
 <td class="query"><pre>$qry</pre></td>
 <td class="props">$props</td>
@@ -247,9 +274,22 @@ if (-not $script:rows) {Write-Host -f red "Nothing to write.`nExiting.`n";return
 
 # Build TOC statistics block
 function buildstats {$script:statsBlock = @"
-<div class="toc-stats"><strong><span class="stat-green">Rule Count: $ruleCount</span><br>
-<span class="stat-red">Disabled Rules: $disabledCount</span><br>
-<span class="stat-yellow">NRT Rules: $nrtCount</span></strong><br></div>
+<div class="toc-stats-grid"><div class="stats-left">
+<strong><span class="stats-header">Rule Overview:</span><br>
+<span class="stat-green">Rule Count: $ruleCount</span><br>
+<span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
+<span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
+<span id="clearFilters" class="toggle clear-filters" style="display:none;">
+❎ Clear Filters</span></strong></div>
+
+<div class="stats-middle"><strong>
+<span class="stats-header">Severity Breakdown:</span><br>
+<span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
+<span class="sev-low toggle" data-filter="sev-low">🟠 Low: $severityLow</span><br>
+<span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
+<span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong></div>
+
+<div class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></div></div>
 "@}
 buildstats
 
@@ -276,10 +316,32 @@ tr:hover td {background: var(--row-hover);}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
+.toc-stats-grid {display: grid; grid-template-columns: auto 140px auto; gap: 24px; max-width: 700px; margin: 0 0 20px 0; align-items: start;}
+.stats-left, .stats-middle {white-space: nowrap;}
+.stats-right {display: flex; justify-content: right; align-items: right;}
+
 .stat-green  {color: var(--green);}
 .stat-red    {color: var(--red);}
+
+.clear-filters {margin-top: 6px; display: block; color: var(--text-muted);}
+.clear-filters:hover {color: var(--text-main);}
+
+.sev-info   { color: var(--text-main); }
+.sev-low    { color: #ff8c00; }
+.sev-medium { color: var(--yellow); }
+.sev-high   { color: var(--red); }
 .stat-yellow {color: var(--yellow);}
-.kv { margin-bottom: 4px; }
+
+.toggle {cursor: pointer; user-select: none;}
+.toggle:hover {text-decoration: underline; cursor: pointer;}
+.toggle.active {font-weight: bold; font-style: italic; text-decoration: none;}
+
+.severity-donut {position: relative; width: 120px; height: 120px; margin-top: 6px;}
+.donut {position: relative; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ffffff 0deg 45deg, #ff8c00 45deg 135deg,#ffd166 135deg 260deg, #d32f2f 260deg 360deg);}
+.donut::before {content: ""; position: absolute; inset: 30%; background: var(--bg-panel); border-radius: 50%;}
+.donut-label {position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; text-align: center; color: var(--text-muted); pointer-events: none;}
+
+.kv {margin-bottom: 4px;}
 .kv .val {margin-left: 6px; color: var(--text-muted);}
 
 .toc ul {column-count: 3; column-gap: 30px;}
@@ -322,10 +384,9 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 
-<h2>Table of Contents</h2>
-
 $statsBlock
 
+<h2>Table of Contents</h2>
 <div class="toc"><ul>$script:toc</ul></div>
 
 <br>
@@ -365,6 +426,38 @@ function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 
 toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
 
 updateIcon();})();
+
+(function () {const toggles = document.querySelectorAll('.toggle'); 
+const rows = document.querySelectorAll('tbody tr');
+const activeFilters = new Set();
+const clearBtn = document.getElementById('clearFilters');
+
+function applyFilters() {rows.forEach(row => {let visible = true;
+
+activeFilters.forEach(filter => {switch (filter) {case 'disabled':
+if (row.dataset.enabled !== 'False') visible = false; break;
+case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
+case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
+case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
+case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
+case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
+row.style.display = visible ? '' : 'none';});
+
+/* Show/Hide Clear Filters */
+if (activeFilters.size > 0) {clearBtn.style.display = 'block';}
+else {clearBtn.style.display = 'none';}}
+
+/* Toggle handlers */
+toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
+if (activeFilters.has(filter)) {activeFilters.delete(filter); t.classList.remove('active');}
+else {activeFilters.add(filter); t.classList.add('active');}
+applyFilters();});});
+
+/* Clear Filters handler */
+clearBtn.addEventListener('click', () => {activeFilters.clear();
+toggles.forEach(t => t.classList.remove('active'));
+rows.forEach(r => (r.style.display = ''));
+clearBtn.style.display = 'none';});})();
 </script>
 
 </body></html>
