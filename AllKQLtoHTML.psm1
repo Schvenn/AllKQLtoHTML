@@ -363,6 +363,10 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .kv {margin-bottom: 4px;}
 .kv .val {margin-left: 6px; color: var(--text-muted);}
 
+.toc-toggle {cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;}
+.toc-arrow {font-size: 0.9em; transition: transform 0.2s ease;}
+.toc-collapsed .toc-arrow {transform: rotate(-900deg);}
+.toc-collapsed #tocContent {display: none;}
 .toc ul {column-count: 3; column-gap: 30px;}
 
 .enabled-true {font-size: 16px; color: var(--green); font-weight: bold;}
@@ -407,10 +411,8 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 $statsBlock
 
-<h2>Table of Contents</h2>
-<div class="toc"><ul>$script:toc</ul></div>
-
-<br>
+<div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
+<div id="tocContent" class="toc"><ul>$script:toc</ul></div></div><br>
 
 <table id="rulesTable">
 <colgroup><col style="width:15%;"><col style="width:42.5%;"><col style="width:42.5%;"></colgroup>
@@ -502,6 +504,10 @@ if (reverseBtn) reverseBtn.classList.remove('active'); rows.forEach(r => (r.styl
 clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');});})();
+
+(function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
+if (!tocToggle || !tocWrapper) return;
+tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
 </script>
 </body></html>
 "@
