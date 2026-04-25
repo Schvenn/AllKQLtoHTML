@@ -148,7 +148,7 @@ try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).G
 catch {re}}
 
 function Format-Properties {param ($Properties)
-$exclude = @('displayName', 'query', 'description', 'enabled', 'severity')
+$exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion')
 $out = ""
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name
@@ -212,6 +212,7 @@ mergedata
 function statistics {$script:ruleCount     = $script:rules.Count
 $script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
 $script:nrtCount = ($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
+$script:templateVersionCount = ($script:rules | Where-Object {$_.templateVersion}).Count
 
 # Severity counts (case-insensitive, safe for missing values)
 $script:severityInfo = ($script:rules | Where-Object {$_.severity -match '^Informational$'}).Count
@@ -244,9 +245,11 @@ $name = Escape-Html $r.displayName
 $id   = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
 $qry  = Escape-Html (Normalize-UnicodeDecorations $r.query)
 $desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
+
 $enabled = $r.enabled
 if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>✅ true</span>"}
 else {$enabledText = "<span class='enabled-false'>❌ false (Disabled)</span>"}
+
 $severity = $r.severity
 switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Informational</strong></span>"}
 '^Low$' {$severityHtml = "<span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>"}
@@ -254,14 +257,20 @@ switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</
 '^High$' {$severityHtml = "<span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>"}
 default {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>"}}
 $props = Format-Properties $r
+
 if ($r.enabled -eq $true) {$script:toc += "<li><a href='#$id'>$name</a></li>`n"}
 else {$script:toc += "<li><a href='#$id' class='enabled-false'>$name</a></li>`n"}
+
+$templateVersionHtml = ""
+if ($r.templateVersion) {$tv = Escape-Html $r.templateVersion; $templateVersionHtml = "<br><span class='template-version'>Template Version: <strong>$tv</strong></span>"}
+
 $script:rows += @"
-<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)">
+<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)">
 <td class="rulename"><strong>$name</strong><br><br>
 <span class="description">$desc</span><br><br>
 <span>Enabled: $enabledText</span><br>
 $severityHtml
+$templateVersionHtml
 </td>
 <td class="query"><pre>$qry</pre></td>
 <td class="props">$props</td>
@@ -279,6 +288,8 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-green">Rule Count: $ruleCount</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
+<span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br>
+
 <span id="clearFilters" class="toggle clear-filters" style="display:none;">
 ❎ Clear Filters</span></strong></div>
 
@@ -320,16 +331,17 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .stats-left, .stats-middle {white-space: nowrap;}
 .stats-right {display: flex; justify-content: right; align-items: right;}
 
-.stat-green  {color: var(--green);}
-.stat-red    {color: var(--red);}
+.stat-green {color: var(--green);}
+.stat-red {color: var(--red);}
+.stat-gray {color: #888;}
 
 .clear-filters {margin-top: 6px; display: block; color: var(--text-muted);}
 .clear-filters:hover {color: var(--text-main);}
 
-.sev-info   { color: var(--text-main); }
-.sev-low    { color: #ff8c00; }
+.sev-info { color: var(--text-main); }
+.sev-low { color: #ff8c00; }
 .sev-medium { color: var(--yellow); }
-.sev-high   { color: var(--red); }
+.sev-high { color: var(--red); }
 .stat-yellow {color: var(--yellow);}
 
 .toggle {cursor: pointer; user-select: none;}
@@ -348,6 +360,8 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 
 .enabled-true {font-size: 16px; color: var(--green); font-weight: bold;}
 .enabled-false {font-size: 16px; color: var(--red); font-weight: bold;}
+
+.template-version {font-size: 13px; color: var(--text-muted);}
 
 .description {font-size: 16px; color: var(--text-muted);}
 
@@ -437,6 +451,7 @@ function applyFilters() {rows.forEach(row => {let visible = true;
 activeFilters.forEach(filter => {switch (filter) {case 'disabled':
 if (row.dataset.enabled !== 'False') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
+case 'template': if (!row.dataset.templateVersion) visible = false; break
 case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
