@@ -587,6 +587,7 @@ badge.style.opacity = '1';
 
 setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 </script>
+<br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
 "@
 
@@ -618,7 +619,7 @@ As with all of these files, a user-provided name can be provided, instead.
 File2 defaults to:	 All_Azure_Sentinel_rules.json
 This is the default name the script expects for a Webshell export.
 
-## Azure Webshell JSON export (PowerShell version)
+## Azure Webshell JSON export
 If you wish to use an export from the Azure Webshell, you will need to run PowerShell from portal.azure.com and enter the following commmand:
 
 az sentinel alert-rule list --resource-group 'RG-<env>-<region>-<service>' --workspace-name 'LAW-<env>-<region>-<workload>' --subscription 'ffffffff-ffff-ffff-ffff-ffffffffffff' -o json > All_Azure_Sentinel_rules.json
@@ -644,7 +645,48 @@ Azure_Sentinel_analytics_rules (2).json
 
 Output:
 Azure_Sentinel_analytics_rules_combined.json
+## Webpage Statistics & Filtering
+The webpage created by this tool provides the following features:
 
+• A light and dark theme toggle is provided in the top right corner.
+
+• Rules counts of: all rules, disabled rules, NRT rules, rules adapted from templates
+
+• Severity breakdown counts: informational, low, medium, high
+
+• Donut chart visualizing the breakdown of rules by Severity.
+
+• By clicking options in the Rule Overview, the list of rules displayed can be filtered accumatively.
+
+• By clicking rule severity levels, the list of rules displayed can be filtered exclusively.
+
+• A live count of visible rules is displayed below the Severity counts.
+
+• Clicking on an active filter undoes the filter.
+
+• Whenever any filter is active two more options appear; one that allows you to invert the current filter, and a second to clear all filters. (Refreshing the page will also clear all filters.)
+## Webpage Navigation
+The main body of the webpage consists of the following components:
+
+• A Table of Contents provides a three column list of all rules included, alphabetically. This table can be expanded and collapsed by clicking on the title and each rule is a hyperlink to the rule details in the table below.
+
+• Keep in mind that if a rule is currently filtered out from being displayed, then clicking a link to that hidden rule will not allow you to navigate to it.
+
+• The main body of the page is a three column table containing all of the details of each rule.
+
+• Column one contains the rule name, description, enabled status, severity and template version number, if applicable.
+
+• Column 2 provides the rule query logic.
+
+• Clicking on a query in this second column will copy its contents to the clipboard, so that it can be used in Sentinel Advanced Hunting or Microsoft Defender, saving time.
+
+• The third column provides all other rule configuration items, including the Mitre TTPs.
+
+• Due to the large nature of the page a "Back to top" button is located in the bottom right corner of the screen once the page is scrolled down far enough.
+
+## Mitre ATT&CK Mapping
+• Rolling over the Mitre ATT&CK logo in the top, right side of the page will provide a pop-out menu that allows you to copy the path to the "report_navigator.json" file, which should be located in the same directory as the webpage into the clipboard.
+• Additionally provided is a hyperlink to the Mitre ATT&CK Navigator, which will allow you to load the aforementioned file in order to see a heatmap of your current rule coverage.
 ## License
 MIT License
 
