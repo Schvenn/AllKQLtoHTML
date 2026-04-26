@@ -357,9 +357,13 @@ function writepage {$html = @"
 /* BASE STYLES */
 body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
 
-#mitrePanel {position: fixed; top: 70px; right: 20px; z-index: 1000; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 6px; padding: 8px 10px; font-size: 13px; line-height: 1.4; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-#mitrePanel a {font-weight: bold; color: var(--link-normal);}
-#mitrePanel a:hover {color: var(--red); text-decoration: underline;}
+#mitrePanel {position: fixed; top: 70px; right: -225px; width: 260px; height: auto; display: flex; align-items: center; z-index: 1000; transition: right 0.3s ease;}
+#mitrePanel:hover {right: 0px; padding-right: 0px;}
+#mitreTab {width: 44px; height: 44px; min-width: 44px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;}
+#mitreTab img {width: 24px; height: 24px; border-radius: 15%;}
+#mitreContent {margin-left: 0px; padding: 10px 12px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 13px; line-height: 1.4;}
+#mitreContent a {font-weight: bold; color: var(--link-normal);}
+#mitreContent a:hover {color: var(--red); text-decoration: underline;}
 
 table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
 th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
@@ -449,7 +453,12 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 <h1>Azure Sentinel Analytics Rules</h1>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
-<div id="mitrePanel"><p><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank" rel="noopener noreferrer">MITRE ATT&CK Navigator</a><br><br>Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a> <span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>(Use in: "Open Existing Layer")</p></div>
+<div id="mitrePanel"><div id="mitreTab"><img
+src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUIWKUAU6MAVaRvkcEOXKddhbs9cbFLerX///+Rqs4AUaK5yd8ATaAAUKKLpcvr8PYARp6asdLe5vAASJ9VgLjx9fkASp/C0OPJ1ud5mMSpvNgATqH3+vzS3esAQpyAnsdwksEdYqql8pYrAAAA80lEQVR4AWIYQABojqwSJYRhAEjlLYNL1p37X/I1xW+w81OLDMEYM2+tMXb/6Jzz4878OXfYvtoUyPK49UBRbh6rGmjauO2AXjaPZUHgqMXkROC8eZSewOWsHVG2TUsi4UauKDez+hyAqKQ6yv2xPOY3eL5UKepc4bU2fdyhd6r0PoWHDzxX3fMLircqHYFvCvjFSJ5Qt8VYkbMBnJl9BiDNJ6t7KQ101ezjgEfS9tMnlhe4zkaq2Ms4Q/o2qTIVn32u46gNgTpPrGrNQu0J6tDjfAG0VzUPOuB5koa9PT5P8WepUagwIiI2aouUYyMRk/wg/29jDlzI7K5BAAAAAElFTkSuQmCC" alt="MITRE ATT&CK"/></div>
+
+<div id="mitreContent"><p><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank" rel="noopener noreferrer">MITRE ATT&amp;CK Navigator</a><br><br>
+Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>
+<span style="font-size:12px; color:var(--text-muted);">(Use in “Open Existing Layer”)</span></p></div></div>
 
 $statsBlock
 
