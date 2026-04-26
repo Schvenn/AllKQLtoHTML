@@ -559,7 +559,8 @@ if (reverseBtn) reverseBtn.classList.remove('active'); rows.forEach(r => (r.styl
 
 clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
-if (filterHeader) filterHeader.classList.add('hidden');});})();
+if (filterHeader) filterHeader.classList.add('hidden');
+if (visibleCountEl) {visibleCountEl.textContent = 'Visible Rules: ' + rows.length;}});})();
 
 (function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
 if (!tocToggle || !tocWrapper) return;
