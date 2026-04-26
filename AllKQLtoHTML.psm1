@@ -370,6 +370,11 @@ th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;
 th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
 tr:nth-child(even) td {background: var(--row-even);}
 tr:hover td {background: var(--row-hover);}
+td.query pre {cursor: pointer; position: relative;}
+td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
+td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--text-muted); opacity: 0; pointer-events: none;}
+td.query pre:hover::after {opacity: 1;}
+.copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
@@ -568,6 +573,18 @@ navigator.clipboard.writeText(url).then(() => {status.textContent = '✔ copied'
 setTimeout(() => status.textContent = '', 2000);},
 () => {status.textContent = '✖ failed';
 setTimeout(() => status.textContent = '', 2000);});});})();
+
+(function () {if (!navigator.clipboard) return;
+document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
+if (!pre) return; const text = pre.innerText.trim();
+if (!text) return; navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
+
+function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
+if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
+
+badge.style.opacity = '1';
+
+setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 </script>
 </body></html>
 "@
