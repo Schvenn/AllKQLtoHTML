@@ -37,3 +37,6 @@ When using the Sentinel UI, you will only be able to export a maximum of 50 rule
 
 	Output:
 	Azure_Sentinel_analytics_rules_combined.json
+
+## Webpage features
+![Screenshot](https://github.com/Schvenn/AllKQLtoHTML/blob/main/Screenshots/fullfeaturebreakdown.png)
