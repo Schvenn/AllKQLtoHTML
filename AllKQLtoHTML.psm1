@@ -691,7 +691,9 @@ The webpage created by this tool provides the following features:
 
 • A light and dark theme toggle is provided in the top right corner.
 
-• Rules counts of: all rules, disabled rules, NRT rules, rules adapted from templates
+• Versioning information.
+
+• Rules counts of: all rules, disabled rules, NRT rules, rules adapted from templates.
 
 • Severity breakdown counts: informational, low, medium, high
 
@@ -702,6 +704,8 @@ The webpage created by this tool provides the following features:
 • By clicking rule severity levels, the list of rules displayed can be filtered exclusively.
 
 • A live count of visible rules is displayed below the Severity counts.
+
+• The ability to export the JSON of all currently visible rules for selective bulk import of rules into an environment.
 
 • Clicking on an active filter undoes the filter.
 
@@ -722,6 +726,8 @@ The main body of the webpage consists of the following components:
 • Clicking on a query in this second column will copy its contents to the clipboard, so that it can be used in Sentinel Advanced Hunting or Microsoft Defender, saving time.
 
 • The third column provides all other rule configuration items, including the Mitre TTPs.
+
+• Clicking on the properties in this third column will allow a rule to be exported to the original JSON format for individual rule import.
 
 • Due to the large nature of the page a "Back to top" button is located in the bottom right corner of the screen once the page is scrolled down far enough.
 
