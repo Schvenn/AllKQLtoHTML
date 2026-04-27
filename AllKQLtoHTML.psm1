@@ -278,6 +278,8 @@ $script:rules = $script:rules | Sort-Object -Property displayName -Culture en-US
 # Build rows.
 function buildrows {$script:rows = ""; $script:toc = ""
 foreach ($r in $script:rules) {if (-not ($r.displayName -and $r.query)) {continue}
+
+$ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($r | ConvertTo-Json -Depth 10 -Compress)))
 $name = Escape-Html $r.displayName
 $id = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
 $qry = Escape-Html (Normalize-UnicodeDecorations $r.query)
@@ -302,7 +304,8 @@ $templateVersionHtml = ""
 if ($r.templateVersion) {$tv = Escape-Html $r.templateVersion; $templateVersionHtml = "<br><span class='template-version'>Template Version: <strong>$tv</strong></span>"}
 
 $script:rows += @"
-<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)">
+<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)" data-rule-json="$ruleJson">
+
 <td class="rulename"><strong>$name</strong><br><br>
 <span class="description">$desc</span><br><br>
 <span>Enabled: $enabledText</span><br>
@@ -310,13 +313,16 @@ $severityHtml
 $templateVersionHtml
 </td>
 <td class="query"><pre>$qry</pre></td>
-<td class="props">$props</td>
+<td class="props"><div class="props-content">$props</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
 </tr>
 "@}}
 buildrows
 
 # Final error check.
 if (-not $script:rows) {Write-Host -f red "Nothing to write.`nExiting.`n";return}
+
+# Snapshot Date
+$script:snapshotDate = (Get-Date).ToString('MM/dd/yyyy @ hh:mm:ss tt (zzz') + ' ' + (Get-TimeZone).StandardName + ')'
 
 # Build TOC statistics block
 function buildstats {$script:statsBlock = @"
@@ -336,8 +342,7 @@ function buildstats {$script:statsBlock = @"
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: $severityLow</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br>
-<br><span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span></td>
-
+<br><span id="visibleRuleCount" class="stat-muted">  Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
 <td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td></tr></table>
 "@}
 buildstats
@@ -365,6 +370,9 @@ body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); 
 #mitreContent a {font-weight: bold; color: var(--link-normal);}
 #mitreContent a:hover {color: var(--red); text-decoration: underline;}
 
+#exportVisibleRules {background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; font-size: 13px;}
+#exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
+
 table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
 th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
 th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
@@ -375,6 +383,12 @@ td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;
 td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--text-muted); opacity: 0; pointer-events: none;}
 td.query pre:hover::after {opacity: 1;}
 .copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
+
+td.props {position: relative;}
+.export-rule-btn {position: absolute; top: 6px; right: 6px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; font-size: 14px; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 2;}
+td.props:hover .export-rule-btn {opacity: 1;}
+.export-rule-btn:hover {background: var(--row-hover);}
+.export-rule-btn:active {transform: scale(0.95);}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
@@ -455,7 +469,8 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 </head>
 
 <body>
-<h1>Azure Sentinel Analytics Rules</h1>
+<h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: $snapshotDate</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -586,6 +601,32 @@ if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badg
 badge.style.opacity = '1';
 
 setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
+
+(function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
+if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
+if (!row || !row.dataset.ruleJson) return;
+if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
+const rule = JSON.parse(atob(row.dataset.ruleJson));
+const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
+downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
+
+function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}})();
+
+function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
+
+(function () {const btn = document.getElementById('exportVisibleRules');
+if (!btn) return; btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr')).filter(r => r.style.display !== 'none');
+if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
+if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
+try {const resources = rows.map(row => {const rule = JSON.parse(atob(row.dataset.ruleJson));
+return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: rule.id ? rule.id.split('/').pop(): rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), location: "global", properties: rule};});
+const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
+downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
+catch (err) {console.error('Bulk export failed:', err);
+alert('Failed to export visible rules. See console for details.');}});})();
+
+function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
+const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
 </script>
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
