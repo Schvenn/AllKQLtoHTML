@@ -331,20 +331,26 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-green">Rule Count: $ruleCount</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
-<span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br>
-<span id="regexFilterBtn" class="toggle" title="Filter visible rules by search or regex" style="display:inline-block; margin-top:10px;">🔍 Filter by Text/Regex</span>
-
-<span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
-<span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
-<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong></td>
+<span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br><br>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text/Regex</span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: $severityLow</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
-<span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br>
-<br><span id="visibleRuleCount" class="stat-muted">  Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
-<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td></tr></table>
+<span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br><br>
+<span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
+<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td>
+
+<td class="stats-right">
+<span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
+<span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
+<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong><br>
+
+<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search criteria: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+</td>
+
+</tr></table>
 "@}
 buildstats
 
@@ -398,15 +404,17 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .stats-table tr:hover td {background: unset;}
 .hidden {visibility: hidden; pointer-events: none;}
 
+.stats-left span {line-height: 1.3;}
+.stats-middle span {line-height: 1.3;}
 .stat-green {color: var(--green);}
 .stat-red {color: var(--red);}
 .stat-gray {color: #888;}
 .stat-muted {color: var(--text-muted);}
 
-.filter-header {font-weight: bold; margin-top: 20px; display: block; cursor: default;}
+.filter-header {font-weight: bold; display: block; cursor: default; line-height: 1.3;}
 .reverse-filter {color: #666;}
 .reverse-filter.active {font-weight: bold; font-style: italic; text-decoration: underline;}
-.clear-filters {margin-top: 0px; display: block; color: var(--text-muted);}
+.clear-filters {margin-top: 1px; display: block; color: var(--text-muted);}
 .clear-filters:hover {color: var(--text-main);}
 
 .sev-info {color: var(--text-main);}
@@ -482,8 +490,6 @@ Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span 
 <span style="font-size:12px; color:var(--text-muted);">(Use in “Open Existing Layer”)</span></p></div></div>
 
 $statsBlock
-
-<div id="searchCriteriaBlock" style="margin: 8px 0 0px 2px; font-size: 13px;" class="hidden">Search criteria: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 
 <div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
 <div id="tocContent" class="toc"><ul>$script:toc</ul></div></div><br>
