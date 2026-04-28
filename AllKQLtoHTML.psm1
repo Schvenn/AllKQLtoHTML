@@ -603,17 +603,19 @@ setTimeout(() => status.textContent = '', 2000);},
 () => {status.textContent = '✖ failed';
 setTimeout(() => status.textContent = '', 2000);});});})();
 
+
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
-if (!pre) return; const text = pre.innerText.trim();
-if (!text) return; navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
+if (!pre) return; const textNode = pre.firstChild;
+if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
+const text = textNode.textContent.trim();
+if (!text) return;
+navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
 
 function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
 if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
 
-badge.style.opacity = '1';
-
-setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
+badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 
 
 (function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
