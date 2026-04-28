@@ -483,6 +483,8 @@ Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span 
 
 $statsBlock
 
+<div id="searchCriteriaBlock" style="margin: 8px 0 0px 2px; font-size: 13px;" class="hidden">Search criteria: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+
 <div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
 <div id="tocContent" class="toc"><ul>$script:toc</ul></div></div><br>
 
@@ -526,6 +528,8 @@ updateIcon();})();
 
 
 (function () {const toggles = document.querySelectorAll('.toggle');
+const searchBlock = document.getElementById('searchCriteriaBlock');
+const searchValue = document.getElementById('searchCriteriaValue');
 const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]');
 const rows = document.querySelectorAll('#rulesTable tbody tr');
 const clearBtn = document.getElementById('clearFilters');
@@ -561,7 +565,8 @@ if (filterHeader) filterHeader.classList.add('hidden');}}
 const regexBtn = document.getElementById('regexFilterBtn');
 if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter a Search term or Regex query:');
 if (!input) return;
-try {regexFilter = new RegExp(input, 'i');}
+try {regexFilter = new RegExp(input, 'i');
+if (searchBlock && searchValue) {searchValue.textContent = input; searchBlock.classList.remove('hidden');}}
 catch {alert('Invalid regular expression.'); return;}
 applyFilters();});}
 
@@ -585,6 +590,7 @@ reverseMode = !reverseMode; reverseBtn.classList.toggle('active', reverseMode); 
 clearBtn.addEventListener('click', () => {activeFilters.clear(); regexFilter = null; reverseMode = false;
 toggles.forEach(t => t.classList.remove('active'));
 if (reverseBtn) reverseBtn.classList.remove('active');
+if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
 rows.forEach(r => (r.style.display = ''));
 applyFilters();});})();
 
