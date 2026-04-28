@@ -729,11 +729,11 @@ The webpage created by this tool provides the following features:
 
 • By clicking options in the Rule Overview, the list of rules displayed can be filtered accumatively.
 
+• A text/Regex filter.
+
 • By clicking rule severity levels, the list of rules displayed can be filtered exclusively.
 
 • A live count of visible rules is displayed below the Severity counts.
-
-• A text/Regex filter.
 
 • The ability to export the JSON of all currently visible rules for selective bulk import of rules into an environment.
 
