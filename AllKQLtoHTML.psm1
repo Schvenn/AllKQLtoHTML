@@ -347,7 +347,7 @@ function buildstats {$script:statsBlock = @"
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
 <span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong><br>
 
-<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search criteria: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 </td>
 
 </tr></table>
