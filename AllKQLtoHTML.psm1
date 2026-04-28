@@ -332,6 +332,7 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br>
+<span id="regexFilterBtn" class="toggle" title="Filter visible rules by search or regex" style="display:inline-block; margin-top:10px;">🔍 Filter by Text/Regex</span>
 
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
@@ -501,15 +502,17 @@ $script:rows
 
 <script>
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
-
 function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
 const ease = 1 - Math.pow(1 - progress, 3);
 window.scrollTo(0, start * (1 - ease));
 if (progress < 1) {requestAnimationFrame(animateScroll);}}
 requestAnimationFrame(animateScroll);}
+
+
 window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
+
 
 (function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return; // <-- prevents silent failure
 const root = document.documentElement;
@@ -521,6 +524,7 @@ function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 
 toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
 updateIcon();})();
 
+
 (function () {const toggles = document.querySelectorAll('.toggle');
 const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]');
 const rows = document.querySelectorAll('#rulesTable tbody tr');
@@ -530,11 +534,11 @@ const filterHeader = document.getElementById('filterHeader');
 const visibleCountEl = document.getElementById('visibleRuleCount');
 const activeFilters = new Set();
 let reverseMode = false;
+let regexFilter = null;
 
-function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode;
-if (!hasFilters) {rows.forEach(r => {r.style.display = '';});}
+function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null;
+if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 else {rows.forEach(row => {let visible = true;
-
 activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled !== 'False') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
 case 'template': if (!row.dataset.templateVersion) visible = false; break;
@@ -542,44 +546,53 @@ case 'sev-informational': if (row.dataset.severity !== 'Informational') visible 
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
 case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
-
-if (reverseMode) {visible = !visible;}
-row.style.display = visible ? '' : 'none';});}
-
-const showControls = activeFilters.size > 0; clearBtn.classList.toggle('hidden', !showControls); 
-if (reverseBtn) reverseBtn.classList.toggle('hidden', !showControls);
-if (filterHeader) filterHeader.classList.toggle('hidden', !showControls);
+if (visible && regexFilter) {if (!regexFilter.test(row.innerText)) visible = false;}
+if (reverseMode) visible = !visible; row.style.display = visible ? '' : 'none';});}
 if (visibleCountEl) {const visibleRows = Array.from(rows)
-.filter(r => r.style.display !== 'none')
-.length;
-visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}}
+.filter(r => r.style.display !== 'none').length;
+visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
+const hasActiveFilters = activeFilters.size > 0 || regexFilter !== null;
+if (hasActiveFilters) {clearBtn.classList.remove('hidden');
+if (reverseBtn) reverseBtn.classList.remove('hidden');
+if (filterHeader) filterHeader.classList.remove('hidden');}
+else {clearBtn.classList.add('hidden');
+if (reverseBtn) reverseBtn.classList.add('hidden');
+if (filterHeader) filterHeader.classList.add('hidden');}}
+const regexBtn = document.getElementById('regexFilterBtn');
+if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter a Search term or Regex query:');
+if (!input) return;
+try {regexFilter = new RegExp(input, 'i');}
+catch {alert('Invalid regular expression.'); return;}
+applyFilters();});}
 
 /* Filter toggle handlers */
 toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
-if (!filter) return; const isSeverity = filter.indexOf('sev-') === 0;
-if (activeFilters.has(filter)) {activeFilters.delete(filter); t.classList.remove('active');}
-else {if (isSeverity) {severityToggles.forEach(st => {const sevFilter = st.dataset.filter;
-if (activeFilters.has(sevFilter)) {activeFilters.delete(sevFilter); st.classList.remove('active');}});}
-activeFilters.add(filter); t.classList.add('active');}
+if (!filter) return;
+const isSeverity = filter.startsWith('sev-');
+if (activeFilters.has(filter)) {activeFilters.delete(filter);
+t.classList.remove('active');}
+else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.dataset.filter);
+st.classList.remove('active');});}
+activeFilters.add(filter);
+t.classList.add('active');}
 applyFilters();});});
 
 /* Reverse Filters handler */
-if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0) return;
+if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 && !regexFilter) return;
 reverseMode = !reverseMode; reverseBtn.classList.toggle('active', reverseMode); applyFilters();});}
 
 /* Clear Filters handler */
-clearBtn.addEventListener('click', () => {activeFilters.clear(); reverseMode = false;
+clearBtn.addEventListener('click', () => {activeFilters.clear(); regexFilter = null; reverseMode = false;
 toggles.forEach(t => t.classList.remove('active'));
-if (reverseBtn) reverseBtn.classList.remove('active'); rows.forEach(r => (r.style.display = '')); 
+if (reverseBtn) reverseBtn.classList.remove('active');
+rows.forEach(r => (r.style.display = ''));
+applyFilters();});})();
 
-clearBtn.classList.add('hidden');
-if (reverseBtn) reverseBtn.classList.add('hidden');
-if (filterHeader) filterHeader.classList.add('hidden');
-if (visibleCountEl) {visibleCountEl.textContent = 'Visible Rules: ' + rows.length;}});})();
 
 (function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
 if (!tocToggle || !tocWrapper) return;
 tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
+
 
 (function () {const link = document.getElementById('copyNavigatorPath');
 const status = document.getElementById('copyStatus');
@@ -602,6 +615,7 @@ badge.style.opacity = '1';
 
 setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 
+
 (function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
 if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
@@ -614,6 +628,7 @@ function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}
 
 function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
 
+
 (function () {const btn = document.getElementById('exportVisibleRules');
 if (!btn) return; btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr')).filter(r => r.style.display !== 'none');
 if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
@@ -625,9 +640,22 @@ downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
 catch (err) {console.error('Bulk export failed:', err);
 alert('Failed to export visible rules. See console for details.');}});})();
 
+
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
 const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
 "@
@@ -704,6 +732,8 @@ The webpage created by this tool provides the following features:
 • By clicking rule severity levels, the list of rules displayed can be filtered exclusively.
 
 • A live count of visible rules is displayed below the Severity counts.
+
+• A text/Regex filter.
 
 • The ability to export the JSON of all currently visible rules for selective bulk import of rules into an environment.
 
