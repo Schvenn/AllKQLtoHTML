@@ -635,7 +635,7 @@ if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.close
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
 const rule = JSON.parse(atob(row.dataset.ruleJson));
-const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
+const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
 downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
 
 function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}})();
@@ -649,7 +649,7 @@ if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
 if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
 try {const resources = rows.map(row => {const rule = JSON.parse(atob(row.dataset.ruleJson));
 return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: rule.id ? rule.id.split('/').pop(): rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), location: "global", properties: rule};});
-const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
+const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
 downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
 catch (err) {console.error('Bulk export failed:', err);
 alert('Failed to export visible rules. See console for details.');}});})();
