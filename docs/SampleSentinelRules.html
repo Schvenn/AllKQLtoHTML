@@ -133,14 +133,14 @@ Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span 
 
 <table class="stats-table" aria-hidden="false">
 <tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
-<span class="stat-green">Rule Count: 2</span><br>
+<span class="stat-green">Rule Count: 3</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: 1</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: 0</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: 0</span><br><br>
 <span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text/Regex</span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
-<span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: 0</span><br>
+<span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: 1</span><br>
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: 1</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: 0</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: 1</span></strong><br><br>
@@ -160,6 +160,7 @@ Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span 
 <div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
 <div id="tocContent" class="toc"><ul><li><a href='#Curl_downloading_a_script_file'>Curl downloading a script file</a></li>
 <li><a href='#Multiple_network_discovery_commands_run_in_a_short_period_of_time' class='enabled-false'>Multiple network discovery commands run in a short period of time</a></li>
+<li><a href='#Suspicious_Remote_Access_Tool_activity'>Suspicious Remote Access Tool activity</a></li>
 </ul></div></div><br>
 
 <table id="rulesTable">
@@ -254,6 +255,47 @@ DiscoveryEvents
 <div class='kv'><strong>sentinelEntitiesMappings :</strong><span class='val'> </span></div>
 <div class='kv'><strong>id :</strong><span class='val'> [concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/REDACTED')]</span></div>
 <div class='kv'><strong>kind :</strong><span class='val'> Scheduled</span></div>
+</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
+</tr><tr id="Suspicious_Remote_Access_Tool_activity" data-enabled="False" data-kind="Scheduled" data-severity="Low" data-template-version="" data-rule-json="eyJkaXNwbGF5TmFtZSI6IlN1c3BpY2lvdXMgUmVtb3RlIEFjY2VzcyBUb29sIGFjdGl2aXR5IiwiZGVzY3JpcHRpb24iOiJEZXRlY3RzIGFueSBvZiBzZXZlcmFsIGtub3duIGxlZ2l0aW1hdGUgcmVtb3RlIGFjY2VzcyBhcHBsaWNhdGlvbnMgbWFraW5nIHN1Y2Nlc3NmdWwgcmVtb3RlIHBvcnQgY29ubmVjdGlvbnMuIiwic2V2ZXJpdHkiOiJJbmZvcm1hdGlvbmFsIiwiZW5hYmxlZCI6dHJ1ZSwicXVlcnkiOiJsZXQgUmVtb3RlQWNjZXNzRXhlY3V0YWJsZXMgPSBkeW5hbWljKFtcImFlcm9hZG1pbi5leGVcIiwgXCJhZ2VudC5leGVcIiwgXCJhZ2VudG1vbi5leGVcIiwgXCJhbW15eS5leGVcIiwgXCJhbnljb25uZWN0LmV4ZVwiLCBcImFueWRlc2suZXhlXCIsIFwiYXNzaXN0LmV4ZVwiLCBcImF0ZXJhYWdlbnQuZXhlXCIsIFwiYmV5b25kdHJ1c3QuZXhlXCIsIFwiYm9tZ2FyLmV4ZVwiLCBcImNocm9tZS1yZW1vdGUtZGVza3RvcC5leGVcIiwgXHJcblwiY2l0cml4LmV4ZVwiLCBcImNsaWVudC5leGVcIiwgXCJjb25uZWN0d2lzZS5leGVcIiwgXCJjb250cm9sLmV4ZVwiLCBcImRlc2tyZWVuLmV4ZVwiLCBcImR3YWdlbnQuZXhlXCIsIFwiZHdyY2MuZXhlXCIsIFwiZHdyY3MuZXhlXCIsIFwiZm9ydGljbGllbnQuZXhlXCIsIFwiZ2V0c3VwcG9ydC5leGVcIiwgXCJnbG9iYWxwcm90ZWN0LmV4ZVwiLCBcImdvMmFzc2lzdC5leGVcIiwgXCJpc2xsaWdodC5leGVcIiwgXCJrYXNleWEuZXhlXCIsIFxyXG5cImxpdGV2aWV3ZXIuZXhlXCIsIFwibG9nbWVpbi5leGVcIiwgXCJtZXNoYWdlbnQuZXhlXCIsIFwibXNyYS5leGVcIiwgXCJuY2VudHJhbC5leGVcIiwgXCJub21hY2hpbmUuZXhlXCIsIFwibnhwbGF5ZXIuZXhlXCIsIFwib3BlbnZwbi5leGVcIiwgXCJwYXJzZWMuZXhlXCIsIFwicGN2aXNpdC5leGVcIiwgXCJwdWxzZS5leGVcIiwgXCJwdWxzZXdheS5leGVcIiwgXCJxdWlja2Fzc2lzdC5leGVcIiwgXCJyZGNsaWVudC5leGVcIiwgXHJcblwicmRwY2xpcC5leGVcIiwgXCJyZWFsdm5jLmV4ZVwiLCBcInJlY2VpdmVyLmV4ZVwiLCBcInJlbW90ZWFzc2lzdC5leGVcIiwgXCJyZW1vdGVkZXNrdG9wbWFuYWdlci5leGVcIiwgXCJyZW1vdGVwYy5leGVcIiwgXCJyZW1vdGV1dGlsaXRpZXMuZXhlXCIsIFwicmVtb3Rldmlld2VyLmV4ZVwiLCBcInJtbWFnZW50LmV4ZVwiLCBcInJ1c3RkZXNrLmV4ZVwiLCBcInJ1dHNlcnYuZXhlXCIsIFwicnV0dmlldy5leGVcIiwgXHJcblwic2NyZWVuY29ubmVjdC5leGVcIiwgXCJzaG93bXlwYy5leGVcIiwgXCJzb2Z0ZXRoZXIuZXhlXCIsIFwic3BsYXNodG9wLmV4ZVwiLCBcInN1cHJlbW8uZXhlXCIsIFwic3luY3JvLmV4ZVwiLCBcInRlYW12aWV3ZXIuZXhlXCIsIFwidGVhbXZpZXdlcl9zZXJ2aWNlLmV4ZVwiLCBcInRlcm1zcnYuZXhlXCIsIFwidHNjb24uZXhlXCIsIFwidHZuc2VydmVyLmV4ZVwiLCBcInVsdHJhdm5jLmV4ZVwiLCBcInZpZXdlci5leGVcIiwgXHJcblwidm1jb25uZWN0LmV4ZVwiLCBcInZuY3ZpZXdlci5leGVcIiwgXCJ3Zy5leGVcIiwgXCJ3aW52bmMuZXhlXCIsIFwid2lyZWd1YXJkLmV4ZVwiLCBcIndvcmtzcGFjZXNhcHAuZXhlXCIsIFwiem9ob2Fzc2lzdC5leGVcIl0pO1xyXG5sZXQgQ29tbW9uUmVtb3RlQWNjZXNzVG9vbHMgPSBkeW5hbWljIChbXCJtc3JkYy5leGVcIiwgXCJtc3RzYy5leGVcIiwgXCJwb3dlcnNoZWxsLmV4ZVwiLCBcInBzZXhlYy5leGVcIiwgXCJwdXR0eS5leGVcIiwgXCJwd3NoLmV4ZVwiLCBcInNjcC5leGVcIiwgXCJzZnRwLmV4ZVwiLCBcInNzaC5leGVcIiwgXCJzc2hkLmV4ZVwiLCBcInRlbG5ldC5leGVcIiwgXCJ3aW5ybS5jbWRcIiwgXCJ3aW5ycy5leGVcIiwgXCJ3aW5yc2hvc3QuZXhlXCIsIFxyXG5cIndpbnNjcC5leGVcIiwgXCJ3bWljLmV4ZVwiLCBcIm1zcmEuZXhlXCIsIFwicGxpbmsuZXhlXCJdKTtcclxubGV0IFByaXZpbGVnZWRBY2NvdW50cyA9IF9HZXRXYXRjaGxpc3QoXHUwMDI3UHJpdmlsZWdlZF9BY2NvdW50c1x1MDAyNykgfCBwcm9qZWN0IEFjY291bnQgPSB0b2xvd2VyKFNlYXJjaEtleSk7XHJcbkRldmljZU5ldHdvcmtFdmVudHNcclxufCB3aGVyZSBBY3Rpb25UeXBlID09IFwiQ29ubmVjdGlvblN1Y2Nlc3NcIiBhbmQgaXNub3RlbXB0eShSZW1vdGVQb3J0KSBhbmQgKEluaXRpYXRpbmdQcm9jZXNzRmlsZU5hbWUgaW4gKFJlbW90ZUFjY2Vzc0V4ZWN1dGFibGVzKSBvciAoSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSBpbiAoQ29tbW9uUmVtb3RlQWNjZXNzVG9vbHMpIGFuZCBub3QoSW5pdGlhdGluZ1Byb2Nlc3NBY2NvdW50TmFtZSBpbiAoXCJzeXN0ZW1cIiwgXCJsb2NhbCBzZXJ2aWNlXCIsIFwibmV0d29yayBzZXJ2aWNlXCIpIG9yIEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUgZW5kc3dpdGggXCIkXCIpKSlcclxufCB3aGVyZSBJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lICFpbiAoUHJpdmlsZWdlZEFjY291bnRzKVxyXG58IHByb2plY3QgVGltZUdlbmVyYXRlZCwgRGV2aWNlTmFtZSwgSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSwgUmVtb3RlSVAsIFJlbW90ZVBvcnQsIEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUiLCJxdWVyeUZyZXF1ZW5jeSI6IlBUMUgiLCJxdWVyeVBlcmlvZCI6IlBUMUgiLCJ0cmlnZ2VyT3BlcmF0b3IiOiJHcmVhdGVyVGhhbiIsInRyaWdnZXJUaHJlc2hvbGQiOjAsInN1cHByZXNzaW9uRHVyYXRpb24iOiJQVDVIIiwic3VwcHJlc3Npb25FbmFibGVkIjpmYWxzZSwic3RhcnRUaW1lVXRjIjpudWxsLCJ0YWN0aWNzIjpbIkNvbW1hbmRBbmRDb250cm9sIl0sInRlY2huaXF1ZXMiOlsiVDEyMTkiXSwic3ViVGVjaG5pcXVlcyI6W10sImFsZXJ0UnVsZVRlbXBsYXRlTmFtZSI6bnVsbCwiaW5jaWRlbnRDb25maWd1cmF0aW9uIjp7ImNyZWF0ZUluY2lkZW50Ijp0cnVlLCJncm91cGluZ0NvbmZpZ3VyYXRpb24iOnsiZW5hYmxlZCI6dHJ1ZSwicmVvcGVuQ2xvc2VkSW5jaWRlbnQiOmZhbHNlLCJsb29rYmFja0R1cmF0aW9uIjoiUFQ1SCIsIm1hdGNoaW5nTWV0aG9kIjoiQWxsRW50aXRpZXMiLCJncm91cEJ5RW50aXRpZXMiOltdLCJncm91cEJ5QWxlcnREZXRhaWxzIjpbXSwiZ3JvdXBCeUN1c3RvbURldGFpbHMiOltdfX0sImV2ZW50R3JvdXBpbmdTZXR0aW5ncyI6eyJhZ2dyZWdhdGlvbktpbmQiOiJTaW5nbGVBbGVydCJ9LCJhbGVydERldGFpbHNPdmVycmlkZSI6bnVsbCwiY3VzdG9tRGV0YWlscyI6bnVsbCwiZW50aXR5TWFwcGluZ3MiOlt7ImVudGl0eVR5cGUiOiJBY2NvdW50IiwiZmllbGRNYXBwaW5ncyI6W3siaWRlbnRpZmllciI6Ik5hbWUiLCJjb2x1bW5OYW1lIjoiSW5pdGlhdGluZ1Byb2Nlc3NBY2NvdW50TmFtZSJ9XX0seyJlbnRpdHlUeXBlIjoiRmlsZSIsImZpZWxkTWFwcGluZ3MiOlt7ImlkZW50aWZpZXIiOiJOYW1lIiwiY29sdW1uTmFtZSI6IkluaXRpYXRpbmdQcm9jZXNzRmlsZU5hbWUifV19XSwic2VudGluZWxFbnRpdGllc01hcHBpbmdzIjpudWxsLCJ0ZW1wbGF0ZVZlcnNpb24iOm51bGwsImlkIjoiW2NvbmNhdChyZXNvdXJjZUlkKFx1MDAyN01pY3Jvc29mdC5PcGVyYXRpb25hbEluc2lnaHRzL3dvcmtzcGFjZXMvcHJvdmlkZXJzXHUwMDI3LCBwYXJhbWV0ZXJzKFx1MDAyN3dvcmtzcGFjZVx1MDAyNyksIFx1MDAyN01pY3Jvc29mdC5TZWN1cml0eUluc2lnaHRzXHUwMDI3KSxcdTAwMjcvYWxlcnRSdWxlcy9SRURBQ1RFRFx1MDAyNyldIiwia2luZCI6IlNjaGVkdWxlZCJ9">
+
+<td class="rulename"><strong>Suspicious Remote Access Tool activity</strong><br><br>
+<span class="description">Detects any of several known legitimate remote access applications making successful remote port connections.</span><br><br>
+<span>Enabled: <span class='enabled-false'>✅ true</span></span><br>
+<span>Severity:</span> <span class='sev-low'><strong>⚪ Informational</strong></span>
+
+</td>
+<td class="query"><pre>let RemoteAccessExecutables = dynamic(["aeroadmin.exe", "agent.exe", "agentmon.exe", "ammyy.exe", "anyconnect.exe", "anydesk.exe", "assist.exe", "ateraagent.exe", "beyondtrust.exe", "bomgar.exe", "chrome-remote-desktop.exe", 
+"citrix.exe", "client.exe", "connectwise.exe", "control.exe", "deskreen.exe", "dwagent.exe", "dwrcc.exe", "dwrcs.exe", "forticlient.exe", "getsupport.exe", "globalprotect.exe", "go2assist.exe", "isllight.exe", "kaseya.exe", 
+"liteviewer.exe", "logmein.exe", "meshagent.exe", "msra.exe", "ncentral.exe", "nomachine.exe", "nxplayer.exe", "openvpn.exe", "parsec.exe", "pcvisit.exe", "pulse.exe", "pulseway.exe", "quickassist.exe", "rdclient.exe", 
+"rdpclip.exe", "realvnc.exe", "receiver.exe", "remoteassist.exe", "remotedesktopmanager.exe", "remotepc.exe", "remoteutilities.exe", "remoteviewer.exe", "rmmagent.exe", "rustdesk.exe", "rutserv.exe", "rutview.exe", 
+"screenconnect.exe", "showmypc.exe", "softether.exe", "splashtop.exe", "supremo.exe", "syncro.exe", "teamviewer.exe", "teamviewer_service.exe", "termsrv.exe", "tscon.exe", "tvnserver.exe", "ultravnc.exe", "viewer.exe", 
+"vmconnect.exe", "vncviewer.exe", "wg.exe", "winvnc.exe", "wireguard.exe", "workspacesapp.exe", "zohoassist.exe"]);
+let CommonRemoteAccessTools = dynamic (["msrdc.exe", "mstsc.exe", "powershell.exe", "psexec.exe", "putty.exe", "pwsh.exe", "scp.exe", "sftp.exe", "ssh.exe", "sshd.exe", "telnet.exe", "winrm.cmd", "winrs.exe", "winrshost.exe", 
+"winscp.exe", "wmic.exe", "msra.exe", "plink.exe"]);
+let PrivilegedAccounts = _GetWatchlist('Privileged_Accounts') | project Account = tolower(SearchKey);
+DeviceNetworkEvents
+| where ActionType == "ConnectionSuccess" and isnotempty(RemotePort) and (InitiatingProcessFileName in (RemoteAccessExecutables) or (InitiatingProcessFileName in (CommonRemoteAccessTools) and not(InitiatingProcessAccountName in ("system", "local service", "network service") or InitiatingProcessAccountName endswith "$")))
+| where InitiatingProcessAccountName !in (PrivilegedAccounts)
+| project TimeGenerated, DeviceName, InitiatingProcessFileName, RemoteIP, RemotePort, InitiatingProcessAccountName</pre></td>
+<td class="props"><div class="props-content"><div class='kv'><strong>queryFrequency :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>queryPeriod :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>triggerOperator :</strong><span class='val'> GreaterThan</span></div>
+<div class='kv'><strong>triggerThreshold :</strong><span class='val'> 0</span></div>
+<div class='kv'><strong>suppressionDuration :</strong><span class='val'> PT5H</span></div>
+<div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
+<div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
+<div class='kv'><strong>tactics :</strong><span class='val'> CommandAndControl</span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> T1219</span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> </span></div>
+<div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
+<div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
+<div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
+<div class='kv'><strong>alertDetailsOverride :</strong><span class='val'> </span></div>
+<div class='kv'><strong>customDetails :</strong><span class='val'> </span></div>
+<div class='kv'><strong>entityMappings :</strong><span class='val'> @{entityType=Account; fieldMappings=System.Object[]}, @{entityType=File; fieldMappings=System.Object[]}</span></div>
+<div class='kv'><strong>sentinelEntitiesMappings :</strong><span class='val'> </span></div>
+<div class='kv'><strong>id :</strong><span class='val'> [concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ff7420b5-e3c9-414e-b7d5-39c0f0a90051')]</span></div>
+<div class='kv'><strong>kind :</strong><span class='val'> Scheduled</span></div>
 </div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
 </tr>
 </tbody>
