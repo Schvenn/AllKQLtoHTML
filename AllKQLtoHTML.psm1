@@ -297,10 +297,8 @@ switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</
 default {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>"}}
 $props = Format-Properties $r
 
-if ($r.enabled -eq $true) {
-$script:toc += "<li data-target='$id'><a href='#$id'>$name</a></li>`n"}
-
-else {$script:toc += "<li><a href='#$id' class='enabled-false'>$name</a></li>`n"}
+if ($r.enabled -eq $true) {$script:toc += "<li data-target='$id'><a href='#$id'>$name</a></li>`n"}
+else {$script:toc += "<li data-target='$id'><a href='#$id' class='enabled-false'>$name</a></li>`n"}
 
 $templateVersionHtml = ""
 if ($r.templateVersion) {$tv = Escape-Html $r.templateVersion; $templateVersionHtml = "<br><span class='template-version'>Template Version: <strong>$tv</strong></span>"}
@@ -667,12 +665,12 @@ alert('Failed to export visible rules. See console for details.');}});})();
 
 
 function syncTocWithVisibleRows() {const visibleIds = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
-.filter(r => r.style.display !== 'none')
+.filter(r => r.offsetParent !== null)
 .map(r => r.id));
 
-document.querySelectorAll('.toc li').forEach(li => {const target = li.dataset.target;
+document.querySelectorAll('.toc li[data-target]').forEach(el => {const target = el.dataset.target;
 if (!target) return;
-li.style.display = visibleIds.has(target) ? '' : 'none';});}
+el.hidden = !visibleIds.has(target);});}
 
 
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
