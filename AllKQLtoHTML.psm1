@@ -297,7 +297,9 @@ switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</
 default {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>"}}
 $props = Format-Properties $r
 
-if ($r.enabled -eq $true) {$script:toc += "<li><a href='#$id'>$name</a></li>`n"}
+if ($r.enabled -eq $true) {
+$script:toc += "<li data-target='$id'><a href='#$id'>$name</a></li>`n"}
+
 else {$script:toc += "<li><a href='#$id' class='enabled-false'>$name</a></li>`n"}
 
 $templateVersionHtml = ""
@@ -573,7 +575,8 @@ if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
-if (regexFilter) {highlightMatches(regexFilter);}}
+if (regexFilter) {highlightMatches(regexFilter);}
+syncTocWithVisibleRows();}
 
 const regexBtn = document.getElementById('regexFilterBtn');
 if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter a Search term or Regex query:');
@@ -661,6 +664,15 @@ const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/20
 downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
 catch (err) {console.error('Bulk export failed:', err);
 alert('Failed to export visible rules. See console for details.');}});})();
+
+
+function syncTocWithVisibleRows() {const visibleIds = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none')
+.map(r => r.id));
+
+document.querySelectorAll('.toc li').forEach(li => {const target = li.dataset.target;
+if (!target) return;
+li.style.display = visibleIds.has(target) ? '' : 'none';});}
 
 
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
