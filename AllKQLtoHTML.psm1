@@ -396,6 +396,11 @@ td.props {position: relative;}
 td.props:hover .export-rule-btn {opacity: 1;}
 .export-rule-btn:hover {background: var(--row-hover);}
 .export-rule-btn:active {transform: scale(0.95);}
+.props-content, .kv .val {word-break: break-word; overflow-wrap: anywhere;}
+
+
+.highlight {background-color: #ffeb3b; color: #000; padding: 1px 2px; border-radius: 3px;}
+:root[data-theme="dark"] .highlight {background-color: #ffd166; color: #000;}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
@@ -546,7 +551,7 @@ const activeFilters = new Set();
 let reverseMode = false;
 let regexFilter = null;
 
-function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null;
+function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null; clearHighlights();
 if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 else {rows.forEach(row => {let visible = true;
 activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled !== 'False') visible = false; break;
@@ -567,11 +572,13 @@ if (reverseBtn) reverseBtn.classList.remove('hidden');
 if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
-if (filterHeader) filterHeader.classList.add('hidden');}}
+if (filterHeader) filterHeader.classList.add('hidden');}
+if (regexFilter) {highlightMatches(regexFilter);}}
+
 const regexBtn = document.getElementById('regexFilterBtn');
 if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter a Search term or Regex query:');
 if (!input) return;
-try {regexFilter = new RegExp(input, 'i');
+try {regexFilter = new RegExp(input, 'gi');
 if (searchBlock && searchValue) {searchValue.textContent = input; searchBlock.classList.remove('hidden');}}
 catch {alert('Invalid regular expression.'); return;}
 applyFilters();});}
@@ -598,6 +605,7 @@ toggles.forEach(t => t.classList.remove('active'));
 if (reverseBtn) reverseBtn.classList.remove('active');
 if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
 rows.forEach(r => (r.style.display = ''));
+clearHighlights();
 applyFilters();});})();
 
 
@@ -634,7 +642,7 @@ badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);
 if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
-const rule = JSON.parse(atob(row.dataset.ruleJson));
+const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
 const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
 downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
 
@@ -647,7 +655,7 @@ function decodeHtmlEntities(str) {const txt = document.createElement('textarea')
 if (!btn) return; btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr')).filter(r => r.style.display !== 'none');
 if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
 if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
-try {const resources = rows.map(row => {const rule = JSON.parse(atob(row.dataset.ruleJson));
+try {const resources = rows.map(row => {const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
 return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: rule.id ? rule.id.split('/').pop(): rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), location: "global", properties: rule};});
 const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
 downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
@@ -657,18 +665,26 @@ alert('Failed to export visible rules. See console for details.');}});})();
 
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
 const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
+
+
+function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
+
+function highlightMatches(regex) {if (!regex) return;
+const cells = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none')
+.flatMap(r => Array.from(r.querySelectorAll('td')));
+cells.forEach(cell => {if (cell.querySelector('.highlight')) return;
+walkTextNodes(cell, textNode => {const text = textNode.nodeValue;
+if (!text.trim()) return;
+const matches = [...text.matchAll(regex)];
+if (matches.length === 0) return;
+let lastIndex = 0; const frag = document.createDocumentFragment();
+matches.forEach(m => {if (!m[0]) return;
+const start = m.index; const end = start + m[0].length; frag.appendChild(document.createTextNode(text.slice(lastIndex, start))); const span = document.createElement('span'); span.className = 'highlight'; span.textContent = text.slice(start, end); frag.appendChild(span); lastIndex = end;}); frag.appendChild(document.createTextNode(text.slice(lastIndex))); textNode.replaceWith(frag);});});}
+
+function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
+while (current = walker.nextNode()) {callback(current);}}
 </script>
-
-
-
-
-
-
-
-
-
-
-
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
