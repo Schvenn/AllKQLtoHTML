@@ -332,7 +332,7 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br><br>
-<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text/Regex</span></td>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text</span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
@@ -379,6 +379,7 @@ body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); 
 
 #exportVisibleRules {background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; font-size: 13px;}
 #exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
+#searchCriteriaValue {white-space: pre-line;}
 
 table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
 th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
@@ -550,6 +551,7 @@ const visibleCountEl = document.getElementById('visibleRuleCount');
 const activeFilters = new Set();
 let reverseMode = false;
 let regexFilter = null;
+let highlightRegex = null;
 
 function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null; clearHighlights();
 if (!hasFilters) {rows.forEach(r => r.style.display = '');}
@@ -561,7 +563,12 @@ case 'sev-informational': if (row.dataset.severity !== 'Informational') visible 
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
 case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
-if (visible && regexFilter) {if (!regexFilter.test(row.innerText)) visible = false;}
+
+if (visible && regexFilter) {if (!regexFilter.test(row.textContent)) {visible = false;}}
+// Apply NOT logic separately
+if (visible && regexNegatives && regexNegatives.length > 0) {const text = row.textContent.toLowerCase();
+for (const term of regexNegatives) {if (text.includes(term.toLowerCase())) {visible = false; break;}}}
+
 if (reverseMode) visible = !visible; row.style.display = visible ? '' : 'none';});}
 if (visibleCountEl) {const visibleRows = Array.from(rows)
 .filter(r => r.style.display !== 'none').length;
@@ -573,16 +580,51 @@ if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
-if (regexFilter) {highlightMatches(regexFilter);}
+if (regexFilter) {highlightMatches(highlightRegex);}
 syncTocWithVisibleRows();}
-
 const regexBtn = document.getElementById('regexFilterBtn');
-if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter a Search term or Regex query:');
+
+
+/* Regex or text search input */
+if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter search term(s) to find: \n\n~     (tilde) acts as an AND operator\n|      (pipe) acts as an OR operator\n~!    (tilde exclamation mark) acts as a NOT operator.');
 if (!input) return;
-try {regexFilter = new RegExp(input, 'gi');
-if (searchBlock && searchValue) {searchValue.textContent = input; searchBlock.classList.remove('hidden');}}
+try {function escapeRegex(str) {return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');}
+let filterPattern = input; let terms = [];
+
+// Replace ~ with AND functionality
+if (input.includes("~")) {const parts = input
+.split("~")
+.map(t => t.trim())
+.filter(t => t.length > 0);
+let positives = []; let negatives = [];
+parts.forEach(p => {if (p.startsWith("!")) {negatives.push(p.substring(1).trim());}
+else {positives.push(p);}});
+
+// Build regex for positive matches
+filterPattern = positives
+.map(function(t) {return "(?=.*" + escapeRegex(t) + ")";})
+.join("");
+terms = positives;
+// Store negatives separately
+regexNegatives = negatives;}
+
+else {terms = input
+.match(/[^\s()|]+/g)
+?.filter(t => t.trim().length > 1) || [];}
+regexFilter = new RegExp(filterPattern, 'is');
+highlightRegex = terms.length
+? new RegExp("(" + terms.map(escapeRegex).join("|") + ")", "gi")
+: null;
+if (searchBlock && searchValue) {const searchCriteriaValue = input; const searchCriteriaValueConverted = searchCriteriaValue
+.replace(/~!\s*/g, " AND NOT ")
+.replace(/~\s*/g, " AND ")
+.replace(/\|\s*/g, " OR ")
+.replace(/\s+/g, " ")
+.trim();
+searchValue.textContent = searchCriteriaValue + "\n(" + searchCriteriaValueConverted + ")"; searchBlock.classList.remove('hidden');}}
 catch {alert('Invalid regular expression.'); return;}
 applyFilters();});}
+
 
 /* Filter toggle handlers */
 toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
@@ -595,6 +637,7 @@ st.classList.remove('active');});}
 activeFilters.add(filter);
 t.classList.add('active');}
 applyFilters();});});
+
 
 /* Reverse Filters handler */
 if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 && !regexFilter) return;
@@ -673,24 +716,30 @@ if (!target) return;
 el.hidden = !visibleIds.has(target);});}
 
 
+/* Download */
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
 const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
+
 
 /* Highlight search terms */
 function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
 
 function highlightMatches(regex) {if (!regex) return;
-const cells = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
-.filter(r => r.style.display !== 'none')
-.flatMap(r => Array.from(r.querySelectorAll('td')));
-cells.forEach(cell => {if (cell.querySelector('.highlight')) return;
-walkTextNodes(cell, textNode => {const text = textNode.nodeValue;
-if (!text.trim()) return;
-const matches = [...text.matchAll(regex)];
+const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none');
+rows.forEach(row => {const cells = row.querySelectorAll('td'); 
+
+// Collect all text nodes (no mutation yet)
+cells.forEach(cell => {const textNodes = []; const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null, false); let node;
+while (node = walker.nextNode()) {if (!node.nodeValue.trim()) continue;
+if (node.parentNode.classList?.contains('highlight')) continue;
+textNodes.push(node);}
+
+// Process them safely
+textNodes.forEach(textNode => {const text = textNode.nodeValue; const localRegex = new RegExp(regex.source, regex.flags); const matches = [...text.matchAll(localRegex)]; 
 if (matches.length === 0) return;
 let lastIndex = 0; const frag = document.createDocumentFragment();
-matches.forEach(m => {if (!m[0]) return;
-const start = m.index; const end = start + m[0].length; frag.appendChild(document.createTextNode(text.slice(lastIndex, start))); const span = document.createElement('span'); span.className = 'highlight'; span.textContent = text.slice(start, end); frag.appendChild(span); lastIndex = end;}); frag.appendChild(document.createTextNode(text.slice(lastIndex))); textNode.replaceWith(frag);});});}
+matches.forEach(m => {const start = m.index; const end = start + m[0].length; frag.appendChild(document.createTextNode(text.slice(lastIndex, start))); const span = document.createElement('span'); span.className = 'highlight'; span.textContent = text.slice(start, end); frag.appendChild(span); lastIndex = end;}); frag.appendChild(document.createTextNode(text.slice(lastIndex))); textNode.replaceWith(frag);});});});}
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
