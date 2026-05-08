@@ -127,7 +127,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/07/2026 @ 09:10:23 PM (-04:00 Eastern Standard Time)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/07/2026 @ 09:37:15 PM (-04:00 Eastern Standard Time)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -492,7 +492,8 @@ if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.close
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
 const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
+const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": getSafeRuleName(rule), "location": "global", "properties": rule}]};
+
 downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
 
 function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}})();
@@ -505,7 +506,7 @@ if (!btn) return; btn.addEventListener('click', function () {const rows = Array.
 if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
 if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
 try {const resources = rows.map(row => {const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: rule.id ? rule.id.split('/').pop(): rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), location: "global", properties: rule};});
+return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: getSafeRuleName(rule), location: "global", properties: rule};});
 const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
 downloadJson(armTemplate, 'sentinel_rules_export_.json');}
 catch (err) {console.error('Bulk export failed:', err);
@@ -548,6 +549,11 @@ matches.forEach(m => {const start = m.index; const end = start + m[0].length; fr
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
+
+function getSafeRuleName(rule) {if (rule.id && !rule.id.includes('REDACTED')) {return rule.id.split('/').pop();}
+return (rule.displayName || 'unnamed_rule')
+.replace(/\s+/g, '')
+.replace(/[^a-zA-Z0-9_-]/g, '');}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
