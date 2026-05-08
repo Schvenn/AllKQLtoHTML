@@ -132,7 +132,7 @@ if (-not $template.resources) {throw "File '$($file.Name)' does not contain a re
 foreach ($resource in $template.resources) {$combinedTemplate.resources += $resource}}
 
 # Serialize final combined template.
-$jsonOut = $combinedTemplate | ConvertTo-Json -Depth 100
+$jsonOut = $combinedTemplate | ConvertTo-Json -Depth 10 -Compress
 Set-Content -Path $outFile -Value $jsonOut -Encoding UTF8
 
 Write-Host -f Cyan "`n✅ Combined ARM template written:`n"
@@ -145,7 +145,7 @@ return $Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'}
 
 function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {return $text}
 try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
-catch {re}}
+catch {return $text}}
 
 function Format-Properties {param ($Properties)
 $exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion')
@@ -165,48 +165,77 @@ if (-not $r.id) {return $null}
 if ($r.id -match '/alertRules/([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
 return $null}
 
+function Normalize-RuleObject {param ($r)
+if ($r.properties) {$r = $r.properties}
+if ($r.value -and $r.value.PSObject.Properties.Count -gt 0) {$r = $r.value}
+return [pscustomobject]@{# Identity / classification
+displayName = $r.displayName
+description = $r.description
+enabled = $r.enabled
+severity = $r.severity
+templateVersion = $r.templateVersion
+# Query logic
+query = $r.query
+# Detection schedule (execution cadence)
+queryFrequency = $r.queryFrequency
+queryPeriod = $r.queryPeriod
+# Trigger logic
+triggerOperator = $r.triggerOperator
+triggerThreshold = $r.triggerThreshold
+# Suppression logic
+suppressionDuration = $r.suppressionDuration
+suppressionEnabled = $r.suppressionEnabled
+startTimeUtc = $r.startTimeUtc
+# MITRE mapping
+tactics = $r.tactics
+techniques = $r.techniques
+subTechniques = $r.subTechniques
+alertRuleTemplateName = $r.alertRuleTemplateName
+# Incident behavior
+incidentConfiguration = $r.incidentConfiguration
+eventGroupingSettings = $r.eventGroupingSettings
+alertDetailsOverride = $r.alertDetailsOverride
+customDetails = $r.customDetails
+# Entity enrichment
+entityMappings = $r.entityMappings
+sentinelEntitiesMappings = $r.sentinelEntitiesMappings
+id = if ($r.id) {$r.id} 
+else {"[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/REDACTED')]"}
+kind = $r.kind}}
+
+
 # Load and normalize.
 function loadandnormalize {if (-not (Test-Path $InputFile)) {Write-Host -f cyan "`nInput file not found: " -n; Write-Host -f white $InputFile; return}
 $json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
-
-# Normalize
-function Normalize-RuleObject {param ($r)
-if ($r.properties) {return $r.properties | Add-Member -NotePropertyName id -NotePropertyValue $r.id -PassThru | Add-Member -NotePropertyName kind -NotePropertyValue $r.kind -PassThru}
-return $r}
-
-# Load Primary JSON
-if (-not (Test-Path $InputFile)) {Write-Host -f Cyan "`nInput file not found: $InputFile`n"; return}
-$json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
-
-# Load Merge JSON
-if ($Merge) {if (-not $MergeInputFile) {throw "The -Merge switch was specified but -MergeInputFile was not provided."}
-if (-not (Test-Path $MergeInputFile)) {throw "Merge input file not found: $MergeInputFile"}
-$mergeJson = Get-Content $MergeInputFile -Raw -Encoding UTF8 | ConvertFrom-Json}
-
-# Normalize rules
-if ($json.resources) {$script:rules = $json.resources | ForEach-Object {Normalize-RuleObject $_}}
-elseif ($json.value) {$script:rules = $json.value | ForEach-Object {Normalize-RuleObject $_}}
-elseif ($json -is [Array]) {$script:rules = $json | ForEach-Object {Normalize-RuleObject $_}}
+# Normalize primary rules
+$rawRules = @()
+if ($json.resources) {$rawRules = $json.resources}
+elseif ($json.value) {$rawRules = $json.value}
+elseif ($json -is [array]) {$rawRules = $json}
 else {throw "Unsupported JSON format"}
 
-# Normalize merge rules
-if ($Merge) {if ($mergeJson.resources) {$mergeRules = $mergeJson.resources}
-elseif ($mergeJson.value) {$mergeRules = $mergeJson.value}
-elseif ($mergeJson -is [Array]) {$mergeRules = $mergeJson}
+# HARD unwrap for nested ARM variants
+$rawRules = foreach ($r in $rawRules) {if ($r.properties) {$r.properties}
+elseif ($r.value -and $r.value.properties) {$r.value.properties}
+elseif ($r.value) {$r.value}
+else {$r}}
+
+$script:rules = @($rawRules | ForEach-Object {Normalize-RuleObject $_} | Where-Object {$_.displayName -and $_.query})
+if (-not $script:rules) {$script:rules = @()}
+
+# Merge JSON (only if requested)
+$script:mergeRules = @()
+if ($Merge) {if (-not $MergeInputFile) {throw "The -Merge switch was specified but -MergeInputFile was not provided."}
+if (-not (Test-Path $MergeInputFile)) {throw "Merge input file not found: $MergeInputFile"}
+$mergeJson = Get-Content $MergeInputFile -Raw -Encoding UTF8 | ConvertFrom-Json
+$mergeRaw = if ($mergeJson.resources) {$mergeJson.resources}
+elseif ($mergeJson.value) {$mergeJson.value}
+elseif ($mergeJson -is [array]) {$mergeJson}
 else {throw "Unsupported JSON format in merge file"}
-$mergeRules = $mergeRules | ForEach-Object {Normalize-RuleObject $_}}}
+$script:mergeRules = @($mergeRaw | ForEach-Object {Normalize-RuleObject $_})}}
 loadandnormalize
 
-# Merge using Sentinel rule GUID.
-function mergedata {$ruleMap = @{}
-foreach ($r in $script:rules) {$uid = Get-RuleUID $r
-if ($uid) {$ruleMap[$uid] = $r}}
-
-foreach ($r in $mergeRules) {$uid = Get-RuleUID $r
-if ($uid -and -not $ruleMap.ContainsKey($uid)) {$ruleMap[$uid] = $r}}
-
-$script:rules = $ruleMap.Values}
-mergedata
+$script:rules = $script:rules + $script:mergeRules
 
 # Generate Mitre ATT&CK Navigator JSON
 function exportnavigatorlayer ([string]$OutputPath, [string]$LayerName = "KQL Coverage", [string]$Domain = "enterprise-attack") {$techniqueMap = @{}
@@ -243,7 +272,7 @@ comment = "Detected by $($kv.Value.Count) rule(s)"
 metadata = @(@{name = "Rules"
 value = $ruleList})}}
 
-$layer | ConvertTo-Json -Depth 100 | Set-Content -Encoding UTF8 $OutputPath}
+$layer | ConvertTo-Json -Depth 10 -Compress | Set-Content -Encoding UTF8 $OutputPath}
 
 # Calculate statistics.
 function statistics {$script:ruleCount = $script:rules.Count
@@ -277,12 +306,17 @@ $script:rules = $script:rules | Sort-Object -Property displayName -Culture en-US
 
 # Build rows.
 function buildrows {$script:rows = ""; $script:toc = ""
-foreach ($r in $script:rules) {if (-not ($r.displayName -and $r.query)) {continue}
-
+foreach ($r in $script:rules) {$qry = $r.query
+if (-not $qry -and $r.properties) {$qry = $r.properties.query}
+if (-not $qry -and $r.value) {$qry = $r.value.query}
+if ([string]::IsNullOrWhiteSpace($qry)) {Write-Host "SKIPPED NO QUERY: $($r.displayName)";continue}
 $ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($r | ConvertTo-Json -Depth 10 -Compress)))
 $name = Escape-Html $r.displayName
-$id = ($r.displayName -replace '[^a-zA-Z0-9_-]', '_')
-$qry = Escape-Html (Normalize-UnicodeDecorations $r.query)
+
+$id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
+else {"rule_" + [guid]::NewGuid().ToString("N")}
+
+$qry = Escape-Html (Normalize-UnicodeDecorations $qry)
 $desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
 
 $enabled = $r.enabled
@@ -552,11 +586,12 @@ const activeFilters = new Set();
 let reverseMode = false;
 let regexFilter = null;
 let highlightRegex = null;
+let regexNegatives = [];
 
 function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null; clearHighlights();
 if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 else {rows.forEach(row => {let visible = true;
-activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled !== 'False') visible = false; break;
+activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled.toLowerCase() !== 'false') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
 case 'template': if (!row.dataset.templateVersion) visible = false; break;
 case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
@@ -566,9 +601,9 @@ case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}})
 
 if (visible && regexFilter) {if (!regexFilter.test(row.textContent)) {visible = false;}}
 // Apply NOT logic separately
-if (visible && regexNegatives && regexNegatives.length > 0) {const text = row.textContent.toLowerCase();
-for (const term of regexNegatives) {if (text.includes(term.toLowerCase())) {visible = false; break;}}}
 
+if (visible && regexNegatives.length > 0) {const text = row.textContent.toLowerCase();
+for (const term of regexNegatives) {if (text.includes(term.toLowerCase())) {visible = false; break;}}}
 if (reverseMode) visible = !visible; row.style.display = visible ? '' : 'none';});}
 if (visibleCountEl) {const visibleRows = Array.from(rows)
 .filter(r => r.style.display !== 'none').length;
@@ -586,8 +621,15 @@ const regexBtn = document.getElementById('regexFilterBtn');
 
 
 /* Regex or text search input */
-if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter search term(s) to find: \n\n~     (tilde) acts as an AND operator\n|      (pipe) acts as an OR operator\n~!    (tilde exclamation mark) acts as a NOT operator.');
+if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter search term(s) to find: \n\n~     (tilde) acts as an AND operator\n|      (pipe) acts as an OR operator\n~!    (tilde exclamation mark) acts as an AND NOT operator.');
 if (!input) return;
+// Clear old regex before applying new one
+regexFilter = null;
+highlightRegex = null;
+regexNegatives = [];
+clearHighlights();
+rows.forEach(r => r.style.display = '');
+
 try {function escapeRegex(str) {return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');}
 let filterPattern = input; let terms = [];
 
@@ -687,7 +729,8 @@ if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.close
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
 const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": rule.id ? rule.id.split('/').pop() : rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), "location": "global", "properties": rule}]};
+const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": getSafeRuleName(rule), "location": "global", "properties": rule}]};
+
 downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
 
 function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}})();
@@ -700,7 +743,7 @@ if (!btn) return; btn.addEventListener('click', function () {const rows = Array.
 if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
 if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
 try {const resources = rows.map(row => {const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: rule.id ? rule.id.split('/').pop(): rule.displayName.replace(/[^a-zA-Z0-9_-]/g, ''), location: "global", properties: rule};});
+return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: getSafeRuleName(rule), location: "global", properties: rule};});
 const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
 downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
 catch (err) {console.error('Bulk export failed:', err);
@@ -717,7 +760,7 @@ el.hidden = !visibleIds.has(target);});}
 
 
 /* Download */
-function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{ type: 'application/json' });
+function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{type: 'application/json'});
 const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
 
 
@@ -743,6 +786,11 @@ matches.forEach(m => {const start = m.index; const end = start + m[0].length; fr
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
+
+function getSafeRuleName(rule) {if (rule.id && !rule.id.includes('REDACTED')) {return rule.id.split('/').pop();}
+return (rule.displayName || 'unnamed_rule')
+.replace(/\s+/g, '')
+.replace(/[^a-zA-Z0-9_-]/g, '');}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
