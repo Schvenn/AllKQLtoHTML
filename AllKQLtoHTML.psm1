@@ -1,4 +1,4 @@
-function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
+function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
@@ -8,11 +8,12 @@ $script:config = Import-PowerShellDataFile -Path $configPath
 # Pull config values into variables
 $script:resourcegroup = $config.privatedata.resourcegroup
 $script:workspacename = $config.privatedata.workspacename
-$script:subscription = $config.privatedata.subscription}
+$script:subscription = $config.privatedata.subscription
+$script:version = $config.moduleversion}
 loadconfiguration
 
 # Usage switch.
-if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-usage> <-help>`n";return}
+if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-usage> <-help>`n";return}
 
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
@@ -160,16 +161,31 @@ $out += "<div class='kv'><strong>$key :</strong><span class='val'> $valText</sp
 return $out}
 
 function Get-RuleUID {param ($r)
-if (-not $r.id) {return $null}
-# Match the GUID after /alertRules/
-if ($r.id -match '/alertRules/([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
-return $null}
+if ($PreserveIds) {if ($r.name -and $r.name -match '([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
+if ($r.id -and $r.id -match '/alertRules/([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}}
+return ([guid]::NewGuid().ToString()).ToLower()}
 
 function Normalize-RuleObject {param ($r)
-if ($r.properties) {$r = $r.properties}
-if ($r.value -and $r.value.PSObject.Properties.Count -gt 0) {$r = $r.value}
-return [pscustomobject]@{# Identity / classification
-displayName = $r.displayName
+$rawDisplayName = $r.displayName
+if (-not $rawDisplayName -and $r.properties) {$rawDisplayName = $r.properties.displayName}
+
+$topName = $r.name
+if ($topName -and $topName -match '([0-9a-fA-F-]{36})') {$topName = $matches[1].ToLower()}
+if (-not $topName -and $r.properties -and $r.properties.name) {$topName = $r.properties.name
+if ($topName -match '([0-9a-fA-F-]{36})') {$topName = $matches[1].ToLower()}}
+
+$topId = $null
+if ($r.id -and $r.id -match '/alertRules/([0-9a-fA-F-]{36})') {$topId = $matches[1].ToLower()}
+elseif ($r.id -and $r.id -match '([0-9a-fA-F-]{36})') {$topId = $matches[1].ToLower()}
+if ($topId) {$topId = "/Microsoft.SecurityInsights/alertRules/$topId"}
+
+$topKind = $r.kind
+
+if ($r.properties -and $r.properties -is [psobject]) {foreach ($p in $r.properties.PSObject.Properties) {if (-not $r.PSObject.Properties[$p.Name]) {Add-Member -InputObject $r -NotePropertyName $p.Name -NotePropertyValue $p.Value}}}
+
+# Sentinel ARM resource
+return [pscustomobject]@{name = $topName
+displayName = $rawDisplayName
 description = $r.description
 enabled = $r.enabled
 severity = $r.severity
@@ -177,13 +193,13 @@ templateVersion = $r.templateVersion
 # Query logic
 query = $r.query
 # Detection schedule (execution cadence)
-queryFrequency = $r.queryFrequency
-queryPeriod = $r.queryPeriod
+queryFrequency = "$($r.queryFrequency)"
+queryPeriod = "$($r.queryPeriod)"
 # Trigger logic
 triggerOperator = $r.triggerOperator
 triggerThreshold = $r.triggerThreshold
 # Suppression logic
-suppressionDuration = $r.suppressionDuration
+suppressionDuration = "$($r.suppressionDuration)"
 suppressionEnabled = $r.suppressionEnabled
 startTimeUtc = $r.startTimeUtc
 # MITRE mapping
@@ -197,42 +213,45 @@ eventGroupingSettings = $r.eventGroupingSettings
 alertDetailsOverride = $r.alertDetailsOverride
 customDetails = $r.customDetails
 # Entity enrichment
-entityMappings = $r.entityMappings
 sentinelEntitiesMappings = $r.sentinelEntitiesMappings
-id = if ($r.id) {$r.id} 
-else {"[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/REDACTED')]"}
-kind = $r.kind}}
-
+entityMappings = $r.entityMappings
+id = $topId
+kind = $topKind}}
 
 # Load and normalize.
 function loadandnormalize {if (-not (Test-Path $InputFile)) {Write-Host -f cyan "`nInput file not found: " -n; Write-Host -f white $InputFile; return}
 $json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
 # Normalize primary rules
-$rawRules = @()
-if ($json.resources) {$rawRules = $json.resources}
-elseif ($json.value) {$rawRules = $json.value}
-elseif ($json -is [array]) {$rawRules = $json}
+if ($json -is [array]) {$rawRules = $json | Where-Object {$_ -ne $null}}
+elseif ($json.value) {$rawRules = $json.value | Where-Object {$_ -ne $null}}
+elseif ($json.resources) {$rawRules = $json.resources | Where-Object {$_ -ne $null}}
 else {throw "Unsupported JSON format"}
 
-# HARD unwrap for nested ARM variants
-$rawRules = foreach ($r in $rawRules) {if ($r.properties) {$r.properties}
-elseif ($r.value -and $r.value.properties) {$r.value.properties}
-elseif ($r.value) {$r.value}
-else {$r}}
+$script:rules = @()
+foreach ($rule in $rawRules) {$n = Normalize-RuleObject $rule
+if (-not $n.displayName) {Write-Host -f r "BROKEN RULE (no displayName)"; continue}
+if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY: $($n.displayName)"; continue}
+$script:rules += $n}
 
-$script:rules = @($rawRules | ForEach-Object {Normalize-RuleObject $_} | Where-Object {$_.displayName -and $_.query})
 if (-not $script:rules) {$script:rules = @()}
 
 # Merge JSON (only if requested)
 $script:mergeRules = @()
 if ($Merge) {if (-not $MergeInputFile) {throw "The -Merge switch was specified but -MergeInputFile was not provided."}
 if (-not (Test-Path $MergeInputFile)) {throw "Merge input file not found: $MergeInputFile"}
+$mergemessage = "`nThe merge feature was invoked, which combines the results from the Sentinel GUI export (ARM Template) and the Azure Rest API export. If there are overlaps of field data, the ARM template version is given preference.`n"
+Write-Host (wordwrap $mergemessage) -f yellow
 $mergeJson = Get-Content $MergeInputFile -Raw -Encoding UTF8 | ConvertFrom-Json
-$mergeRaw = if ($mergeJson.resources) {$mergeJson.resources}
-elseif ($mergeJson.value) {$mergeJson.value}
-elseif ($mergeJson -is [array]) {$mergeJson}
+if ($mergeJson -is [array]) {$mergeRaw = $mergeJson | Where-Object {$_ -ne $null}}
+elseif ($mergeJson.value) {$mergeRaw = $mergeJson.value | Where-Object {$_ -ne $null}}
+elseif ($mergeJson.resources) {$mergeRaw = $mergeJson.resources | Where-Object {$_ -ne $null}}
 else {throw "Unsupported JSON format in merge file"}
-$script:mergeRules = @($mergeRaw | ForEach-Object {Normalize-RuleObject $_})}}
+
+$script:mergeRules = @()
+foreach ($rule in $mergeRaw) {$n = Normalize-RuleObject $rule
+if (-not $n.displayName) {Write-Host -f red "BROKEN RULE (no displayName)"; continue}
+if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY (MERGE): $($n.displayName)"; continue}
+$script:mergeRules += $n}}}
 loadandnormalize
 
 $script:rules = $script:rules + $script:mergeRules
@@ -274,6 +293,25 @@ value = $ruleList})}}
 
 $layer | ConvertTo-Json -Depth 10 -Compress | Set-Content -Encoding UTF8 $OutputPath}
 
+function Merge-Rules {param ($rules)
+$gui = $rules | Where-Object {$_.templateVersion -or $_.incidentConfiguration} | Select-Object -First 1
+$api = $rules | Where-Object {$_ -ne $gui} | Select-Object -First 1
+if (-not $gui) {return $rules[0]}
+if (-not $api) {return $gui}
+Write-Host -f Cyan -n "Results merged for rule: "; Write-Host -f White -n $gui.displayName; Write-Host -f DarkGray " (GUID:" $gui.name ")"
+$merged = [pscustomobject]@{}
+foreach ($prop in $gui.PSObject.Properties.Name) {$guiVal = $gui.$prop; $apiVal = $api.$prop
+if ($guiVal -ne $apiVal -and $guiVal -and $apiVal) {Write-Host -f Yellow -n "   Difference:"; Write-Host -f DarkGray $prop}
+$value = $null
+if ($null -ne $guiVal -and $guiVal -ne "") {$value = $guiVal}
+else {$value = $apiVal}
+$merged | Add-Member -NotePropertyName $prop -NotePropertyValue $value}
+return $merged}
+
+# Merge fields.
+$script:rules = $script:rules | Group-Object name | ForEach-Object {if ($_.Count -eq 1) {$_.Group[0]}
+else {Merge-Rules $_.Group}}
+
 # Calculate statistics.
 function statistics {$script:ruleCount = $script:rules.Count
 $script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
@@ -286,6 +324,9 @@ $script:severityLow = ($script:rules | Where-Object {$_.severity -match '^Low$'}
 $script:severityMedium = ($script:rules | Where-Object {$_.severity -match '^Medium$'}).Count
 $script:severityHigh = ($script:rules | Where-Object {$_.severity -match '^High$'}).Count}
 statistics
+
+# Sort rules alphabetically.
+$script:rules = $script:rules | Sort-Object displayName
 
 # Donut chart math (degrees for conic-gradient)
 function builddonut {$script:severityTotal = $severityInfo + $severityLow + $severityMedium + $severityHigh
@@ -301,21 +342,41 @@ $script:degLowEnd = [Math]::Round($degInfo + $degLow, 1)
 $script:degMediumEnd = [Math]::Round($degInfo + $degLow + $degMedium, 1)}
 builddonut
 
-# Sort rules alphabetically.
-$script:rules = $script:rules | Sort-Object -Property displayName -Culture en-US
-
 # Build rows.
 function buildrows {$script:rows = ""; $script:toc = ""
 foreach ($r in $script:rules) {$qry = $r.query
 if (-not $qry -and $r.properties) {$qry = $r.properties.query}
 if (-not $qry -and $r.value) {$qry = $r.value.query}
 if ([string]::IsNullOrWhiteSpace($qry)) {Write-Host "SKIPPED NO QUERY: $($r.displayName)";continue}
-$ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($r | ConvertTo-Json -Depth 10 -Compress)))
-$name = Escape-Html $r.displayName
 
+# Build export-safe rule object
+$guid = Get-RuleUID $r
+$ruleExportObject = [ordered]@{name = $guid
+location = "global"
+kind = if ($r.kind) {$r.kind} else {"Scheduled"}
+properties = [ordered]@{}}
+
+$ruleDisplayObject = [ordered]@{}
+foreach ($prop in $r.PSObject.Properties) {if ($prop.Name -eq "name") {if ($PreserveIds -and $prop.Value) {$ruleExportObject.name = $prop.Value; $ruleDisplayObject.name = $prop.Value}
+else {$ruleExportObject.name = $guid; $ruleDisplayObject.name = $guid}
+continue}
+
+if ($prop.Name -eq "id") {if ($PreserveIds -and $prop.Value) {$ruleExportObject.properties.id = $prop.Value; $ruleDisplayObject.id = $prop.Value}
+else {$ruleExportObject.properties.id = "/Microsoft.SecurityInsights/alertRules/$guid'"; $ruleDisplayObject.id = "/Microsoft.SecurityInsights/alertRules/$guid"}
+continue}
+
+$ruleDisplayObject[$prop.Name] = $prop.Value
+
+if ($null -eq $prop.Value) {continue}
+if ($prop.Value -is [array] -and $prop.Value.Count -eq 0) {continue}
+if ($prop.Value -is [string] -and [string]::IsNullOrWhiteSpace($prop.Value)) {continue}
+$ruleExportObject.properties[$prop.Name] = $prop.Value}
+
+$ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($ruleExportObject | ConvertTo-Json -Depth 10 -Compress)))
+
+$name = Escape-Html $r.displayName
 $id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
 else {"rule_" + [guid]::NewGuid().ToString("N")}
-
 $qry = Escape-Html (Normalize-UnicodeDecorations $qry)
 $desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
 
@@ -329,7 +390,7 @@ switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</
 '^Medium$' {$severityHtml = "<span>Severity:</span> <span class='sev-medium'><strong>🟡 Medium</strong></span>"}
 '^High$' {$severityHtml = "<span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>"}
 default {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>"}}
-$props = Format-Properties $r
+$props = Format-Properties ([pscustomobject]$ruleDisplayObject)
 
 if ($r.enabled -eq $true) {$script:toc += "<li data-target='$id'><a href='#$id'>$name</a></li>`n"}
 else {$script:toc += "<li data-target='$id'><a href='#$id' class='enabled-false'>$name</a></li>`n"}
@@ -519,7 +580,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: $snapshotDate</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: $snapshotDate (created by AllKQLtoHTML v$script:version)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -723,29 +784,52 @@ if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badg
 
 badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 
+function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
 
 (function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
 if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
-const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", "contentVersion": "1.0.0.0", "resources": [{"type": "Microsoft.SecurityInsights/alertRules", "apiVersion": "2023-11-01-preview", "name": getSafeRuleName(rule), "location": "global", "properties": rule}]};
+const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
+const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+"contentVersion": "1.0.0.0",
+"resources": [{type: "Microsoft.SecurityInsights/alertRules",
+apiVersion: "2023-11-01-preview",
+name: rule.name,
+location: rule.location,
+kind: rule.kind,
+properties: rule.properties}]};
 
-downloadJson(armTemplate, sanitize(rule.displayName) + '.sentinel.rule.json');});
+downloadJson(armTemplate, sanitize(rule.properties.displayName || rule.name) + '.sentinel.rule.json');});
 
-function sanitize(name) {return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();}})();
+function sanitize(name) {return (name || 'rule')
+.replace(/[^a-z0-9]/gi, '_')
+.toLowerCase();}})();
 
 function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
 
-
 (function () {const btn = document.getElementById('exportVisibleRules');
-if (!btn) return; btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr')).filter(r => r.style.display !== 'none');
+if (!btn) return;
+
+btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none');
 if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
 if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
-try {const resources = rows.map(row => {const rule = JSON.parse(atob(decodeHtmlEntities(row.dataset.ruleJson)));
-return {type: "Microsoft.SecurityInsights/alertRules", apiVersion: "2023-11-01-preview", name: getSafeRuleName(rule), location: "global", properties: rule};});
-const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#", contentVersion: "1.0.0.0", resources};
-downloadJson(armTemplate, 'sentinel_rules_export_${rows.length}.json');}
+
+try {const resources = rows.map(row => {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
+return {type: "Microsoft.SecurityInsights/alertRules",
+apiVersion: "2023-11-01-preview",
+name: rule.name,
+location: rule.location,
+kind: rule.kind,
+properties: rule.properties};
+});
+
+const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+contentVersion: "1.0.0.0",
+resources: resources};
+
+downloadJson(armTemplate, 'sentinel_rules_export_' + rows.length + '.json');}
 catch (err) {console.error('Bulk export failed:', err);
 alert('Failed to export visible rules. See console for details.');}});})();
 
@@ -786,11 +870,6 @@ matches.forEach(m => {const start = m.index; const end = start + m[0].length; fr
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
-
-function getSafeRuleName(rule) {if (rule.id && !rule.id.includes('REDACTED')) {return rule.id.split('/').pop();}
-return (rule.displayName || 'unnamed_rule')
-.replace(/\s+/g, '')
-.replace(/[^a-zA-Z0-9_-]/g, '');}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
@@ -814,7 +893,7 @@ Export-ModuleMember -Alias sentinelrules
 ## Overview
 This script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference.
 
-Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-usage> <-help>
+Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-usage> <-help>
 
 File1 defaults to: Azure_Sentinel_analytics_rules.json
 This is the Sentinel UI export default filename.
@@ -824,6 +903,8 @@ As with all of these files, a user-provided name can be provided, instead.
 
 File2 defaults to:	 All_Azure_Sentinel_rules.json
 This is the default name the script expects for a Webshell export.
+
+By default, a new GUID is assigned to every rule, unless the -preserveid switch is chosen, in order to retain the original information.
 
 ## Azure Webshell JSON export
 If you wish to use an export from the Azure Webshell, you will need to run PowerShell from portal.azure.com and enter the following commmand:
@@ -839,6 +920,8 @@ To acquire your Resource Group and Workspace names, navigate in Sentinel to the 
 If you provide the -merge switch, you should also provide a second JSON file. Without the -merge switch, the second JSON file is ignored.
 
 When merging, the two files can be any combination of an Azure WebShell export or Sentinel UI export, because the script is designed to handle both JSON formats, interchangeably. If you need to merge more than 2 files, it is best that you merge the files of similar JSON format manually first, and then run the script to complete the remaining tasks.
+
+It is important to note that the script will show preference to the ARM template version of a rule, the one exported from the Sentinel GUI interface, over the Azure Rest API exported versions, because the ARM template versions are more verbose. When overlaps occur, output will be written to the screen, not as an error message, but as an indication that field data between to two formats will be combined.
 ## Using the concat(enate) switch
 Concatenation in this case is not the same as merge. It is used exclusively for Sentinel UI exports of the ARM formatted JSON files.
 
