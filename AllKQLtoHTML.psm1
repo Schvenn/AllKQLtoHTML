@@ -362,7 +362,7 @@ else {$ruleExportObject.name = $guid; $ruleDisplayObject.name = $guid}
 continue}
 
 if ($prop.Name -eq "id") {if ($PreserveIds -and $prop.Value) {$ruleExportObject.properties.id = $prop.Value; $ruleDisplayObject.id = $prop.Value}
-else {$ruleExportObject.properties.id = "/Microsoft.SecurityInsights/alertRules/$guid'"; $ruleDisplayObject.id = "/Microsoft.SecurityInsights/alertRules/$guid"}
+else {$ruleExportObject.properties.id = "/Microsoft.SecurityInsights/alertRules/$guid"; $ruleDisplayObject.id = "/Microsoft.SecurityInsights/alertRules/$guid"}
 continue}
 
 $ruleDisplayObject[$prop.Name] = $prop.Value
