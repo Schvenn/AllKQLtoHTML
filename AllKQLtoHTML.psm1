@@ -980,10 +980,13 @@ The main body of the webpage consists of the following components:
 • Clicking on the properties in this third column will allow a rule to be exported to the original JSON format for individual rule import.
 
 • Due to the large nature of the page a "Back to top" button is located in the bottom right corner of the screen once the page is scrolled down far enough.
-
 ## Mitre ATT&CK Mapping
 • Rolling over the Mitre ATT&CK logo in the top, right side of the page will provide a pop-out menu that allows you to copy the path to the "report_navigator.json" file, which should be located in the same directory as the webpage into the clipboard.
 • Additionally provided is a hyperlink to the Mitre ATT&CK Navigator, which will allow you to load the aforementioned file in order to see a heatmap of your current rule coverage.
+## Sample ARM JSON Entry
+Save the data below as a file with a .JSON extension in order to test the script. These fields are the minimum required to demonstrate what an entry would look like within the generated HTML webpage and the Mitre ATT&CK Navigator.
+
+{"resources": [{"kind": "Scheduled", "properties": {"displayName": "Rule name", "description": "description", "enabled": false, "severity": "Low", "query": "KQL logic", "queryFrequency": "PT1H", "queryPeriod": "PT1H", "triggerOperator": "GreaterThan", "triggerThreshold": 0, "suppressionDuration": "PT5H", "suppressionEnabled": false, "tactics": ["InitialAccess"], "techniques": ["T1078"], "incidentConfiguration": {"createIncident": false, "groupingConfiguration": {"enabled": false, "reopenClosedIncident": false, "lookbackDuration": "PT5H", "matchingMethod": "AllEntities", "groupByEntities": [], "groupByAlertDetails": [], "groupByCustomDetails": []}}, "eventGroupingSettings": {"aggregationKind": "SingleAlert"}, "entityMappings": [{"entityType": "Account", "fieldMappings": [{"identifier": "Name", "columnName": "Account"}]}], "kind": "Scheduled"}}]}
 ## License
 MIT License
 
