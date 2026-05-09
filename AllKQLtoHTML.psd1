@@ -22,8 +22,7 @@ workspacename = 'LAW-<env>-<region>-<workload>'
 resourcegroup = 'RG-<env>-<region>-<service>'
 
 WikiIntegration = @{BaseUrl = "https://wiki.company.local/playbooks/"
-Separator = "slug" # slug | underscore | dash | html
+Separator = "slug"
 Suffix = ".html"
-LinkText = "📘 Playbook" # Playbook | Knowledgebase Article | Wiki page ...
-Fallback = "true" # Only create CSV links dynamically if rule links are not found in the accompanying AllKQLtoHTML.csv file.
-}}}
+LinkText = "📘 Playbook"
+Fallback = "true"}}}
