@@ -3,7 +3,7 @@ This script will read Sentinel JSON files containing Analytics rules and create 
 
 The webpage features statistics about the rules, filtering, the ability to copy queries to the clipboard and more. Check out the screenshots to see some of what it can do, or try it yourself with this sample page using two effective endpoint rules: https://schvenn.github.io/AllKQLtoHTML/SampleSentinelRules.html
 
-	Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-usage> <-help>
+	Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>
 
 | File | Default filename | Notes |
 |------|------------------|-------|
