@@ -1,16 +1,25 @@
+<head>
+<style>
+ol li {margin-bottom: 12px;}
+</style>
+</head>
+<body>
 <h1>Sample Knowledgebase Article:</h1>
+<h2>Overview:</h2>
 <p>This is a sample playbook or knowledgebase article link for the <a href="https://github.com/Schvenn/AllKQLtoHTML">AllKQLtoHTML</a> PowerShell utility.</p>
 <h2>Summary:</h2>
-<p>Here's a few tips for using the KB generator.</p>
+<p>Here are a few tips for using the KB generator.</p>
 
-<ul><li>If you were directed here from the first link on the sample page, you will see that it went to an explicit URL for this page. That's because the CSV file was directed to link that rule to this URL, specifically.</li>
-<li>In most cases however, you will have a wiki or knowledgebase setup on which you create pages for each rule name. For those rules, you won't use the CSV file. Instead, you will let the script create a link based on the rule name. Usually, this would be something like "mywiki.com/rule-name"</li>
-<li>If you want to use the same page for multiple rules, you can also use a parent page and let the script generate an anchor link, which is what happens for the remaining rules on the previous page. They all direct to "https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#rule-name". Since the parent page exists, the redirection works. If the anchor doesn't exist however, you will be harmlessly directed to the page and the anchor will be ignored. This is a safe option. </li>
-<li>Of course, you can also use the suffix portion, if necessary. That would be similar to the previous option, but perhaps you need a ".html" extension on the end. So, the generated link might instead look like "mywiki.com/rule-name.html"</li>
-<li>The final tip I have regarding using this tool is to generate a search link, instead of a direct page link. If your knowledgebase was ServiceNow for example, you could let the script generate a link like this: "https://company.service-now.com/sp?id=search&spa=1&t=kb&q=some%20rule%20name", wherein the BaseURL would include everything up to the "q=" portion and the search query could be created for the remainder. In this case, you would use "html" for the separator option in the PSD1 configuration.</li></ul>
+<ol><li>If you were directed here from the first link on the sample page, you will see that it went to an explicit URL for this page. That's because there is an entry in the CSV file for that first rule.</li>
+<li>In most cases however, you will have a wiki or knowledgebase setup on which you create pages for each rule name. For those rules, you won't use the CSV file. Instead, you will let the script create a link based on the rule name. Usually, this would be something like <font color=cyan>"mywiki.com/rule-name"</font>. Simply set the BaseUrl in the PSD1 configuration file and let the script generate the page name that appends to it.</li>
+<li>Of course, you can also use the Suffix option, as necessary. That would be similar to the previous configuration, but perhaps you need a <font color=cyan>".html"</font> extension on the end. So, the generated link might instead look like <font color=cyan>"mywiki.com/rule-name.html"</font></li>
+<li >If you want to use the same page for multiple rules, you can also use a parent page and let the script generate an anchor link, which is what happens for the remaining rules on the sample rules page. They all direct to <font color=cyan>"https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#some-rule-name"</font>. Since the parent page exists, the redirection works. If the anchor doesn't exist however, you will be harmlessly directed to the page and the anchor will be ignored. This is a safe option. </li>
+<li>The final tip I have is to use the script to generate a search link, instead of a direct page link. If your knowledgebase was ServiceNow for example, you could let the script generate a link like this: <font color=cyan>"https://company.service-now.com/sp?id=search&spa=1&t=kb&q=some%20rule%20name"</font>, wherein the BaseURL would include everything up to the <font color=cyan>"q="</font> portion and the search query could be created for the remainder. In this case, you would use <font color=cyan>"html"</font> for the Separator option in the PSD1 configuration so that it converts the spaces and similar characters correctly.</li></ol>
 
-As you can see, there are many ways to make the link generation work, for nearly every environment.
+</p>As you can see, there are many ways to make the link generation work, for nearly every environment, even mixing the CSV file and link generator, at the same time, in the same environment.</p>
 
+<p>The rest of this page is a knowledgebase format example for demonstration purposes.</p>
+<hr></hr>
 <h2>Playbook:</h2>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, ba-na-na sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ac erat enim. Curabitur enim quam, fringilla a hendrerit a, laoreet vel sem. Nam pellentesque lectus tortor. Quisque euismod et mauris vitae ullamcorper.</p>
 
@@ -22,11 +31,13 @@ As you can see, there are many ways to make the link generation work, for nearly
 
 <p>Fusce ultrices auctor eros in venenatis. Fusce nec magna venenatis nunc condimentum fringilla eleifend a nunc. Nullam pretium tincidunt velit. Aliquam tristique volutpat dui quis pellentesque. Maecenas dapibus neque magna, ac tempus magna blandit sit amet. Ut mollis auctor diam, vitae porta erat sodales pretium. Mauris id nunc eget felis tincidunt mollis et cursus elit. Duis faucibus mollis turpis vel vulputate.</p>
 
+<hr></hr>
 <h3>References:</h3>
-<ul><li>Link 1: blarg</li>
-<li>Link 2: blarg detections</li>
-<li>Link 3: blarg updated</li></ul>
+<ul><li>Link 1: <font color=yellow>blarg</font></li>
+<li>Link 2: <font color=yellow>some external link</font></li>
+<li>Link 3: <font color=yellow>some internal policy</font></li></ul>
 
+<hr></hr>
 <table>
 <tr><td><b>Created On:</b></td><td>5/1/2026</td></tr>
 <tr><td><b>Authour:</b></td><td>BWayne</td></tr>
@@ -34,3 +45,4 @@ As you can see, there are many ways to make the link generation work, for nearly
 <tr><td><b>Updated By:</b></td><td>ENigma</td></tr>
 <tr><td><b>Tickets:</b></td><td>SIR00013479, SIR00021735, SIR00043129</td></tr>
 </table>
+</body>
