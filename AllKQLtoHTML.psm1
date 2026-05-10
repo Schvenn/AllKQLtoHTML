@@ -37,8 +37,9 @@ $name = $name -replace '[^a-z0-9\s-]', ''
 $name = $name -replace '\s+', '-'
 $name = $name -replace '-+', '-'}
 default {$name = [uri]::EscapeDataString($name)}}
+$base = $config.PrivateData.WikiIntegration.BaseUrl
 $suffix = $config.PrivateData.WikiIntegration.Suffix
-return "$base/$name$suffix"}
+return "$base$name$suffix"}
 
 # GetAZCommand
 if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
