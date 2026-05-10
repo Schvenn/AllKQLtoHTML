@@ -1,4 +1,4 @@
-function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateLinks, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
+function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateLinks, [switch]$Usage,  [switch]$GetAZCommand, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
@@ -43,8 +43,11 @@ $suffix = $config.PrivateData.WikiIntegration.Suffix
 
 return "$base/$name$suffix"}
 
+# GetAZCommand
+if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
+
 # Usage switch.
-if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-help>`n";return}
+if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>`n";return}
 
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
@@ -932,7 +935,7 @@ Export-ModuleMember -Alias sentinelrules
 ## Overview
 This script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference.
 
-Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-help>
+Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>
 
 File1 defaults to: Azure_Sentinel_analytics_rules.json
 This is the Sentinel UI export default filename.
@@ -943,12 +946,14 @@ As with all of these files, a user-provided name can be provided, instead.
 File2 defaults to:	 All_Azure_Sentinel_rules.json
 This is the default name the script expects for a Webshell export.
 
-By default, a new GUID is assigned to every rule, unless the -preserveid switch is chosen, in order to retain the original information.
+By default, a new GUID is assigned to every rule, unless the -preserveid switch is chosen, in order to retain the original information. Using the -createlinks switch will also enable the -preserveids switch.
 
 ## Azure Webshell JSON export
 If you wish to use an export from the Azure Webshell, you will need to run PowerShell from portal.azure.com and enter the following commmand:
 
 az sentinel alert-rule list --resource-group 'RG-<env>-<region>-<service>' --workspace-name 'LAW-<env>-<region>-<workload>' --subscription 'ffffffff-ffff-ffff-ffff-ffffffffffff' -o json > All_Azure_Sentinel_rules.json
+
+Since this will need to be run periodically, the GetAZCommand switch has been created to provide you with the specific command required to run within the Azure Web Shell in order to create the All_Azure_Sentinels_rules.json for download. The Sentinel subscription variables will need to be added to the PSD1 file for this to work.
 
 To acquire your Subscription ID, you can run the following command in Azure Cloudshell:
 
@@ -1060,7 +1065,7 @@ This means that you can use both the CSV file and the link generator, interchang
 ## Sample ARM JSON Entry
 Save the data below as a file with a .JSON extension in order to test the script. These fields are the minimum required to demonstrate what an entry would look like within the generated HTML webpage and the Mitre ATT&CK Navigator.
 
-{"resources": [{"kind": "Scheduled", "name": "1ce4300f-9783-45ed-a417-1ba9e14b4555", "properties": {"displayName": "Rule name", "description": "description", "enabled": false, "severity": "Low", "query": "KQL logic", "queryFrequency": "PT1H", "queryPeriod": "PT1H", "triggerOperator": "GreaterThan", "triggerThreshold": 0, "suppressionDuration": "PT5H", "suppressionEnabled": false, "tactics": ["InitialAccess"], "techniques": ["T1078"], "incidentConfiguration": {"createIncident": false, "groupingConfiguration": {"enabled": false, "reopenClosedIncident": false, "lookbackDuration": "PT5H", "matchingMethod": "AllEntities", "groupByEntities": [], "groupByAlertDetails": [], "groupByCustomDetails": []}}, "eventGroupingSettings": {"aggregationKind": "SingleAlert"}, "entityMappings": [{"entityType": "Account", "fieldMappings": [{"identifier": "Name", "columnName": "Account"}]}], "kind": "Scheduled"}}]}
+{"resources": [{"kind": "Scheduled", "properties": {"displayName": "Rule name", "description": "description", "enabled": false, "severity": "Low", "query": "KQL logic", "queryFrequency": "PT1H", "queryPeriod": "PT1H", "triggerOperator": "GreaterThan", "triggerThreshold": 0, "suppressionDuration": "PT5H", "suppressionEnabled": false, "tactics": ["InitialAccess"], "techniques": ["T1078"], "incidentConfiguration": {"createIncident": false, "groupingConfiguration": {"enabled": false, "reopenClosedIncident": false, "lookbackDuration": "PT5H", "matchingMethod": "AllEntities", "groupByEntities": [], "groupByAlertDetails": [], "groupByCustomDetails": []}}, "eventGroupingSettings": {"aggregationKind": "SingleAlert"}, "entityMappings": [{"entityType": "Account", "fieldMappings": [{"identifier": "Name", "columnName": "Account"}]}], "kind": "Scheduled"}}]}
 ## License
 MIT License
 
