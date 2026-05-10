@@ -127,7 +127,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/09/2026 @ 10:50:34 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.5)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/10/2026 @ 09:34:18 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.5)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -225,7 +225,7 @@ union(SecurityEvent
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
 <br>
-<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#multiple-network-discovery-commands-run-in-a-short-period-of-time' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre>// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.
 let TimeWindow = 10m;
@@ -275,7 +275,7 @@ DiscoveryEvents
 <span>Enabled: <span class='enabled-false'>❌ false (Disabled)</span></span><br>
 <span>Severity:</span> <span class='sev-info'><strong>⚪ Informational</strong></span>
 <br>
-<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#suspicious-remote-access-tool-activity' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre>let RemoteAccessExecutables = dynamic(["aeroadmin.exe", "agent.exe", "agentmon.exe", "ammyy.exe", "anyconnect.exe", "anydesk.exe", "assist.exe", "ateraagent.exe", "beyondtrust.exe", "bomgar.exe", "chrome-remote-desktop.exe", 
 "citrix.exe", "client.exe", "connectwise.exe", "control.exe", "deskreen.exe", "dwagent.exe", "dwrcc.exe", "dwrcs.exe", "forticlient.exe", "getsupport.exe", "globalprotect.exe", "go2assist.exe", "isllight.exe", "kaseya.exe", 
