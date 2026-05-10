@@ -1,19 +1,50 @@
-function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
+function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateLinks, [switch]$Usage, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
 if (!(Test-Path $configPath)) {throw "Config file not found at $configPath"}
 $script:config = Import-PowerShellDataFile -Path $configPath
 
-# Pull config values into variables
+# Pull config values into variables.
 $script:resourcegroup = $config.privatedata.resourcegroup
 $script:workspacename = $config.privatedata.workspacename
 $script:subscription = $config.privatedata.subscription
 $script:version = $config.moduleversion}
 loadconfiguration
 
+# Add Knowledgebase Links.
+if ($CreateLinks) {$csvPath = Join-Path $baseModulePath "AllKQLtoHTML.csv"; ; $PreserveIds = $true; $script:wikiLinks = @{}
+if (Test-Path $csvPath) {try {$csv = Import-Csv $csvPath
+foreach ($entry in $csv) {if ([string]::IsNullOrWhiteSpace($entry.uid)) {continue}
+$csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
+if (-not $script:wikiLinks.ContainsKey($csvGuid)) {$script:wikiLinks[$csvGuid] = $entry.link}}
+Write-Host -f green -n "`nLoaded $($script:wikiLinks.Count) wiki links from "; Write-Host -f White $csvPath}
+catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgray $_.Exception.Message}}}
+
+function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
+if ($RuleGuid) {$lookupGuid = $RuleGuid.ToString().Trim().Trim('{}').ToLower()
+if ($script:wikiLinks.ContainsKey($lookupGuid)) {return $script:wikiLinks[$lookupGuid]}}
+if (-not $config.PrivateData.WikiIntegration.Fallback) {return $null}
+if (-not $config.PrivateData.WikiIntegration.BaseUrl) {return $null}
+
+$name = $DisplayName.Trim()
+
+switch ($config.PrivateData.WikiIntegration.Separator) {"underscore" {$name = $name -replace '\s+', '_'}
+"dash" {$name = $name -replace '\s+', '-'}
+"html" {$name = [uri]::EscapeDataString($name)}
+"slug" {$name = $name.ToLower()
+$name = $name -replace '[^a-z0-9\s-]', ''
+$name = $name -replace '\s+', '-'
+$name = $name -replace '-+', '-'}
+default {$name = [uri]::EscapeDataString($name)}}
+
+$base = $config.PrivateData.WikiIntegration.BaseUrl.TrimEnd('/')
+$suffix = $config.PrivateData.WikiIntegration.Suffix
+
+return "$base/$name$suffix"}
+
 # Usage switch.
-if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-usage> <-help>`n";return}
+if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-help>`n";return}
 
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
@@ -398,6 +429,13 @@ else {$script:toc += "<li data-target='$id'><a href='#$id' class='enabled-false'
 $templateVersionHtml = ""
 if ($r.templateVersion) {$tv = Escape-Html $r.templateVersion; $templateVersionHtml = "<br><span class='template-version'>Template Version: <strong>$tv</strong></span>"}
 
+$wikiHtml = ""
+$wikiLink = Get-RuleWikiLink $r.displayName $r.name
+
+if ($wikiLink) {$wikiText = $config.PrivateData.WikiIntegration.LinkText
+if (-not $wikiText) {$wikiText = "📘 Playbook"}
+$wikiHtml = "<br><a href='$wikiLink' target='_blank'>$wikiText</a>"}
+
 $script:rows += @"
 <tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)" data-rule-json="$ruleJson">
 
@@ -405,7 +443,8 @@ $script:rows += @"
 <span class="description">$desc</span><br><br>
 <span>Enabled: $enabledText</span><br>
 $severityHtml
-$templateVersionHtml
+$templateVersionHtml<br>
+$wikiHtml
 </td>
 <td class="query"><pre>$qry</pre></td>
 <td class="props"><div class="props-content">$props</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
@@ -893,7 +932,7 @@ Export-ModuleMember -Alias sentinelrules
 ## Overview
 This script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference.
 
-Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-usage> <-help>
+Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-help>
 
 File1 defaults to: Azure_Sentinel_analytics_rules.json
 This is the Sentinel UI export default filename.
@@ -983,6 +1022,41 @@ The main body of the webpage consists of the following components:
 ## Mitre ATT&CK Mapping
 • Rolling over the Mitre ATT&CK logo in the top, right side of the page will provide a pop-out menu that allows you to copy the path to the "report_navigator.json" file, which should be located in the same directory as the webpage into the clipboard.
 • Additionally provided is a hyperlink to the Mitre ATT&CK Navigator, which will allow you to load the aforementioned file in order to see a heatmap of your current rule coverage.
+## Create Links
+A limited knowledgebase or playbook link generator and import functionality has been added to the script using the -CreateLinks switch.
+
+If no explicit link is provided in the accompanying CSV file, then dynamic links can be created from the rule's DisplayName and that makes this feature somewhat fragile, which is why I indicated this feature is limited.
+
+In order to use it, you need to configure a few settings in the accompanying PSD1 file:
+
+WikiIntegration = @{BaseUrl = "https://wiki.company.local/playbooks/"
+Separator = "slug"
+Suffix = ".html" 
+LinkText = "📘 Playbook"
+Fallback = "true"
+
+The BaseURL defines the root location of the articles in question.
+
+The Separator defines how the page names are created:
+• "slug" will convert the name to lower case, remove all special characters and separate words with hyphens. This is the preferred naming convention for most modern knowledge base systems.
+• "underscore" will replace spaces with underscores.
+• "dash" will replace all spaces with hyphens.
+• "html" will convert the name into HTML code, so spaces for example, would become %20.
+
+Suffix is optional, depending on your specific knowledgebase requirements. This can be something like: ".html", ".aspx", or "/some_additional_url_requirement"
+
+LinkText determines how your link will appear on the webpage, such as "Knowledgebase article", "Playbook" or "References".
+
+Fallback determines the priority of link creation. If this is set to "true", the script will first try to import links from the accompanying csv file, based upon the rule's unique GUID. If no match is found, then a dynamic link will be generated based on preceding criteria, instead.
+
+The CSV file should look like this:
+
+rulename,uid,link
+"Rule name","1ce4300f-9783-45ed-a417-1ba9e14b4555","https://wiki.company.local/playbooks/alternatelinkforrulename.html"
+
+The first column is just for user reference and is not used by the script. All rules are instead referenced by their uid and it is the third column that represents the link of preference for the rule in question.
+
+This means that you can use both the CSV file and the link generator, interchangeably. Some rules might need dynamic links, while others have pre-defined explicit links, allowing for greater flexibility.
 ## Sample ARM JSON Entry
 Save the data below as a file with a .JSON extension in order to test the script. These fields are the minimum required to demonstrate what an entry would look like within the generated HTML webpage and the Mitre ATT&CK Navigator.
 
