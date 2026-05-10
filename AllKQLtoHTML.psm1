@@ -37,10 +37,7 @@ $name = $name -replace '[^a-z0-9\s-]', ''
 $name = $name -replace '\s+', '-'
 $name = $name -replace '-+', '-'}
 default {$name = [uri]::EscapeDataString($name)}}
-
-$base = $config.PrivateData.WikiIntegration.BaseUrl.TrimEnd('/')
 $suffix = $config.PrivateData.WikiIntegration.Suffix
-
 return "$base/$name$suffix"}
 
 # GetAZCommand
