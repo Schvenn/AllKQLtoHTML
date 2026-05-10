@@ -1,9 +1,16 @@
 <h1>Sample Knowledgebase Article:</h1>
-<p>This is a sample playbook or knowledgebase article link for the <a href="https://schvenn.github.io/AllKQLtoHTML">AllKQLtoHTML</a> PowerShell utility.</p>
+<p>This is a sample playbook or knowledgebase article link for the <a href="https://github.com/Schvenn/AllKQLtoHTML">AllKQLtoHTML</a> PowerShell utility.</p>
 <h2>Summary:</h2>
-<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+<p>Here's a few tips for using the KB generator.</p>
 
-<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci. Phasellus tempor vehicula malesuada. Fusce ligula quam, posuere laoreet ornare eget, iaculis eget tortor. Duis sit amet velit purus. Vestibulum eleifend mauris ac rhoncus aliquet. Proin auctor, purus sit amet placerat ornare, sapien lectus fringilla diam, nec hendrerit ligula nulla nec ante. Aliquam mattis, nulla ut tempus blandit, ligula purus vehicula lectus, at suscipit sapien arcu at metus. Quisque eget dignissim odio, sodales euismod tortor. Morbi feugiat mi sed mi interdum faucibus. Vivamus placerat neque id dui porttitor sagittis. Nunc sit amet augue est. Nullam interdum rhoncus ullamcorper. Sed accumsan odio blandit, mattis tellus vitae, tincidunt risus. Fusce nec lacus porta, vehicula mauris a, eleifend nibh. Vivamus a auctor orci, sed bibendum dui. Donec commodo diam enim, in feugiat erat laoreet feugiat.</p>
+<ul><li>If you were directed here from the first link on the sample page, you will see that it went to an explicit URL for this page. That's because the CSV file was directed to link that rule to this URL, specifically.</li>
+<li>In most cases however, you will have a wiki or knowledgebase setup on which you create pages for each rule name. For those rules, you won't use the CSV file. Instead, you will let the script create a link based on the rule name. Usually, this would be something like "mywiki.com/rule-name"</li>
+<li>If you want to use the same page for multiple rules, you can also use a parent page and let the script generate an anchor link, which is what happens for the remaining rules on the previous page. They all direct to "https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#rule-name". Since the parent page exists, the redirection works. If the anchor doesn't exist however, you will be harmlessly directed to the page and the anchor will be ignored. This is a safe option. </li>
+<li>Of course, you can also use the suffix portion, if necessary. That would be similar to the previous option, but perhaps you need a ".html" extension on the end. So, the generated link might instead look like "mywiki.com/rule-name.html"</li>
+<li>The final tip I have regarding using this tool is to generate a search link, instead of a direct page link. If your knowledgebase was ServiceNow for example, you could let the script generate a link like this: "https://company.service-now.com/sp?id=search&spa=1&t=kb&q=some%20rule%20name", wherein the BaseURL would include everything up to the "q=" portion and the search query could be created for the remainder. In this case, you would use "html" for the separator option in the PSD1 configuration.</li></ul>
+
+As you can see, there are many ways to make the link generation work, for nearly every environment.
+
 <h2>Playbook:</h2>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, ba-na-na sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ac erat enim. Curabitur enim quam, fringilla a hendrerit a, laoreet vel sem. Nam pellentesque lectus tortor. Quisque euismod et mauris vitae ullamcorper.</p>
 
