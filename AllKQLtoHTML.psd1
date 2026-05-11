@@ -10,7 +10,7 @@ FunctionsToExport = @('AllKQLtoHTML')
 CmdletsToExport = @()
 VariablesToExport = @()
 AliasesToExport = @('sentinelrules')
-FileList = @('AllKQLtoHTML.psm1,AllKQLtoHTML.csv')
+FileList = @('AllKQLtoHTML.psm1','AllKQLtoHTML.csv')
 
 PrivateData = @{PSData = @{Tags = @('export', 'html', 'json', 'merge', 'siem', 'sentinel')
 LicenseUri = 'https://github.com/Schvenn/AllKQLtoHTML/blob/main/license.txt'
