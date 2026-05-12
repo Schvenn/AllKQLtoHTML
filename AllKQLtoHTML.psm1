@@ -23,7 +23,8 @@ catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgr
 
 function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
 if ($RuleGuid) {$lookupGuid = $RuleGuid.ToString().Trim().Trim('{}').ToLower()
-if ($script:wikiLinks.ContainsKey($lookupGuid)) {return $script:wikiLinks[$lookupGuid]}}
+if ($script:wikiLinks.ContainsKey($lookupGuid)) {$link = $script:wikiLinks[$lookupGuid]
+if (-not [string]::IsNullOrWhiteSpace($link)) {return $link}}}
 if (-not $config.PrivateData.WikiIntegration.Fallback) {return $null}
 if (-not $config.PrivateData.WikiIntegration.BaseUrl) {return $null}
 
