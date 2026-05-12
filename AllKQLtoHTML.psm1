@@ -832,9 +832,7 @@ setTimeout(() => status.textContent = '', 2000);});});})();
 
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
-if (!pre) return; const textNode = pre.firstChild;
-if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
-const text = textNode.textContent.trim();
+if (!pre) return; const text = pre.innerText.trim();
 if (!text) return;
 navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
 
