@@ -127,7 +127,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/11/2026 @ 10:50:13 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.6)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/12/2026 @ 07:52:14 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.6)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -481,9 +481,8 @@ setTimeout(() => status.textContent = '', 2000);});});})();
 
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
-if (!pre) return; const textNode = pre.firstChild;
-if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
-const text = textNode.textContent.trim();
+if (!pre) return;
+const text = pre.innerText.trim();
 if (!text) return;
 navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
 
@@ -582,3 +581,4 @@ while (current = walker.nextNode()) {callback(current);}}
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
+
