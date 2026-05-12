@@ -522,7 +522,7 @@ th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;
 th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
 tr:nth-child(even) td {background: var(--row-even);}
 tr:hover td {background: var(--row-hover);}
-td.query pre {cursor: pointer; position: relative;}
+td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
 td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
 td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--text-muted); opacity: 0; pointer-events: none;}
 td.query pre:hover::after {opacity: 1;}
