@@ -1,4 +1,4 @@
-function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateLinks, [switch]$Usage,  [switch]$GetAZCommand, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
+function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateCSV, [switch]$CreateLinks, [switch]$Usage, [switch]$GetAZCommand, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # Load PSD1 configuration.
 function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
@@ -12,8 +12,11 @@ $script:subscription = $config.privatedata.subscription
 $script:version = $config.moduleversion}
 loadconfiguration
 
+# Enable PreserveIds when CreateLinks or CreateCSV is chosen.
+if ($CreateLinks -or $CreateCSV) {$csvPath = Join-Path $baseModulePath "AllKQLtoHTML.csv"; $PreserveIds = $true}
+
 # Add Knowledgebase Links.
-if ($CreateLinks) {$csvPath = Join-Path $baseModulePath "AllKQLtoHTML.csv"; ; $PreserveIds = $true; $script:wikiLinks = @{}
+if ($CreateLinks) {$script:wikiLinks = @{}
 if (Test-Path $csvPath) {try {$csv = Import-Csv $csvPath
 foreach ($entry in $csv) {if ([string]::IsNullOrWhiteSpace($entry.uid)) {continue}
 $csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
@@ -46,7 +49,7 @@ return "$base$name$suffix"}
 if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
 
 # Usage switch.
-if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>`n";return}
+if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge><-preserveids>  <-createcsv> <-createlinks> <-usage> <-getazcommand> <-help>`n";return}
 
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
@@ -360,6 +363,21 @@ statistics
 
 # Sort rules alphabetically.
 $script:rules = $script:rules | Sort-Object displayName
+
+# Create CSV file.
+if ($CreateCSV) {Write-Host -f Cyan -n "`nGenerating CSV file: "; Write-Host -f White " AllKQLtoHTML.csv"; $csvOutput = @(); $seen = @{}
+foreach ($r in $script:rules) {if (-not $r.displayName) {continue}
+$uid = Get-RuleUID $r
+if ([string]::IsNullOrWhiteSpace($uid)) {continue}
+$uidNormalized = $uid.ToString().Trim().Trim('{}').ToLower()
+if ($seen.ContainsKey($uidNormalized)) {continue}
+$seen[$uidNormalized] = $true
+$csvOutput += [pscustomobject]@{rulename = $r.displayName
+uid = $uidNormalized
+link = ""}}
+
+try {$csvOutput | Sort-Object rulename | Export-Csv -Path "AllKQLtoHTML.csv" -NoTypeInformation -Encoding UTF8; Write-Host -f Green "✅ CSV created with $($csvOutput.Count) rules."}
+catch {Write-Host -f Red "❌ Failed to create CSV file"; Write-Host -f DarkGray $_.Exception.Message}}
 
 # Donut chart math (degrees for conic-gradient)
 function builddonut {$script:severityTotal = $severityInfo + $severityLow + $severityMedium + $severityHigh
@@ -934,7 +952,7 @@ Export-ModuleMember -Alias sentinelrules
 ## Overview
 This script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference.
 
-Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>
+Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-createcsv> <-usage> <-getazcommand> <-help>
 
 File1 defaults to: Azure_Sentinel_analytics_rules.json
 This is the Sentinel UI export default filename.
@@ -945,7 +963,7 @@ As with all of these files, a user-provided name can be provided, instead.
 File2 defaults to:	 All_Azure_Sentinel_rules.json
 This is the default name the script expects for a Webshell export.
 
-By default, a new GUID is assigned to every rule, unless the -preserveid switch is chosen, in order to retain the original information. Using the -createlinks switch will also enable the -preserveids switch.
+By default, a new GUID is assigned to every rule, unless the -preserveid switch is chosen, in order to retain the original information. Using the -createlinks or -createcsv switches will also enable the -preserveids switch.
 
 ## Azure Webshell JSON export
 If you wish to use an export from the Azure Webshell, you will need to run PowerShell from portal.azure.com and enter the following commmand:
@@ -1061,6 +1079,12 @@ rulename,uid,link
 The first column is just for user reference and is not used by the script. All rules are instead referenced by their uid and it is the third column that represents the link of preference for the rule in question.
 
 This means that you can use both the CSV file and the link generator, interchangeably. Some rules might need dynamic links, while others have pre-defined explicit links, allowing for greater flexibility.
+## Create CSV
+In order to simplify the link mapping process, the -CreateCSV switch has been added, which will create the AllKQLtoHTML.csv file with the following columns:
+
+rulename, uid, link
+
+The rulename and uid will be populated, but the link column will not be. This is intentionally left blank so that you can add explicit or manufactured links in this column, as required.
 ## Sample ARM JSON Entry
 Save the data below as a file with a .JSON extension in order to test the script. These fields are the minimum required to demonstrate what an entry would look like within the generated HTML webpage and the Mitre ATT&CK Navigator.
 
