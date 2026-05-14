@@ -555,7 +555,7 @@ td.rulename:hover::after {opacity: 1;}
 
 td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
 td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
-td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--text-muted); opacity: 0; pointer-events: none;}
+td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none;}
 td.query pre:hover::after {opacity: 1;}
 .copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
 
