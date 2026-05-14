@@ -903,12 +903,16 @@ case "Medium": severityIcon = "🟡"; break;
 case "Low": severityIcon = "🟠"; break;
 case "Informational": severityIcon = "⚪"; break;}
 
+let templateLine = '';
+if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
+
 const kql = val(p.query);
 
 return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
 'Enabled: **' + enabled + '**',
-'Severity: **' + severityIcon + ' ' + val(p.severity) + '**','',
+'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
+...(templateLine ? [templateLine] : []),''
 '* * *',
 '``````',kql,'``````',
 '* * *','',
