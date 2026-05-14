@@ -180,6 +180,11 @@ function Escape-Html {param ([string]$Text)
 if ($null -eq $Text) {return ""}
 return $Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'}
 
+function Convert-UrlsToLinks {param ([string]$Text)
+if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
+$urlPattern = '(https?:\/\/[^\s<]+)'
+return ($Text -replace $urlPattern, '<a href="$1" target="_blank">$1</a>')}
+
 function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {return $text}
 try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
 catch {return $text}}
@@ -429,7 +434,8 @@ $name = Escape-Html $r.displayName
 $id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
 else {"rule_" + [guid]::NewGuid().ToString("N")}
 $qry = Escape-Html (Normalize-UnicodeDecorations $qry)
-$desc = Escape-Html (Normalize-UnicodeDecorations $r.description)
+
+$descRaw = Normalize-UnicodeDecorations $r.description; $descEscaped = Escape-Html $descRaw; $desc = Convert-UrlsToLinks $descEscaped
 
 $enabled = $r.enabled
 if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>✅ true</span>"}
@@ -540,6 +546,13 @@ th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;
 th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
 tr:nth-child(even) td {background: var(--row-even);}
 tr:hover td {background: var(--row-hover);}
+
+td.rulename .description a {display: inline; word-break: break-all;}
+td.rulename {position: relative; cursor: pointer;}
+td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease;}
+
+td.rulename:hover::after {opacity: 1;}
+
 td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
 td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
 td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; color: var(--text-muted); opacity: 0; pointer-events: none;}
@@ -553,6 +566,7 @@ td.props:hover .export-rule-btn {opacity: 1;}
 .export-rule-btn:active {transform: scale(0.95);}
 .props-content, .kv .val {word-break: break-word; overflow-wrap: anywhere;}
 
+.props-copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
 
 .highlight {background-color: #ffeb3b; color: #000; padding: 1px 2px; border-radius: 3px;}
 :root[data-theme="dark"] .highlight {background-color: #ffd166; color: #000;}
@@ -607,14 +621,15 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 
 .template-version {font-size: 13px; color: var(--text-muted);}
 
-.description {font-size: 16px; color: var(--text-muted);}
+.description {font-size: 16px; color: var(--text-muted); display: inline-block; max-width: 100%; overflow-wrap: anywhere; word-break: break-word;}
+.description a {word-break: break-all; overflow-wrap: anywhere;}
 
 /* BACK TO TOP */
 #backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #064; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 1000;}
 #backToTop:hover {background-color: #0a6;}
 
 /* LINKS (privacy-safe + status-safe) */
-a {text-decoration: none;}
+a {text-decoration: none; word-break: break-all; overflow-wrap: anywhere;}
 a:visited {color: var(--link-visited);}
 a:hover {color: var(--red); text-decoration: underline;}
 a:active {color: var(--link-active); text-decoration: underline;}
@@ -646,7 +661,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUIWKUAU6MAVaRvkcEOXKddhbs9cbFLerX///+Rqs4AUaK5yd8ATaAAUKKLpcvr8PYARp6asdLe5vAASJ9VgLjx9fkASp/C0OPJ1ud5mMSpvNgATqH3+vzS3esAQpyAnsdwksEdYqql8pYrAAAA80lEQVR4AWIYQABojqwSJYRhAEjlLYNL1p37X/I1xW+w81OLDMEYM2+tMXb/6Jzz4878OXfYvtoUyPK49UBRbh6rGmjauO2AXjaPZUHgqMXkROC8eZSewOWsHVG2TUsi4UauKDez+hyAqKQ6yv2xPOY3eL5UKepc4bU2fdyhd6r0PoWHDzxX3fMLircqHYFvCvjFSJ5Qt8VYkbMBnJl9BiDNJ6t7KQ101ezjgEfS9tMnlhe4zkaq2Ms4Q/o2qTIVn32u46gNgTpPrGrNQu0J6tDjfAG0VzUPOuB5koa9PT5P8WepUagwIiI2aouUYyMRk/wg/29jDlzI7K5BAAAAAElFTkSuQmCC" alt="MITRE ATT&CK"/></div>
 
 <div id="mitreContent"><p><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank" rel="noopener noreferrer">MITRE ATT&amp;CK Navigator</a><br><br>
-Copy path to: <a href="#" id="copyNavigatorPath">report_navigator.json</a><span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>
+Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>
 <span style="font-size:12px; color:var(--text-muted);">(Use in “Open Existing Layer”)</span></p></div></div>
 
 $statsBlock
@@ -680,7 +695,6 @@ requestAnimationFrame(animateScroll);}
 window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
-
 
 (function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return; // <-- prevents silent failure
 const root = document.documentElement;
@@ -832,7 +846,10 @@ setTimeout(() => status.textContent = '', 2000);});});})();
 
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
-if (!pre) return; const text = pre.innerText.trim();
+if (!pre) return;
+const clone = pre.cloneNode(true); const badge = clone.querySelector('.copy-badge'); if (badge) badge.remove();
+const text = clone.innerText.trim();
+
 if (!text) return;
 navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
 
@@ -844,6 +861,15 @@ badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);
 function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
 
 (function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
+
+(function () {document.addEventListener('click', function (e) {if (e.target.closest('.export-rule-btn')) return;
+const cell = e.target.closest('td.rulename');
+if (!cell) return;
+const row = cell.closest('tr');
+if (!row || !row.dataset.ruleJson) return;
+try {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson))); const md = buildMarkdown(rule); navigator.clipboard.writeText(md).then(() => {showPropsCopied(cell);});}
+catch (err) {console.error('Markdown copy failed:', err);}});})();
+
 if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
@@ -862,6 +888,57 @@ downloadJson(armTemplate, sanitize(rule.properties.displayName || rule.name) + '
 function sanitize(name) {return (name || 'rule')
 .replace(/[^a-z0-9]/gi, '_')
 .toLowerCase();}})();
+
+function buildMarkdown(rule) {const p = rule.properties || {};
+function val(v) {if (v === null || v === undefined) return "";
+if (Array.isArray(v)) return v.join(', ');
+if (typeof v === 'object') return JSON.stringify(v);
+return String(v);}
+
+const enabled = p.enabled === true ? "✅ true" : "❌ false (Disabled)";
+
+let severityIcon = "⚪";
+switch (p.severity) {case "High": severityIcon = "🔴"; break;
+case "Medium": severityIcon = "🟡"; break;
+case "Low": severityIcon = "🟠"; break;
+case "Informational": severityIcon = "⚪"; break;}
+
+const kql = val(p.query);
+
+return ['**' + val(p.displayName) + '**','',
+val(p.description),'',
+'Enabled: **' + enabled + '**',
+'Severity: **' + severityIcon + ' ' + val(p.severity) + '**','',
+'* * *',
+'``````',kql,'``````',
+'* * *','',
+'**name :** ' + rule.name,
+'**queryFrequency :** ' + val(p.queryFrequency),
+'**queryPeriod :** ' + val(p.queryPeriod),
+'**triggerOperator :** ' + val(p.triggerOperator),
+'**triggerThreshold :** ' + val(p.triggerThreshold),
+'**suppressionDuration :** ' + val(p.suppressionDuration),
+'**suppressionEnabled :** ' + val(p.suppressionEnabled),
+'**startTimeUtc :** ' + val(p.startTimeUtc),
+'**tactics :** ' + val(p.tactics),
+'**techniques :** ' + val(p.techniques),
+'**subTechniques :** ' + val(p.subTechniques),
+'**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
+'**incidentConfiguration :** ' + val(p.incidentConfiguration),
+'**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
+'**alertDetailsOverride :** ' + val(p.alertDetailsOverride),
+'**customDetails :** ' + val(p.customDetails),
+'**sentinelEntitiesMappings :** ' + val(p.sentinelEntitiesMappings),
+'**entityMappings :** ' + val(p.entityMappings),
+'**id :** ' + val(p.id),
+'**kind :** ' + rule.kind,'',
+'* * *'].join('\n');}
+
+function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
+if (!badge) {badge = document.createElement('div'); badge.className = 'props-copy-badge'; badge.textContent = '✔ Markdown copied'; cell.appendChild(badge);}
+badge.style.opacity = '1';
+setTimeout(() => {badge.style.opacity = '0';}, 1200);}
+
 
 function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
 
@@ -1030,7 +1107,9 @@ The main body of the webpage consists of the following components:
 
 • Column one contains the rule name, description, enabled status, severity and template version number, if applicable.
 
-• Column 2 provides the rule query logic.
+• Clicking on a query in the first column copies the entire row in markdown format for use in wiki, knowledgebase and gitlab resources.
+
+• Column two provides the rule query logic.
 
 • Clicking on a query in this second column will copy its contents to the clipboard, so that it can be used in Sentinel Advanced Hunting or Microsoft Defender, saving time.
 
