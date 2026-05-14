@@ -136,7 +136,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/14/2026 @ 12:17:53 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.8)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/14/2026 @ 12:38:21 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.8)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -546,12 +546,16 @@ case "Medium": severityIcon = "🟡"; break;
 case "Low": severityIcon = "🟠"; break;
 case "Informational": severityIcon = "⚪"; break;}
 
+let templateLine = '';
+if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
+
 const kql = val(p.query);
 
 return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
 'Enabled: **' + enabled + '**',
-'Severity: **' + severityIcon + ' ' + val(p.severity) + '**','',
+'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
+...(templateLine ? [templateLine] : []),'',
 '* * *',
 '```',kql,'```',
 '* * *','',
@@ -651,5 +655,4 @@ while (current = walker.nextNode()) {callback(current);}}
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
-
 
