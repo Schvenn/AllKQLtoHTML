@@ -912,7 +912,7 @@ return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
 'Enabled: **' + enabled + '**',
 'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
-...(templateLine ? [templateLine] : []),''
+...(templateLine ? [templateLine] : []),'',
 '* * *',
 '``````',kql,'``````',
 '* * *','',
