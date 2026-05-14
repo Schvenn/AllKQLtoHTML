@@ -838,7 +838,7 @@ tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-coll
 const status = document.getElementById('copyStatus');
 if (!link || !navigator.clipboard) return;
 link.addEventListener('click', function (e) {e.preventDefault(); const url = new URL('report_navigator.json', window.location.href).href;
-navigator.clipboard.writeText(url).then(() => {status.textContent = '✔ copied';
+navigator.clipboard.writeText(url).then(() => {status.textContent = '✔ Copied';
 setTimeout(() => status.textContent = '', 2000);},
 () => {status.textContent = '✖ failed';
 setTimeout(() => status.textContent = '', 2000);});});})();
