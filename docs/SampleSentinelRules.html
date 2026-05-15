@@ -23,6 +23,8 @@ body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); 
 #exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
 #searchCriteriaValue {white-space: pre-line;}
 
+#filterInputBox {width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px;}
+
 table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
 th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
 th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
@@ -136,7 +138,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/14/2026 @ 12:38:21 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.8)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/15/2026 @ 04:27:11 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.9)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -326,6 +328,14 @@ DeviceNetworkEvents
 
 <div id="backToTop" onclick="scrollToTop()">↑ Back to top ↑</div>
 
+<div id="filterModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999;">
+<div style="background:#1e1e1e; color:#fff; width:400px; max-width:90%; margin:10% auto; padding:20px; border-radius:10px; font-family:Arial;">
+<h3 style="margin-top:0;">Filter Rules</h3>
+<input id="filterInputBox" style="width:100%; padding:10px; font-size:14px;" placeholder="Enter search terms..." />
+<pre style="margin-top:10px; font-size:12px; color:#aaa;">~     AND
+|     OR
+~!    AND NOT</pre></div></div>
+
 <script>
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
 function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
@@ -394,55 +404,48 @@ if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
 if (regexFilter) {highlightMatches(highlightRegex);}
 syncTocWithVisibleRows();}
-const regexBtn = document.getElementById('regexFilterBtn');
 
 
 /* Regex or text search input */
-if (regexBtn) {regexBtn.addEventListener('click', () => {const input = prompt('Enter search term(s) to find: \n\n~     (tilde) acts as an AND operator\n|      (pipe) acts as an OR operator\n~!    (tilde exclamation mark) acts as an AND NOT operator.');
+const regexBtn = document.getElementById('regexFilterBtn');
+
+document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {e.preventDefault();
+if (regexBtn) regexBtn.click();}});
+
+if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
 if (!input) return;
-// Clear old regex before applying new one
-regexFilter = null;
-highlightRegex = null;
-regexNegatives = [];
-clearHighlights();
-rows.forEach(r => r.style.display = '');
 
+regexFilter = null; highlightRegex = null; regexNegatives = []; clearHighlights(); rows.forEach(r => r.style.display = '');
 try {function escapeRegex(str) {return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');}
+
 let filterPattern = input; let terms = [];
+if (input.includes("~")) {const parts = input.split("~").map(t => t.trim()).filter(Boolean); let positives = []; let negatives = [];
+parts.forEach(p => {if (p.startsWith("!")) negatives.push(p.substring(1).trim());
+else positives.push(p);});
 
-// Replace ~ with AND functionality
-if (input.includes("~")) {const parts = input
-.split("~")
-.map(t => t.trim())
-.filter(t => t.length > 0);
-let positives = []; let negatives = [];
-parts.forEach(p => {if (p.startsWith("!")) {negatives.push(p.substring(1).trim());}
-else {positives.push(p);}});
-
-// Build regex for positive matches
-filterPattern = positives
-.map(function(t) {return "(?=.*" + escapeRegex(t) + ")";})
+filterPattern = positives 
+.map(t => "(?=.*" + escapeRegex(t) + ")")
 .join("");
-terms = positives;
-// Store negatives separately
-regexNegatives = negatives;}
 
-else {terms = input
-.match(/[^\s()|]+/g)
+terms = positives; regexNegatives = negatives;}
+else {terms = input.match(/[^\s()|]+/g)
 ?.filter(t => t.trim().length > 1) || [];}
+
 regexFilter = new RegExp(filterPattern, 'is');
 highlightRegex = terms.length
 ? new RegExp("(" + terms.map(escapeRegex).join("|") + ")", "gi")
 : null;
-if (searchBlock && searchValue) {const searchCriteriaValue = input; const searchCriteriaValueConverted = searchCriteriaValue
+
+if (searchBlock && searchValue) {const converted = input
 .replace(/~!\s*/g, " AND NOT ")
 .replace(/~\s*/g, " AND ")
 .replace(/\|\s*/g, " OR ")
 .replace(/\s+/g, " ")
 .trim();
-searchValue.textContent = searchCriteriaValue + "\n(" + searchCriteriaValueConverted + ")"; searchBlock.classList.remove('hidden');}}
-catch {alert('Invalid regular expression.'); return;}
-applyFilters();});}
+searchValue.textContent = input + "\n(" + converted + ")"; searchBlock.classList.remove('hidden');}
+
+applyFilters();}
+catch {alert('Invalid regular expression.');}});}
 
 
 /* Filter toggle handlers */
@@ -651,6 +654,17 @@ matches.forEach(m => {const start = m.index; const end = start + m[0].length; fr
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
+
+/* Search function */
+function showFilterModal() {return new Promise(resolve => {const modal = document.getElementById('filterModal'); const input = document.getElementById('filterInputBox'); modal.style.display = 'block'; input.value = ''; input.focus(); 
+
+function close(value) {modal.style.display = 'none'; cleanup(); resolve(value);}
+
+function cleanup() {document.removeEventListener('keydown', keyHandler);}
+
+function keyHandler(e) {if (e.key === 'Escape') {close(null);}
+if (e.key === 'Enter') {e.preventDefault(); close(input.value);}}
+document.addEventListener('keydown', keyHandler);});}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
