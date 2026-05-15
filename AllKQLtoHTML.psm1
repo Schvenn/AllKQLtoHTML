@@ -507,7 +507,7 @@ function buildstats {$script:statsBlock = @"
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
 <span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong><br>
 
-<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms: <strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 </td>
 
 </tr></table>
@@ -570,8 +570,8 @@ td.props:hover .export-rule-btn {opacity: 1;}
 
 .props-copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
 
-.highlight {background-color: #ffeb3b; color: #000; padding: 1px 2px; border-radius: 3px;}
-:root[data-theme="dark"] .highlight {background-color: #ffd166; color: #000;}
+.highlight {background-color: #ff0; color: #000; border-radius: 2px; padding: 0; margin: 0;}
+:root[data-theme="dark"] .highlight {background-color: #ff0; color: #000;}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
@@ -689,9 +689,8 @@ $script:rows
 <div style="background:#1e1e1e; color:#fff; width:400px; max-width:90%; margin:10% auto; padding:20px; border-radius:10px; font-family:Arial;">
 <h3 style="margin-top:0;">Filter Rules</h3>
 <input id="filterInputBox" style="width:100%; padding:10px; font-size:14px;" placeholder="Enter search terms..." />
-<pre style="margin-top:10px; font-size:12px; color:#aaa;">~     AND
-|     OR
-~!    AND NOT</pre></div></div>
+<pre style="margin-top:10px; font-size:12px; color:#aaa;">~ is the AND operator
+| is the OR operator</pre></div></div>
 
 <script>
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
@@ -706,7 +705,7 @@ window.addEventListener('scroll', function () {const btn = document.getElementBy
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
 
-(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return; // <-- prevents silent failure
+(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;
 const root = document.documentElement;
 const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
 else {root.setAttribute('data-theme', 'dark');}
@@ -717,53 +716,49 @@ toggle.addEventListener('click', () => {const current = root.getAttribute('data-
 updateIcon();})();
 
 
-(function () {const toggles = document.querySelectorAll('.toggle');
-const searchBlock = document.getElementById('searchCriteriaBlock');
-const searchValue = document.getElementById('searchCriteriaValue');
-const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]');
-const rows = document.querySelectorAll('#rulesTable tbody tr');
-const clearBtn = document.getElementById('clearFilters');
-const reverseBtn = document.getElementById('reverseFilters');
-const filterHeader = document.getElementById('filterHeader');
-const visibleCountEl = document.getElementById('visibleRuleCount');
-const activeFilters = new Set();
-let reverseMode = false;
-let regexFilter = null;
-let highlightRegex = null;
-let regexNegatives = [];
+(function () {const toggles = document.querySelectorAll('.toggle'); const searchBlock = document.getElementById('searchCriteriaBlock'); const searchValue = document.getElementById('searchCriteriaValue'); const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]'); const rows = document.querySelectorAll('#rulesTable tbody tr'); const clearBtn = document.getElementById('clearFilters'); const reverseBtn = document.getElementById('reverseFilters'); const filterHeader = document.getElementById('filterHeader'); const visibleCountEl = document.getElementById('visibleRuleCount'); const activeFilters = new Set(); let reverseMode = false; let includeFilter = null; let excludeFilter = null;
 
-function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || regexFilter !== null; clearHighlights();
+/* APPLY FILTERS */
+function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || includeFilter !== null || excludeFilter !== null;
+clearHighlights();
 if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 else {rows.forEach(row => {let visible = true;
-activeFilters.forEach(filter => {switch (filter) {case 'disabled': if (row.dataset.enabled.toLowerCase() !== 'false') visible = false; break;
+activeFilters.forEach(filter => {switch (filter) {case 'disabled': if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
 case 'template': if (!row.dataset.templateVersion) visible = false; break;
 case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
 case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
+const text = row.textContent || '';
 
-if (visible && regexFilter) {if (!regexFilter.test(row.textContent)) {visible = false;}}
-// Apply NOT logic separately
+/* INCLUDE FILTER (must match) */
+if (includeFilter && !includeFilter.test(text)) {visible = false;}
 
-if (visible && regexNegatives.length > 0) {const text = row.textContent.toLowerCase();
-for (const term of regexNegatives) {if (text.includes(term.toLowerCase())) {visible = false; break;}}}
-if (reverseMode) visible = !visible; row.style.display = visible ? '' : 'none';});}
-if (visibleCountEl) {const visibleRows = Array.from(rows)
-.filter(r => r.style.display !== 'none').length;
-visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
-const hasActiveFilters = activeFilters.size > 0 || regexFilter !== null;
+/* EXCLUDE FILTER (must NOT match) */
+if (excludeFilter && excludeFilter.test(text)) {visible = false;}
+
+if (reverseMode) visible = !visible;
+
+row.style.display = visible ? '' : 'none';});}
+
+/* COUNT */
+if (visibleCountEl) {const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none').length; visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
+
+/* UI STATE */
+const hasActiveFilters = activeFilters.size > 0 || includeFilter !== null || excludeFilter !== null;
+
 if (hasActiveFilters) {clearBtn.classList.remove('hidden');
 if (reverseBtn) reverseBtn.classList.remove('hidden');
 if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
-if (regexFilter) {highlightMatches(highlightRegex);}
-syncTocWithVisibleRows();}
 
+syncTocWithVisibleRows();
+if (includeFilter) {highlightMatches(includeFilter);}}
 
-/* Regex or text search input */
+/* SEARCH BUTTON */
 const regexBtn = document.getElementById('regexFilterBtn');
 
 document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {e.preventDefault();
@@ -772,65 +767,52 @@ if (regexBtn) regexBtn.click();}});
 if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
 if (!input) return;
 
-regexFilter = null; highlightRegex = null; regexNegatives = []; clearHighlights(); rows.forEach(r => r.style.display = '');
-try {function escapeRegex(str) {return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');}
+activeFilters.clear(); includeFilter = null; excludeFilter = null;
+clearHighlights();
+rows.forEach(r => r.style.display = '');
 
-let filterPattern = input; let terms = [];
-if (input.includes("~")) {const parts = input.split("~").map(t => t.trim()).filter(Boolean); let positives = []; let negatives = [];
-parts.forEach(p => {if (p.startsWith("!")) negatives.push(p.substring(1).trim());
-else positives.push(p);});
+/* INCLUDE REGEX */
+try {if (input.include && input.include.trim()) {includeFilter = new RegExp(input.include.trim(), "i");}
 
-filterPattern = positives 
-.map(t => "(?=.*" + escapeRegex(t) + ")")
-.join("");
+/* EXCLUDE REGEX */
+const excludeText = (input.exclude || '').trim();
 
-terms = positives; regexNegatives = negatives;}
-else {terms = input.match(/[^\s()|]+/g)
-?.filter(t => t.trim().length > 1) || [];}
+if (excludeText.length > 0) {excludeFilter = new RegExp(excludeText, "i");}
+else {excludeFilter = null;}
 
-regexFilter = new RegExp(filterPattern, 'is');
-highlightRegex = terms.length
-? new RegExp("(" + terms.map(escapeRegex).join("|") + ")", "gi")
-: null;
-
-if (searchBlock && searchValue) {const converted = input
-.replace(/~!\s*/g, " AND NOT ")
-.replace(/~\s*/g, " AND ")
-.replace(/\|\s*/g, " OR ")
-.replace(/\s+/g, " ")
-.trim();
-searchValue.textContent = input + "\n(" + converted + ")"; searchBlock.classList.remove('hidden');}
+/* UI DISPLAY */
+if (searchBlock && searchValue) {let lines = [];
+if (input.include && input.include.trim()) {lines.push("INCLUDE: " + input.include.trim());}
+if (input.exclude && input.exclude.trim()) {lines.push("EXCLUDE: " + input.exclude.trim());}
+searchValue.textContent = lines.join("\n"); searchBlock.classList.remove('hidden');}
 
 applyFilters();}
 catch {alert('Invalid regular expression.');}});}
 
-
-/* Filter toggle handlers */
+/* FILTER TOGGLES */
 toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
 if (!filter) return;
 const isSeverity = filter.startsWith('sev-');
-if (activeFilters.has(filter)) {activeFilters.delete(filter);
-t.classList.remove('active');}
-else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.dataset.filter);
-st.classList.remove('active');});}
-activeFilters.add(filter);
-t.classList.add('active');}
+if (activeFilters.has(filter)) { activeFilters.delete(filter); t.classList.remove('active');}
+else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.dataset.filter); st.classList.remove('active');});}
+activeFilters.add(filter); t.classList.add('active');}
 applyFilters();});});
 
+/* REVERSE */
+if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 &&
+!includeFilter &&
+!excludeFilter) return;
 
-/* Reverse Filters handler */
-if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 && !regexFilter) return;
-reverseMode = !reverseMode; reverseBtn.classList.toggle('active', reverseMode); applyFilters();});}
+reverseMode = !reverseMode;
+reverseBtn.classList.toggle('active', reverseMode);
+applyFilters();});}
 
-/* Clear Filters handler */
-clearBtn.addEventListener('click', () => {activeFilters.clear(); regexFilter = null; reverseMode = false;
+/* CLEAR */
+clearBtn.addEventListener('click', () => {activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false;
 toggles.forEach(t => t.classList.remove('active'));
 if (reverseBtn) reverseBtn.classList.remove('active');
 if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
-rows.forEach(r => (r.style.display = ''));
-clearHighlights();
-applyFilters();});})();
-
+clearHighlights(); applyFilters();});})();
 
 (function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
 if (!tocToggle || !tocWrapper) return;
@@ -963,8 +945,7 @@ apiVersion: "2023-11-01-preview",
 name: rule.name,
 location: rule.location,
 kind: rule.kind,
-properties: rule.properties};
-});
+properties: rule.properties};});
 
 const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 contentVersion: "1.0.0.0",
@@ -992,36 +973,44 @@ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.
 /* Highlight search terms */
 function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
 
-function highlightMatches(regex) {if (!regex) return;
+function highlightMatches(regex) {if (!regex) return; 
 const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
 .filter(r => r.style.display !== 'none');
-rows.forEach(row => {const cells = row.querySelectorAll('td'); 
 
-// Collect all text nodes (no mutation yet)
-cells.forEach(cell => {const textNodes = []; const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null, false); let node;
-while (node = walker.nextNode()) {if (!node.nodeValue.trim()) continue;
-if (node.parentNode.classList?.contains('highlight')) continue;
-textNodes.push(node);}
+// remove old highlights
+rows.forEach(row => {row.querySelectorAll('.highlight').forEach(el => {el.replaceWith(document.createTextNode(el.textContent));});
 
-// Process them safely
-textNodes.forEach(textNode => {const text = textNode.nodeValue; const localRegex = new RegExp(regex.source, regex.flags); const matches = [...text.matchAll(localRegex)]; 
-if (matches.length === 0) return;
-let lastIndex = 0; const frag = document.createDocumentFragment();
-matches.forEach(m => {const start = m.index; const end = start + m[0].length; frag.appendChild(document.createTextNode(text.slice(lastIndex, start))); const span = document.createElement('span'); span.className = 'highlight'; span.textContent = text.slice(start, end); frag.appendChild(span); lastIndex = end;}); frag.appendChild(document.createTextNode(text.slice(lastIndex))); textNode.replaceWith(frag);});});});}
+const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT); const textNodes = []; let node;
+while (node = walker.nextNode()) {if (node.nodeValue && node.nodeValue.trim()) {textNodes.push(node);}}
+
+textNodes.forEach(textNode => {const source = textNode.nodeValue; const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g'; const r = new RegExp(regex.source, flags);
+
+let match; let lastIndex = 0; const frag = document.createDocumentFragment();
+while ((match = r.exec(source)) !== null) {const start = match.index; const end = start + match[0].length;
+if (start > lastIndex) {frag.appendChild(document.createTextNode(source.slice(lastIndex, start)));}
+const span = document.createElement('span'); span.className = 'highlight'; span.textContent = match[0]; frag.appendChild(span); lastIndex = end;
+if (match.index === r.lastIndex) r.lastIndex++;}
+if (lastIndex < source.length) {frag.appendChild(document.createTextNode(source.slice(lastIndex)));}
+textNode.replaceWith(frag);});});}
+
 
 function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
 while (current = walker.nextNode()) {callback(current);}}
 
 /* Search function */
-function showFilterModal() {return new Promise(resolve => {const modal = document.getElementById('filterModal'); const input = document.getElementById('filterInputBox'); modal.style.display = 'block'; input.value = ''; input.focus(); 
+function showFilterModal() {return new Promise(resolve => {const overlay = document.createElement('div'); overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif';
+box.innerHTML = '<div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />';
+overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); includeInput.focus();
 
-function close(value) {modal.style.display = 'none'; cleanup(); resolve(value);}
+function cleanup(result) {document.body.removeChild(overlay); resolve(result); document.removeEventListener('keydown', escHandler);}
 
-function cleanup() {document.removeEventListener('keydown', keyHandler);}
+function submit() {cleanup({include: includeInput.value, exclude: excludeInput.value});}
 
-function keyHandler(e) {if (e.key === 'Escape') {close(null);}
-if (e.key === 'Enter') {e.preventDefault(); close(input.value);}}
-document.addEventListener('keydown', keyHandler);});}
+function escHandler(e) {if (e.key === 'Escape') {cleanup(null);}}
+
+document.addEventListener('keydown', escHandler);
+includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();};
+excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
