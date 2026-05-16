@@ -5,10 +5,8 @@
 <title>Azure Sentinel Analytics Rules</title>
 
 <style>
-/* BASE FALLBACK (used before JS / old browsers) */
 :root {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #995599; --link-hover: #ff0000; --link-visited: #6b84c4; --link-active: #44ff44;}
 
-/* BASE STYLES */
 body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
 
 #mitrePanel {position: fixed; top: 70px; right: -225px; width: 260px; height: auto; display: flex; align-items: center; z-index: 1000; transition: right 0.3s ease;}
@@ -34,7 +32,6 @@ tr:hover td {background: var(--row-hover);}
 td.rulename .description a {display: inline; word-break: break-all;}
 td.rulename {position: relative; cursor: pointer;}
 td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease;}
-
 td.rulename:hover::after {opacity: 1;}
 
 td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
@@ -108,26 +105,21 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .description {font-size: 16px; color: var(--text-muted); display: inline-block; max-width: 100%; overflow-wrap: anywhere; word-break: break-word;}
 .description a {word-break: break-all; overflow-wrap: anywhere;}
 
-/* BACK TO TOP */
 #backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #064; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 1000;}
 #backToTop:hover {background-color: #0a6;}
 
-/* LINKS (privacy-safe + status-safe) */
 a {text-decoration: none; word-break: break-all; overflow-wrap: anywhere;}
 a:visited {color: var(--link-visited);}
 a:hover {color: var(--red); text-decoration: underline;}
 a:active {color: var(--link-active); text-decoration: underline;}
 
-/* Force enabled-false to NEVER change */
 a.enabled-false {text-decoration: none;}
 a.enabled-false:visited {color: #bb4444}
 a.enabled-false:hover {text-decoration: underline;}
 a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
-/* Theme toggle */
 #themeToggle {position: fixed; top: 20px; right: 20px; padding: 6px 10px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; z-index: 1001;}
 
-/* Manual override beats system preference */
 :root[data-theme="light"] {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #0000FF; --link-hover: #ff0000; --link-visited: #000088; --link-active: #009900; color-scheme: light;}
 
 :root[data-theme="dark"] {--bg-main: #0e0e0e; --bg-panel: #141414; --bg-header: #1f1f1f; --bg-code: #161616; --border-main: #2a2a2a; --text-main: #e6e6e6; --text-muted: #aaa; --green: #6ddf7c; --red: #ff6b6b; --yellow: #ffd166; --row-even: #222222; --row-hover: #303055; --link-normal: #aabbee; --link-hover: #995599; --link-visited: #6666bb; --link-active: #ffff00; color-scheme: dark;}
@@ -138,7 +130,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/15/2026 @ 09:20:35 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.8)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/15/2026 @ 10:41:01 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.8)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -154,7 +146,7 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: 1</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: 0</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: 0</span><br><br>
-<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text</span></td>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+F)</span></span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: 1</span><br>
@@ -167,9 +159,11 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <td class="stats-right">
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
-<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong><br>
+<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+Z)</span></span></strong><br>
 
 <div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+
+<td style="white-space: normal; border-radius: 20px; background: url('https://www.transparenttextures.com/patterns/dust.png'), #4d3f22;"><h1 style="color: lime;">This page is a sample of the output generated by the AllKQLtoHTML PowerShell utility.</h1><h3 style="color: white;">The Sentinel rules on this page were designed by me and are free to use in your own environment. All three have proven to be very effective in providing security protection in multiple corporate environments.</h3></td>
 </td>
 
 </tr></table>
@@ -341,7 +335,6 @@ window.scrollTo(0, start * (1 - ease));
 if (progress < 1) {requestAnimationFrame(animateScroll);}}
 requestAnimationFrame(animateScroll);}
 
-
 window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
@@ -350,19 +343,25 @@ else {btn.style.display = 'none';}});
 const root = document.documentElement;
 const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
 else {root.setAttribute('data-theme', 'dark');}
-
 function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';}
-
 toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
 updateIcon();})();
 
-
 (function () {const toggles = document.querySelectorAll('.toggle'); const searchBlock = document.getElementById('searchCriteriaBlock'); const searchValue = document.getElementById('searchCriteriaValue'); const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]'); const rows = document.querySelectorAll('#rulesTable tbody tr'); const clearBtn = document.getElementById('clearFilters'); const reverseBtn = document.getElementById('reverseFilters'); const filterHeader = document.getElementById('filterHeader'); const visibleCountEl = document.getElementById('visibleRuleCount'); const activeFilters = new Set(); let reverseMode = false; let includeFilter = null; let excludeFilter = null;
+
+/* CTRL+Z TO CLEAR FILTERS */
+document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {return;}
+e.preventDefault(); activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false; toggles.forEach(t => t.classList.remove('active')); 
+if (reverseBtn) reverseBtn.classList.remove('active');
+if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
+clearHighlights(); applyFilters();}});
 
 /* APPLY FILTERS */
 function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || includeFilter !== null || excludeFilter !== null;
 clearHighlights();
 if (!hasFilters) {rows.forEach(r => r.style.display = '');}
+
+/* SEVERITIES */
 else {rows.forEach(row => {let visible = true;
 activeFilters.forEach(filter => {switch (filter) {case 'disabled': if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
@@ -375,36 +374,30 @@ const text = row.textContent || '';
 
 /* INCLUDE FILTER (must match) */
 if (includeFilter && !includeFilter.test(text)) {visible = false;}
-
 /* EXCLUDE FILTER (must NOT match) */
 if (excludeFilter && excludeFilter.test(text)) {visible = false;}
-
+/* REVERSE FILTER */
 if (reverseMode) visible = !visible;
-
 row.style.display = visible ? '' : 'none';});}
 
 /* COUNT */
 if (visibleCountEl) {const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none').length; visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
 
-/* UI STATE */
+/* UI STATES */
 const hasActiveFilters = activeFilters.size > 0 || includeFilter !== null || excludeFilter !== null;
-
 if (hasActiveFilters) {clearBtn.classList.remove('hidden');
 if (reverseBtn) reverseBtn.classList.remove('hidden');
 if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
-
 syncTocWithVisibleRows();
 if (includeFilter) {highlightMatches(includeFilter);}}
 
-/* SEARCH BUTTON */
+/* SEARCH OPTION */
 const regexBtn = document.getElementById('regexFilterBtn');
-
 document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {e.preventDefault();
 if (regexBtn) regexBtn.click();}});
-
 if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
 if (!input) return;
 
@@ -417,7 +410,6 @@ try {if (input.include && input.include.trim()) {includeFilter = new RegExp(inpu
 
 /* EXCLUDE REGEX */
 const excludeText = (input.exclude || '').trim();
-
 if (excludeText.length > 0) {excludeFilter = new RegExp(excludeText, "i");}
 else {excludeFilter = null;}
 
@@ -439,27 +431,27 @@ else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.da
 activeFilters.add(filter); t.classList.add('active');}
 applyFilters();});});
 
-/* REVERSE */
+/* REVERSE TOGGLE */
 if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 &&
 !includeFilter &&
 !excludeFilter) return;
-
 reverseMode = !reverseMode;
 reverseBtn.classList.toggle('active', reverseMode);
 applyFilters();});}
 
-/* CLEAR */
+/* CLEAR ACTION */
 clearBtn.addEventListener('click', () => {activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false;
 toggles.forEach(t => t.classList.remove('active'));
 if (reverseBtn) reverseBtn.classList.remove('active');
 if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
 clearHighlights(); applyFilters();});})();
 
+/* TABLE OF CONTENTS TOGGLE */
 (function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
 if (!tocToggle || !tocWrapper) return;
 tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
 
-
+/* MITRE ATT&CK NAVIGATOR */
 (function () {const link = document.getElementById('copyNavigatorPath');
 const status = document.getElementById('copyStatus');
 if (!link || !navigator.clipboard) return;
@@ -469,23 +461,22 @@ setTimeout(() => status.textContent = '', 2000);},
 () => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✖ failed'));
 setTimeout(() => status.textContent = '', 2000);});});})();
 
-
+/* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD */
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
 if (!pre) return;
 const clone = pre.cloneNode(true); const badge = clone.querySelector('.copy-badge'); if (badge) badge.remove();
 const text = clone.innerText.trim();
-
 if (!text) return;
 navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
-
 function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
 if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
-
 badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 
+/* DECODE RULE FOR EXPORT */
 function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
 
+/* EXPORT RULE(S) */
 (function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
 
 (function () {document.addEventListener('click', function (e) {if (e.target.closest('.export-rule-btn')) return;
@@ -515,6 +506,7 @@ function sanitize(name) {return (name || 'rule')
 .replace(/[^a-z0-9]/gi, '_')
 .toLowerCase();}})();
 
+/* RULE MARKDOWN CREATION */
 function buildMarkdown(rule) {const p = rule.properties || {};
 function val(v) {if (v === null || v === undefined) return "";
 if (Array.isArray(v)) return v.join(', ');
@@ -564,14 +556,15 @@ val(p.description),'',
 '**kind :** ' + rule.kind,'',
 '* * *'].join('\n');}
 
+/* RULE MARKDOWN COPY TO CLIPBOARD */
 function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
 if (!badge) {badge = document.createElement('div'); badge.className = 'props-copy-badge'; badge.textContent = '✔ Markdown copied'; cell.appendChild(badge);}
 badge.style.opacity = '1';
 setTimeout(() => {badge.style.opacity = '0';}, 1200);}
 
-
 function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
 
+/* EXPORT ALL VISIBLE RULES */
 (function () {const btn = document.getElementById('exportVisibleRules');
 if (!btn) return;
 
@@ -596,36 +589,27 @@ downloadJson(armTemplate, 'sentinel_rules_export_' + rows.length + '.json');}
 catch (err) {console.error('Bulk export failed:', err);
 alert('Failed to export visible rules. See console for details.');}});})();
 
-
+/* UPDATE TABLE OF CONTENTS */
 function syncTocWithVisibleRows() {const visibleIds = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
 .filter(r => r.offsetParent !== null)
 .map(r => r.id));
-
 document.querySelectorAll('.toc li[data-target]').forEach(el => {const target = el.dataset.target;
 if (!target) return;
 el.hidden = !visibleIds.has(target);});}
 
-
-/* Download */
+/* DOWNLOAD RULE */
 function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{type: 'application/json'});
 const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
 
-
-/* Highlight search terms */
+/* HIGHLIGHT SEARCH TERMS */
 function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
-
 function highlightMatches(regex) {if (!regex) return; 
 const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
 .filter(r => r.style.display !== 'none');
-
-// remove old highlights
 rows.forEach(row => {row.querySelectorAll('.highlight').forEach(el => {el.replaceWith(document.createTextNode(el.textContent));});
-
 const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT); const textNodes = []; let node;
 while (node = walker.nextNode()) {if (node.nodeValue && node.nodeValue.trim()) {textNodes.push(node);}}
-
 textNodes.forEach(textNode => {const source = textNode.nodeValue; const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g'; const r = new RegExp(regex.source, flags);
-
 let match; let lastIndex = 0; const frag = document.createDocumentFragment();
 while ((match = r.exec(source)) !== null) {const start = match.index; const end = start + match[0].length;
 if (start > lastIndex) {frag.appendChild(document.createTextNode(source.slice(lastIndex, start)));}
@@ -634,11 +618,7 @@ if (match.index === r.lastIndex) r.lastIndex++;}
 if (lastIndex < source.length) {frag.appendChild(document.createTextNode(source.slice(lastIndex)));}
 textNode.replaceWith(frag);});});}
 
-
-function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
-while (current = walker.nextNode()) {callback(current);}}
-
-/* Search function */
+/* TEXT SEARCH */
 function showFilterModal() {const existing = document.getElementById('filterOverlay');
 if (existing) existing.remove();
 return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.innerHTML = '<div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />';
@@ -657,4 +637,5 @@ excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
+
 
