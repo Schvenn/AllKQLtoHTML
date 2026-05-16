@@ -130,7 +130,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/15/2026 @ 10:41:01 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.9)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/16/2026 @ 10:56:08 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.9)</span>
 
 <button id="themeToggle" title="Toggle light/dark mode">🌙</button>
 <div id="mitrePanel"><div id="mitreTab"><img
@@ -621,8 +621,9 @@ textNode.replaceWith(frag);});});}
 /* TEXT SEARCH */
 function showFilterModal() {const existing = document.getElementById('filterOverlay');
 if (existing) existing.remove();
-return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.innerHTML = '<div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />';
-overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); includeInput.focus();
+return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.style.position = 'relative';
+
+box.innerHTML = '<div id="closeFilterModal" style="position:absolute; top:8px; right:12px; cursor:pointer; font-size:18px; color:#aaa;">✕</div><div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />'; overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); var closeButton = box.querySelector('#closeFilterModal'); includeInput.focus();
 
 function cleanup(result) {document.removeEventListener('keydown', escHandler); document.body.removeChild(overlay); resolve(result);}
 
@@ -630,12 +631,648 @@ function submit() {cleanup({include: includeInput.value, exclude: excludeInput.v
 
 function escHandler(e) {if (e.key === 'Escape') {cleanup(null);}}
 
-document.addEventListener('keydown', escHandler);
-includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();};
-excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
+document.addEventListener('keydown', escHandler); closeButton.onclick = function () {cleanup(null);}; includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();}; excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
 </body></html>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Azure Sentinel Analytics Rules</title>
+
+<style>
+:root {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #995599; --link-hover: #ff0000; --link-visited: #6b84c4; --link-active: #44ff44;}
+
+body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
+
+#mitrePanel {position: fixed; top: 70px; right: -225px; width: 260px; height: auto; display: flex; align-items: center; z-index: 1000; transition: right 0.3s ease;}
+#mitrePanel:hover {right: 0px; padding-right: 0px;}
+#mitreTab {width: 44px; height: 44px; min-width: 44px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;}
+#mitreTab img {width: 24px; height: 24px; border-radius: 15%;}
+#mitreContent {margin-left: 0px; padding: 10px 12px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 13px; line-height: 1.4;}
+#mitreContent a {font-weight: bold; color: var(--link-normal);}
+#mitreContent a:hover {color: var(--red); text-decoration: underline;}
+
+#exportVisibleRules {background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; font-size: 13px;}
+#exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
+#searchCriteriaValue {white-space: pre-line;}
+
+#filterInputBox {width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px;}
+
+table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
+th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
+th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
+tr:nth-child(even) td {background: var(--row-even);}
+tr:hover td {background: var(--row-hover);}
+
+td.rulename .description a {display: inline; word-break: break-all;}
+td.rulename {position: relative; cursor: pointer;}
+td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease;}
+td.rulename:hover::after {opacity: 1;}
+
+td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
+td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
+td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none;}
+td.query pre:hover::after {opacity: 1;}
+.copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
+
+td.props {position: relative;}
+.export-rule-btn {position: absolute; top: 6px; right: 6px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; font-size: 14px; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 2;}
+td.props:hover .export-rule-btn {opacity: 1;}
+.export-rule-btn:hover {background: var(--row-hover);}
+.export-rule-btn:active {transform: scale(0.95);}
+.props-content, .kv .val {word-break: break-word; overflow-wrap: anywhere;}
+
+.props-copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
+
+.highlight {background-color: #ff0; color: #000; border-radius: 2px; padding: 0; margin: 0;}
+:root[data-theme="dark"] .highlight {background-color: #ff0; color: #000;}
+
+pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
+
+.stats-table {width: auto; table-layout: auto; border-collapse: separate; background: none;}
+.stats-table td {border: none; padding-right: 24px; vertical-align: top; white-space: nowrap;}
+.stats-table tr:hover td {background: unset;}
+.hidden {visibility: hidden; pointer-events: none;}
+
+.stats-left span {line-height: 1.3;}
+.stats-middle span {line-height: 1.3;}
+.stat-green {color: var(--green);}
+.stat-red {color: var(--red);}
+.stat-gray {color: #888;}
+.stat-muted {color: var(--text-muted);}
+
+.filter-header {font-weight: bold; display: block; cursor: default; line-height: 1.3;}
+.reverse-filter {color: #666;}
+.reverse-filter.active {font-weight: bold; font-style: italic; text-decoration: underline;}
+.clear-filters {margin-top: 1px; display: block; color: var(--text-muted);}
+.clear-filters:hover {color: var(--text-main);}
+
+.sev-info {color: var(--text-main);}
+.sev-low {color: #ff8c00;}
+.sev-medium {color: var(--yellow);}
+.sev-high {color: var(--red);}
+.stat-yellow {color: var(--yellow);}
+
+.toggle {cursor: pointer; user-select: none;}
+.toggle:hover {text-decoration: underline; cursor: pointer;}
+.toggle.active {font-weight: bold; font-style: italic; text-decoration: none;}
+.toggle:hover.active {text-decoration: underline;}
+
+.severity-donut {position: relative; width: 120px; height: 120px; margin-top: 6px;}
+.donut {position: relative; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ffffff 0deg 45deg, #ff8c00 45deg 135deg,#ffd166 135deg 260deg, #d32f2f 260deg 360deg);}
+.donut::before {content: ""; position: absolute; inset: 30%; background: var(--bg-panel); border-radius: 50%;}
+.donut-label {position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; text-align: center; color: var(--text-muted); pointer-events: none;}
+
+.kv {margin-bottom: 4px;}
+.kv .val {margin-left: 6px; color: var(--text-muted);}
+
+.toc-toggle {cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;}
+.toc-arrow {font-size: 0.9em; transition: transform 0.2s ease;}
+.toc-collapsed .toc-arrow {transform: rotate(-900deg);}
+.toc-collapsed #tocContent {display: none;}
+.toc ul {column-count: 3; column-gap: 30px;}
+
+.enabled-true {font-size: 16px; color: var(--green); font-weight: bold;}
+.enabled-false {font-size: 16px; color: var(--red); font-weight: bold;}
+
+.template-version {font-size: 13px; color: var(--text-muted);}
+
+.description {font-size: 16px; color: var(--text-muted); display: inline-block; max-width: 100%; overflow-wrap: anywhere; word-break: break-word;}
+.description a {word-break: break-all; overflow-wrap: anywhere;}
+
+#backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #064; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 1000;}
+#backToTop:hover {background-color: #0a6;}
+
+a {text-decoration: none; word-break: break-all; overflow-wrap: anywhere;}
+a:visited {color: var(--link-visited);}
+a:hover {color: var(--red); text-decoration: underline;}
+a:active {color: var(--link-active); text-decoration: underline;}
+
+a.enabled-false {text-decoration: none;}
+a.enabled-false:visited {color: #bb4444}
+a.enabled-false:hover {text-decoration: underline;}
+a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
+
+#themeToggle {position: fixed; top: 20px; right: 20px; padding: 6px 10px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; z-index: 1001;}
+
+:root[data-theme="light"] {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #0000FF; --link-hover: #ff0000; --link-visited: #000088; --link-active: #009900; color-scheme: light;}
+
+:root[data-theme="dark"] {--bg-main: #0e0e0e; --bg-panel: #141414; --bg-header: #1f1f1f; --bg-code: #161616; --border-main: #2a2a2a; --text-main: #e6e6e6; --text-muted: #aaa; --green: #6ddf7c; --red: #ff6b6b; --yellow: #ffd166; --row-even: #222222; --row-hover: #303055; --link-normal: #aabbee; --link-hover: #995599; --link-visited: #6666bb; --link-active: #ffff00; color-scheme: dark;}
+</style>
+
+<meta name="color-scheme" content="light dark">
+</head>
+
+<body>
+<h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/16/2026 @ 10:56:08 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v4.9)</span>
+
+<button id="themeToggle" title="Toggle light/dark mode">🌙</button>
+<div id="mitrePanel"><div id="mitreTab"><img
+src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUIWKUAU6MAVaRvkcEOXKddhbs9cbFLerX///+Rqs4AUaK5yd8ATaAAUKKLpcvr8PYARp6asdLe5vAASJ9VgLjx9fkASp/C0OPJ1ud5mMSpvNgATqH3+vzS3esAQpyAnsdwksEdYqql8pYrAAAA80lEQVR4AWIYQABojqwSJYRhAEjlLYNL1p37X/I1xW+w81OLDMEYM2+tMXb/6Jzz4878OXfYvtoUyPK49UBRbh6rGmjauO2AXjaPZUHgqMXkROC8eZSewOWsHVG2TUsi4UauKDez+hyAqKQ6yv2xPOY3eL5UKepc4bU2fdyhd6r0PoWHDzxX3fMLircqHYFvCvjFSJ5Qt8VYkbMBnJl9BiDNJ6t7KQ101ezjgEfS9tMnlhe4zkaq2Ms4Q/o2qTIVn32u46gNgTpPrGrNQu0J6tDjfAG0VzUPOuB5koa9PT5P8WepUagwIiI2aouUYyMRk/wg/29jDlzI7K5BAAAAAElFTkSuQmCC" alt="MITRE ATT&CK"/></div>
+
+<div id="mitreContent"><p><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank" rel="noopener noreferrer">MITRE ATT&amp;CK Navigator</a><br><br>
+Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>
+<span style="font-size:12px; color:var(--text-muted);">(Use in “Open Existing Layer”)</span></p></div></div>
+
+<table class="stats-table" aria-hidden="false">
+<tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
+<span class="stat-green">Rule Count: 3</span><br>
+<span class="stat-red toggle" data-filter="disabled">Disabled Rules: 1</span><br>
+<span class="stat-yellow toggle" data-filter="nrt">NRT Rules: 0</span><br>
+<span class="stat-gray toggle" data-filter="template">Built from templates: 0</span><br><br>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+F)</span></span></td>
+
+<td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
+<span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: 1</span><br>
+<span class="sev-low toggle" data-filter="sev-low">🟠 Low: 1</span><br>
+<span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: 0</span><br>
+<span class="sev-high toggle" data-filter="sev-high">🔴 High: 1</span></strong><br><br>
+<span id="visibleRuleCount" class="stat-muted"> Visible Rules: 3</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
+<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">3<br>Rules</div></div></td>
+
+<td class="stats-right">
+<span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
+<span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
+<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+Z)</span></span></strong><br>
+
+<div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
+
+<td style="white-space: normal; border-radius: 20px; background: url('https://www.transparenttextures.com/patterns/dust.png'), #4d3f22;"><h1 style="color: lime;">This page is a sample of the output generated by the AllKQLtoHTML PowerShell utility.</h1><h3 style="color: white;">The Sentinel rules on this page were designed by me and are free to use in your own environment. All three have proven to be very effective in providing security protection in multiple corporate environments.</h3></td>
+</td>
+
+</tr></table>
+
+<div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
+<div id="tocContent" class="toc"><ul><li data-target='Curl_downloading_a_script_file'><a href='#Curl_downloading_a_script_file'>Curl downloading a script file</a></li>
+<li data-target='Multiple_network_discovery_commands_run_in_a_short_period_of_time'><a href='#Multiple_network_discovery_commands_run_in_a_short_period_of_time'>Multiple network discovery commands run in a short period of time</a></li>
+<li data-target='Suspicious_Remote_Access_Tool_activity'><a href='#Suspicious_Remote_Access_Tool_activity' class='enabled-false'>Suspicious Remote Access Tool activity</a></li>
+</ul></div></div><br>
+
+<table id="rulesTable">
+<colgroup><col style="width:15%;"><col style="width:42.5%;"><col style="width:42.5%;"></colgroup>
+
+<thead>
+<tr><th>Rule Name</th><th>Query Logic</th><th>Properties</th></tr>
+</thead>
+
+<tbody>
+<tr id="Curl_downloading_a_script_file" data-enabled="True" data-kind="Scheduled" data-severity="High" data-template-version="" data-rule-json="eyJuYW1lIjoiNzZiNTQ5MzgtNTJhYS00YWIxLWE0ODctYTRmNTVkNzQ3MjNjIiwibG9jYXRpb24iOiJnbG9iYWwiLCJraW5kIjoiU2NoZWR1bGVkIiwicHJvcGVydGllcyI6eyJkaXNwbGF5TmFtZSI6IkN1cmwgZG93bmxvYWRpbmcgYSBzY3JpcHQgZmlsZSIsImRlc2NyaXB0aW9uIjoiQ2FwdHVyZXMgY3VybCBhY3Rpdml0eSB0aGF0IGludm9sdmVzIGRvd25sb2FkZWQgZXhlY3V0YWJsZSBzY3JpcHQgZmlsZXMsIHdoaWNoIGlzIHVudXN1YWwgaW4gYW55IGNvcnBvcmF0ZSBlbnZpcm9ubWVudC4iLCJlbmFibGVkIjp0cnVlLCJzZXZlcml0eSI6IkhpZ2giLCJxdWVyeSI6Ii8vIEN1cmwgZG93bG9hZGluZyBhIHNjcmlwdCBmaWxlLlxyXG5sZXQgU2NyaXB0UmVnZXggPSBAXCJcXC4oP2kpKFBTW0RNXT8xfEJBVHxDTUR8VkJbRVNdfEpTRT98V1NbRkhdfEhUQXxQWXxSQnxQMXwoQkF8S3xaKT9TSHxQSFApKFxcV3wkKVwiO1xyXG51bmlvbihTZWN1cml0eUV2ZW50XHJcbnwgd2hlcmUgRXZlbnRJRCA9PSA0Njg4IGFuZCAoTmV3UHJvY2Vzc05hbWUgZW5kc3dpdGggQFwiXFxjdXJsLmV4ZVwiIG9yIENvbW1hbmRMaW5lIGhhcyBcImN1cmwgXCIpIGFuZCBDb21tYW5kTGluZSBtYXRjaGVzIHJlZ2V4IFNjcmlwdFJlZ2V4XHJcbnwgcHJvamVjdCBUaW1lR2VuZXJhdGVkLCBEZXZpY2UgPSBDb21wdXRlciwgQWNjb3VudCA9IFN1YmplY3RVc2VyTmFtZSwgUGFyZW50UHJvY2VzcyA9IFBhcmVudFByb2Nlc3NOYW1lLCBQcm9jZXNzID0gTmV3UHJvY2Vzc05hbWUsIENvbW1hbmRMaW5lID0gQ29tbWFuZExpbmUsIFNvdXJjZSA9IFwiU2VjdXJpdHlFdmVudFwiKSxcclxuKERldmljZVByb2Nlc3NFdmVudHNcclxufCB3aGVyZSAoRmlsZU5hbWUgPT0gXCJjdXJsLmV4ZVwiIG9yIFByb2Nlc3NDb21tYW5kTGluZSBoYXMgXCJjdXJsIFwiKSBhbmQgUHJvY2Vzc0NvbW1hbmRMaW5lIG1hdGNoZXMgcmVnZXggU2NyaXB0UmVnZXhcclxufCBwcm9qZWN0IFRpbWVHZW5lcmF0ZWQsIERldmljZSA9IERldmljZU5hbWUsIEFjY291bnQgPSBBY2NvdW50TmFtZSwgUGFyZW50UHJvY2VzcyA9IEluaXRpYXRpbmdQcm9jZXNzUGFyZW50RmlsZU5hbWUsIFByb2Nlc3MgPSBGaWxlTmFtZSwgQ29tbWFuZExpbmUgPSBQcm9jZXNzQ29tbWFuZExpbmUsIFNvdXJjZSA9IFwiRGV2aWNlUHJvY2Vzc0V2ZW50c1wiKVxyXG58IG9yZGVyIGJ5IFRpbWVHZW5lcmF0ZWQgZGVzYyIsInF1ZXJ5RnJlcXVlbmN5IjoiUFQxSCIsInF1ZXJ5UGVyaW9kIjoiUFQxSCIsInRyaWdnZXJPcGVyYXRvciI6IkdyZWF0ZXJUaGFuIiwidHJpZ2dlclRocmVzaG9sZCI6MCwic3VwcHJlc3Npb25EdXJhdGlvbiI6IlBUNUgiLCJzdXBwcmVzc2lvbkVuYWJsZWQiOmZhbHNlLCJ0YWN0aWNzIjpbIkNvbW1hbmRBbmRDb250cm9sIiwiRXhlY3V0aW9uIl0sInRlY2huaXF1ZXMiOlsiVDEwNTkiLCJUMTIwNCJdLCJzdWJUZWNobmlxdWVzIjpbIlQxMjA0LjAwMiIsIlQxMDU5LjAwMSIsIlQxMDU5LjAwMyIsIlQxMDU5LjAwNCIsIlQxMDU5LjAwNSIsIlQxMDU5LjAwNiIsIlQxMDU5LjAwNyJdLCJpbmNpZGVudENvbmZpZ3VyYXRpb24iOnsiY3JlYXRlSW5jaWRlbnQiOnRydWUsImdyb3VwaW5nQ29uZmlndXJhdGlvbiI6eyJlbmFibGVkIjpmYWxzZSwicmVvcGVuQ2xvc2VkSW5jaWRlbnQiOmZhbHNlLCJsb29rYmFja0R1cmF0aW9uIjoiUFQ1SCIsIm1hdGNoaW5nTWV0aG9kIjoiQWxsRW50aXRpZXMiLCJncm91cEJ5RW50aXRpZXMiOltdLCJncm91cEJ5QWxlcnREZXRhaWxzIjpbXSwiZ3JvdXBCeUN1c3RvbURldGFpbHMiOltdfX0sImV2ZW50R3JvdXBpbmdTZXR0aW5ncyI6eyJhZ2dyZWdhdGlvbktpbmQiOiJTaW5nbGVBbGVydCJ9LCJlbnRpdHlNYXBwaW5ncyI6W3siZW50aXR5VHlwZSI6IkFjY291bnQiLCJmaWVsZE1hcHBpbmdzIjpbeyJpZGVudGlmaWVyIjoiTmFtZSIsImNvbHVtbk5hbWUiOiJBY2NvdW50In1dfSx7ImVudGl0eVR5cGUiOiJGaWxlIiwiZmllbGRNYXBwaW5ncyI6W3siaWRlbnRpZmllciI6Ik5hbWUiLCJjb2x1bW5OYW1lIjoiUHJvY2VzcyJ9XX0seyJlbnRpdHlUeXBlIjoiUHJvY2VzcyIsImZpZWxkTWFwcGluZ3MiOlt7ImlkZW50aWZpZXIiOiJDb21tYW5kTGluZSIsImNvbHVtbk5hbWUiOiJDb21tYW5kTGluZSJ9XX1dLCJpZCI6Ii9NaWNyb3NvZnQuU2VjdXJpdHlJbnNpZ2h0cy9hbGVydFJ1bGVzLzc2YjU0OTM4LTUyYWEtNGFiMS1hNDg3LWE0ZjU1ZDc0NzIzYyIsImtpbmQiOiJTY2hlZHVsZWQifX0=">
+
+<td class="rulename"><strong>Curl downloading a script file</strong><br><br>
+<span class="description">Captures curl activity that involves downloaded executable script files, which is unusual in any corporate environment.</span><br><br>
+<span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
+<span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>
+<br>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
+</td>
+<td class="query"><pre>// Curl dowloading a script file.
+let ScriptRegex = @"\.(?i)(PS[DM]?1|BAT|CMD|VB[ES]|JSE?|WS[FH]|HTA|PY|RB|P1|(BA|K|Z)?SH|PHP)(\W|$)";
+union(SecurityEvent
+| where EventID == 4688 and (NewProcessName endswith @"\curl.exe" or CommandLine has "curl ") and CommandLine matches regex ScriptRegex
+| project TimeGenerated, Device = Computer, Account = SubjectUserName, ParentProcess = ParentProcessName, Process = NewProcessName, CommandLine = CommandLine, Source = "SecurityEvent"),
+(DeviceProcessEvents
+| where (FileName == "curl.exe" or ProcessCommandLine has "curl ") and ProcessCommandLine matches regex ScriptRegex
+| project TimeGenerated, Device = DeviceName, Account = AccountName, ParentProcess = InitiatingProcessParentFileName, Process = FileName, CommandLine = ProcessCommandLine, Source = "DeviceProcessEvents")
+| order by TimeGenerated desc</pre></td>
+<td class="props"><div class="props-content"><div class='kv'><strong>name :</strong><span class='val'> 76b54938-52aa-4ab1-a487-a4f55d74723c</span></div>
+<div class='kv'><strong>queryFrequency :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>queryPeriod :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>triggerOperator :</strong><span class='val'> GreaterThan</span></div>
+<div class='kv'><strong>triggerThreshold :</strong><span class='val'> 0</span></div>
+<div class='kv'><strong>suppressionDuration :</strong><span class='val'> PT5H</span></div>
+<div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
+<div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
+<div class='kv'><strong>tactics :</strong><span class='val'> CommandAndControl, Execution</span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> T1059, T1204</span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> T1204.002, T1059.001, T1059.003, T1059.004, T1059.005, T1059.006, T1059.007</span></div>
+<div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
+<div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
+<div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
+<div class='kv'><strong>alertDetailsOverride :</strong><span class='val'> </span></div>
+<div class='kv'><strong>customDetails :</strong><span class='val'> </span></div>
+<div class='kv'><strong>sentinelEntitiesMappings :</strong><span class='val'> </span></div>
+<div class='kv'><strong>entityMappings :</strong><span class='val'> @{entityType=Account; fieldMappings=System.Object[]}, @{entityType=File; fieldMappings=System.Object[]}, @{entityType=Process; fieldMappings=System.Object[]}</span></div>
+<div class='kv'><strong>id :</strong><span class='val'> /Microsoft.SecurityInsights/alertRules/76b54938-52aa-4ab1-a487-a4f55d74723c</span></div>
+<div class='kv'><strong>kind :</strong><span class='val'> Scheduled</span></div>
+</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
+</tr><tr id="Multiple_network_discovery_commands_run_in_a_short_period_of_time" data-enabled="True" data-kind="Scheduled" data-severity="Low" data-template-version="" data-rule-json="eyJuYW1lIjoiNDA4OWFhYjUtYzUzNy00NjJmLWExNzEtZTczOGQzNGVlNzJlIiwibG9jYXRpb24iOiJnbG9iYWwiLCJraW5kIjoiU2NoZWR1bGVkIiwicHJvcGVydGllcyI6eyJkaXNwbGF5TmFtZSI6Ik11bHRpcGxlIG5ldHdvcmsgZGlzY292ZXJ5IGNvbW1hbmRzIHJ1biBpbiBhIHNob3J0IHBlcmlvZCBvZiB0aW1lIiwiZGVzY3JpcHRpb24iOiJEZXRlY3RzIG11bHRpcGxlIExPTEJpbiBhbmQgUG93ZXJTaGVsbCBjb21tYW5kcyB0aGF0IGF0dGFja2VycyBmcmVxdWVudGx5IHVzZSB0byBwZXJmb3JtIHJlY29ubmFpc3NhbmNlIG9uIGEgbmV0d29yay4iLCJlbmFibGVkIjp0cnVlLCJzZXZlcml0eSI6IkxvdyIsInF1ZXJ5IjoiLy8gRGV0ZWN0IG11bHRpcGxlIG5ldHdvcmsgZGlzY292ZXJ5IGNvbW1hbmRzIHJ1biBvbiBhIHNpbmdsZSBob3N0LCBieSBhIHNpbmdsZSB1c2VyLCB3aXRoaW4gYSBzaG9ydCBwZXJpb2Qgb2YgdGltZTsgZXhjbHVkZXMgY29tbW9uIGxlZ2l0aW1hdGUgcGF0dGVybnMgYW5kIHN5c3RlbSBhY2NvdW50IGFjdGl2aXR5LlxyXG5sZXQgVGltZVdpbmRvdyA9IDEwbTtcclxubGV0IERpc2NvdmVyeVRvb2xzID0gZHluYW1pYyhbXCJuZXQuZXhlXCIsIFwibmV0MS5leGVcIiwgXCJpcGNvbmZpZy5leGVcIiwgXCJob3N0bmFtZS5leGVcIiwgXCJ3aG9hbWkuZXhlXCIsIFwibmx0ZXN0LmV4ZVwiLCBcIm5idHN0YXQuZXhlXCIsIFwiYXJwLmV4ZVwiLCBcInJvdXRlLmV4ZVwiLCBcInF1c2VyLmV4ZVwiLCBcInF1ZXJ5LmV4ZVwiLCBcInF3aW5zdGEuZXhlXCIsIFwicGluZy5leGVcIiwgXCJ0cmFjZXJ0LmV4ZVwiLCBcIm5ldHNoLmV4ZVwiLCBcImRzcXVlcnkuZXhlXCIsIFwiZHNnZXQuZXhlXCIsIFwid21pYy5leGVcIiwgXCJuc2xvb2t1cC5leGVcIiwgXCJ3aG9pcy5leGVcIl0pO1xyXG5sZXQgUG93ZXJTaGVsbERpc2NvdmVyeVRlcm1zID0gZHluYW1pYyhbXCJnZXQtbmV0aXBjb25maWd1cmF0aW9uXCIsIFwiZ2V0LW5ldGlwYWRkcmVzc1wiLCBcImdldC1uZXRyb3V0ZVwiLCBcImdldC1uZXR0Y3Bjb25uZWN0aW9uXCIsIFwiZ2V0LW5ldG5laWdoYm9yXCIsIFwiZ2V0LW5ldGFkYXB0ZXJcIiwgXCJnZXQtZG5zY2xpZW50c2VydmVyYWRkcmVzc1wiLCBcInJlc29sdmUtZG5zbmFtZVwiLCBcInRlc3QtY29ubmVjdGlvblwiLCBcImdldC1hZGNvbXB1dGVyXCIsIFwiZ2V0LWFkdXNlclwiLCBcImdldC1hZGRvbWFpblwiLCBcImdldC1hZGZvcmVzdFwiLCBcImdldC1zbWJjb25uZWN0aW9uXCIsIFwiZ2V0LXNtYnNoYXJlXCIsIFwiZ2V0LWxvY2FsZ3JvdXBcIiwgXCJnZXQtbG9jYWx1c2VyXCIsIFwiZ2V0LWNpbWluc3RhbmNlIHdpbjMyX25ldHdvcmthZGFwdGVyY29uZmlndXJhdGlvblwiXSk7XHJcbmxldCBTZWN1cml0eTQ2ODggPSBTZWN1cml0eUV2ZW50XHJcbnwgd2hlcmUgRXZlbnRJRCA9PSA0Njg4XHJcbnwgZXh0ZW5kIFByb2Nlc3NOYW1lID0gdG9sb3dlcih0b3N0cmluZyhOZXdQcm9jZXNzTmFtZSkpLCBDb21tYW5kTGluZSA9IHRvbG93ZXIodG9zdHJpbmcoQ29tbWFuZExpbmUpKSwgQWNjb3VudCA9IHN0cmNhdChTdWJqZWN0RG9tYWluTmFtZSwgXCJcXFxcXCIsIFN1YmplY3RVc2VyTmFtZSksIERldmljZSA9IENvbXB1dGVyO1xyXG5sZXQgTURFUHJvY2VzcyA9IERldmljZVByb2Nlc3NFdmVudHNcclxufCBleHRlbmQgUHJvY2Vzc05hbWUgPSB0b2xvd2VyKHRvc3RyaW5nKEZpbGVOYW1lKSksIENvbW1hbmRMaW5lID0gdG9sb3dlcih0b3N0cmluZyhQcm9jZXNzQ29tbWFuZExpbmUpKSwgQWNjb3VudCA9IHRvc3RyaW5nKEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUpLCBEZXZpY2UgPSBEZXZpY2VOYW1lO1xyXG5sZXQgQWxsUHJvY2Vzc2VzID0gdW5pb24gaXNmdXp6eT10cnVlIFNlY3VyaXR5NDY4OCwgTURFUHJvY2Vzc1xyXG58IGV4dGVuZCBOb3JtYWxpemVkUHJvY2VzcyA9IGNhc2UoUHJvY2Vzc05hbWUgZW5kc3dpdGggXCJuZXQxLmV4ZVwiLCBcIm5ldC5leGVcIiwgUHJvY2Vzc05hbWUpXHJcbnwgcHJvamVjdCBUaW1lR2VuZXJhdGVkLCBEZXZpY2UsIEFjY291bnQsIE5vcm1hbGl6ZWRQcm9jZXNzLCBDb21tYW5kTGluZTtcclxubGV0IERpc2NvdmVyeUV2ZW50cyA9IEFsbFByb2Nlc3Nlc1xyXG58IHdoZXJlIE5vcm1hbGl6ZWRQcm9jZXNzIGluIChEaXNjb3ZlcnlUb29scykgb3IgKE5vcm1hbGl6ZWRQcm9jZXNzIGluIChcInBvd2Vyc2hlbGwuZXhlXCIsXCJwb3dlcnNoZWxsX2lzZS5leGVcIiwgXCJwd3NoLmV4ZVwiKSBhbmQgQ29tbWFuZExpbmUgaGFzX2FueSAoUG93ZXJTaGVsbERpc2NvdmVyeVRlcm1zKSlcclxufCBleHRlbmQgRGlzY292ZXJ5VGVjaG5pcXVlID0gY2FzZShOb3JtYWxpemVkUHJvY2VzcyBpbiAoXCJwb3dlcnNoZWxsLmV4ZVwiLFwicG93ZXJzaGVsbF9pc2UuZXhlXCIsIFwicHdzaC5leGVcIiksIFwiUG93ZXJTaGVsbFwiLCBOb3JtYWxpemVkUHJvY2Vzcyk7XHJcbkRpc2NvdmVyeUV2ZW50c1xyXG58IHN1bW1hcml6ZSBEaXNjb3ZlcnlDb3VudCA9IGRjb3VudChEaXNjb3ZlcnlUZWNobmlxdWUpLCBUb29sc1VzZWQgPSBhcnJheV9zb3J0X2FzYyhtYWtlX3NldChEaXNjb3ZlcnlUZWNobmlxdWUpKSwgQ29tbWFuZHMgPSBtYWtlX3NldChDb21tYW5kTGluZSkgYnkgRGV2aWNlLCBBY2NvdW50LCBiaW4oVGltZUdlbmVyYXRlZCwgVGltZVdpbmRvdylcclxufCB3aGVyZSBub3QgKHNldF9oYXNfZWxlbWVudChUb29sc1VzZWQsIFwibmV0LmV4ZVwiKSBhbmQgc2V0X2hhc19lbGVtZW50KFRvb2xzVXNlZCwgXCJpcGNvbmZpZy5leGVcIikgYW5kIHNldF9oYXNfZWxlbWVudChUb29sc1VzZWQsIFwibmV0c2guZXhlXCIpIGFuZCBhcnJheV9sZW5ndGgoVG9vbHNVc2VkKSA9PSAzKSAvLyBOb3QgbmVjZXNzYXJ5IGlmIERpc2NvdmVyeUNvdW50IHNldCB0byA0IG9yIGhpZ2hlci5cclxufCB3aGVyZSBEaXNjb3ZlcnlDb3VudCA+IDMgYW5kIG5vdCAoQWNjb3VudCA9PSBcInN5c3RlbVwiIG9yIEFjY291bnQgZW5kc3dpdGggXCIkXCIpXHJcbnwgc29ydCBieSBUaW1lR2VuZXJhdGVkIGRlc2MiLCJxdWVyeUZyZXF1ZW5jeSI6IlBUMUgiLCJxdWVyeVBlcmlvZCI6IlBUMUgiLCJ0cmlnZ2VyT3BlcmF0b3IiOiJHcmVhdGVyVGhhbiIsInRyaWdnZXJUaHJlc2hvbGQiOjAsInN1cHByZXNzaW9uRHVyYXRpb24iOiJQVDVIIiwic3VwcHJlc3Npb25FbmFibGVkIjpmYWxzZSwidGFjdGljcyI6WyJEaXNjb3ZlcnkiXSwidGVjaG5pcXVlcyI6WyJUMTA4MiIsIlQxMDE2IiwiVDEwNDkiLCJUMTAxOCIsIlQxMDY5IiwiVDEwMzMiXSwic3ViVGVjaG5pcXVlcyI6WyJUMTA2OS4wMDEiXSwiaW5jaWRlbnRDb25maWd1cmF0aW9uIjp7ImNyZWF0ZUluY2lkZW50Ijp0cnVlLCJncm91cGluZ0NvbmZpZ3VyYXRpb24iOnsiZW5hYmxlZCI6ZmFsc2UsInJlb3BlbkNsb3NlZEluY2lkZW50IjpmYWxzZSwibG9va2JhY2tEdXJhdGlvbiI6IlBUNUgiLCJtYXRjaGluZ01ldGhvZCI6IkFsbEVudGl0aWVzIiwiZ3JvdXBCeUVudGl0aWVzIjpbXSwiZ3JvdXBCeUFsZXJ0RGV0YWlscyI6W10sImdyb3VwQnlDdXN0b21EZXRhaWxzIjpbXX19LCJldmVudEdyb3VwaW5nU2V0dGluZ3MiOnsiYWdncmVnYXRpb25LaW5kIjoiU2luZ2xlQWxlcnQifSwiYWxlcnREZXRhaWxzT3ZlcnJpZGUiOnsiYWxlcnREeW5hbWljUHJvcGVydGllcyI6W119LCJlbnRpdHlNYXBwaW5ncyI6W3siZW50aXR5VHlwZSI6IkFjY291bnQiLCJmaWVsZE1hcHBpbmdzIjpbeyJpZGVudGlmaWVyIjoiTmFtZSIsImNvbHVtbk5hbWUiOiJBY2NvdW50In1dfSx7ImVudGl0eVR5cGUiOiJIb3N0IiwiZmllbGRNYXBwaW5ncyI6W3siaWRlbnRpZmllciI6Ikhvc3ROYW1lIiwiY29sdW1uTmFtZSI6IkRldmljZSJ9XX1dLCJpZCI6Ii9NaWNyb3NvZnQuU2VjdXJpdHlJbnNpZ2h0cy9hbGVydFJ1bGVzLzQwODlhYWI1LWM1MzctNDYyZi1hMTcxLWU3MzhkMzRlZTcyZSIsImtpbmQiOiJTY2hlZHVsZWQifX0=">
+
+<td class="rulename"><strong>Multiple network discovery commands run in a short period of time</strong><br><br>
+<span class="description">Detects multiple LOLBin and PowerShell commands that attackers frequently use to perform reconnaissance on a network.</span><br><br>
+<span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
+<span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
+<br>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#multiple-network-discovery-commands-run-in-a-short-period-of-time' target='_blank'>📘 Playbook</a>
+</td>
+<td class="query"><pre>// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.
+let TimeWindow = 10m;
+let DiscoveryTools = dynamic(["net.exe", "net1.exe", "ipconfig.exe", "hostname.exe", "whoami.exe", "nltest.exe", "nbtstat.exe", "arp.exe", "route.exe", "quser.exe", "query.exe", "qwinsta.exe", "ping.exe", "tracert.exe", "netsh.exe", "dsquery.exe", "dsget.exe", "wmic.exe", "nslookup.exe", "whois.exe"]);
+let PowerShellDiscoveryTerms = dynamic(["get-netipconfiguration", "get-netipaddress", "get-netroute", "get-nettcpconnection", "get-netneighbor", "get-netadapter", "get-dnsclientserveraddress", "resolve-dnsname", "test-connection", "get-adcomputer", "get-aduser", "get-addomain", "get-adforest", "get-smbconnection", "get-smbshare", "get-localgroup", "get-localuser", "get-ciminstance win32_networkadapterconfiguration"]);
+let Security4688 = SecurityEvent
+| where EventID == 4688
+| extend ProcessName = tolower(tostring(NewProcessName)), CommandLine = tolower(tostring(CommandLine)), Account = strcat(SubjectDomainName, "\\", SubjectUserName), Device = Computer;
+let MDEProcess = DeviceProcessEvents
+| extend ProcessName = tolower(tostring(FileName)), CommandLine = tolower(tostring(ProcessCommandLine)), Account = tostring(InitiatingProcessAccountName), Device = DeviceName;
+let AllProcesses = union isfuzzy=true Security4688, MDEProcess
+| extend NormalizedProcess = case(ProcessName endswith "net1.exe", "net.exe", ProcessName)
+| project TimeGenerated, Device, Account, NormalizedProcess, CommandLine;
+let DiscoveryEvents = AllProcesses
+| where NormalizedProcess in (DiscoveryTools) or (NormalizedProcess in ("powershell.exe","powershell_ise.exe", "pwsh.exe") and CommandLine has_any (PowerShellDiscoveryTerms))
+| extend DiscoveryTechnique = case(NormalizedProcess in ("powershell.exe","powershell_ise.exe", "pwsh.exe"), "PowerShell", NormalizedProcess);
+DiscoveryEvents
+| summarize DiscoveryCount = dcount(DiscoveryTechnique), ToolsUsed = array_sort_asc(make_set(DiscoveryTechnique)), Commands = make_set(CommandLine) by Device, Account, bin(TimeGenerated, TimeWindow)
+| where not (set_has_element(ToolsUsed, "net.exe") and set_has_element(ToolsUsed, "ipconfig.exe") and set_has_element(ToolsUsed, "netsh.exe") and array_length(ToolsUsed) == 3) // Not necessary if DiscoveryCount set to 4 or higher.
+| where DiscoveryCount &gt; 3 and not (Account == "system" or Account endswith "$")
+| sort by TimeGenerated desc</pre></td>
+<td class="props"><div class="props-content"><div class='kv'><strong>name :</strong><span class='val'> 4089aab5-c537-462f-a171-e738d34ee72e</span></div>
+<div class='kv'><strong>queryFrequency :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>queryPeriod :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>triggerOperator :</strong><span class='val'> GreaterThan</span></div>
+<div class='kv'><strong>triggerThreshold :</strong><span class='val'> 0</span></div>
+<div class='kv'><strong>suppressionDuration :</strong><span class='val'> PT5H</span></div>
+<div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
+<div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
+<div class='kv'><strong>tactics :</strong><span class='val'> Discovery</span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> T1082, T1016, T1049, T1018, T1069, T1033</span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> T1069.001</span></div>
+<div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
+<div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
+<div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
+<div class='kv'><strong>alertDetailsOverride :</strong><span class='val'> {"alertDynamicProperties":[]}</span></div>
+<div class='kv'><strong>customDetails :</strong><span class='val'> </span></div>
+<div class='kv'><strong>sentinelEntitiesMappings :</strong><span class='val'> </span></div>
+<div class='kv'><strong>entityMappings :</strong><span class='val'> @{entityType=Account; fieldMappings=System.Object[]}, @{entityType=Host; fieldMappings=System.Object[]}</span></div>
+<div class='kv'><strong>id :</strong><span class='val'> /Microsoft.SecurityInsights/alertRules/4089aab5-c537-462f-a171-e738d34ee72e</span></div>
+<div class='kv'><strong>kind :</strong><span class='val'> Scheduled</span></div>
+</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
+</tr><tr id="Suspicious_Remote_Access_Tool_activity" data-enabled="False" data-kind="Scheduled" data-severity="Informational" data-template-version="" data-rule-json="eyJuYW1lIjoiMTUxMGEzNjAtMDliMC00MzcxLTlkNDktZWQ2YTQwODMxMTZhIiwibG9jYXRpb24iOiJnbG9iYWwiLCJraW5kIjoiU2NoZWR1bGVkIiwicHJvcGVydGllcyI6eyJkaXNwbGF5TmFtZSI6IlN1c3BpY2lvdXMgUmVtb3RlIEFjY2VzcyBUb29sIGFjdGl2aXR5IiwiZGVzY3JpcHRpb24iOiJEZXRlY3RzIGFueSBvZiBzZXZlcmFsIGtub3duIGxlZ2l0aW1hdGUgcmVtb3RlIGFjY2VzcyBhcHBsaWNhdGlvbnMgbWFraW5nIHN1Y2Nlc3NmdWwgcmVtb3RlIHBvcnQgY29ubmVjdGlvbnMuIiwiZW5hYmxlZCI6ZmFsc2UsInNldmVyaXR5IjoiSW5mb3JtYXRpb25hbCIsInF1ZXJ5IjoibGV0IFJlbW90ZUFjY2Vzc0V4ZWN1dGFibGVzID0gZHluYW1pYyhbXCJhZXJvYWRtaW4uZXhlXCIsIFwiYWdlbnQuZXhlXCIsIFwiYWdlbnRtb24uZXhlXCIsIFwiYW1teXkuZXhlXCIsIFwiYW55Y29ubmVjdC5leGVcIiwgXCJhbnlkZXNrLmV4ZVwiLCBcImFzc2lzdC5leGVcIiwgXCJhdGVyYWFnZW50LmV4ZVwiLCBcImJleW9uZHRydXN0LmV4ZVwiLCBcImJvbWdhci5leGVcIiwgXCJjaHJvbWUtcmVtb3RlLWRlc2t0b3AuZXhlXCIsIFxyXG5cImNpdHJpeC5leGVcIiwgXCJjbGllbnQuZXhlXCIsIFwiY29ubmVjdHdpc2UuZXhlXCIsIFwiY29udHJvbC5leGVcIiwgXCJkZXNrcmVlbi5leGVcIiwgXCJkd2FnZW50LmV4ZVwiLCBcImR3cmNjLmV4ZVwiLCBcImR3cmNzLmV4ZVwiLCBcImZvcnRpY2xpZW50LmV4ZVwiLCBcImdldHN1cHBvcnQuZXhlXCIsIFwiZ2xvYmFscHJvdGVjdC5leGVcIiwgXCJnbzJhc3Npc3QuZXhlXCIsIFwiaXNsbGlnaHQuZXhlXCIsIFwia2FzZXlhLmV4ZVwiLCBcclxuXCJsaXRldmlld2VyLmV4ZVwiLCBcImxvZ21laW4uZXhlXCIsIFwibWVzaGFnZW50LmV4ZVwiLCBcIm1zcmEuZXhlXCIsIFwibmNlbnRyYWwuZXhlXCIsIFwibm9tYWNoaW5lLmV4ZVwiLCBcIm54cGxheWVyLmV4ZVwiLCBcIm9wZW52cG4uZXhlXCIsIFwicGFyc2VjLmV4ZVwiLCBcInBjdmlzaXQuZXhlXCIsIFwicHVsc2UuZXhlXCIsIFwicHVsc2V3YXkuZXhlXCIsIFwicXVpY2thc3Npc3QuZXhlXCIsIFwicmRjbGllbnQuZXhlXCIsIFxyXG5cInJkcGNsaXAuZXhlXCIsIFwicmVhbHZuYy5leGVcIiwgXCJyZWNlaXZlci5leGVcIiwgXCJyZW1vdGVhc3Npc3QuZXhlXCIsIFwicmVtb3RlZGVza3RvcG1hbmFnZXIuZXhlXCIsIFwicmVtb3RlcGMuZXhlXCIsIFwicmVtb3RldXRpbGl0aWVzLmV4ZVwiLCBcInJlbW90ZXZpZXdlci5leGVcIiwgXCJybW1hZ2VudC5leGVcIiwgXCJydXN0ZGVzay5leGVcIiwgXCJydXRzZXJ2LmV4ZVwiLCBcInJ1dHZpZXcuZXhlXCIsIFxyXG5cInNjcmVlbmNvbm5lY3QuZXhlXCIsIFwic2hvd215cGMuZXhlXCIsIFwic29mdGV0aGVyLmV4ZVwiLCBcInNwbGFzaHRvcC5leGVcIiwgXCJzdXByZW1vLmV4ZVwiLCBcInN5bmNyby5leGVcIiwgXCJ0ZWFtdmlld2VyLmV4ZVwiLCBcInRlYW12aWV3ZXJfc2VydmljZS5leGVcIiwgXCJ0ZXJtc3J2LmV4ZVwiLCBcInRzY29uLmV4ZVwiLCBcInR2bnNlcnZlci5leGVcIiwgXCJ1bHRyYXZuYy5leGVcIiwgXCJ2aWV3ZXIuZXhlXCIsIFxyXG5cInZtY29ubmVjdC5leGVcIiwgXCJ2bmN2aWV3ZXIuZXhlXCIsIFwid2cuZXhlXCIsIFwid2ludm5jLmV4ZVwiLCBcIndpcmVndWFyZC5leGVcIiwgXCJ3b3Jrc3BhY2VzYXBwLmV4ZVwiLCBcInpvaG9hc3Npc3QuZXhlXCJdKTtcclxubGV0IENvbW1vblJlbW90ZUFjY2Vzc1Rvb2xzID0gZHluYW1pYyAoW1wibXNyZGMuZXhlXCIsIFwibXN0c2MuZXhlXCIsIFwicG93ZXJzaGVsbC5leGVcIiwgXCJwc2V4ZWMuZXhlXCIsIFwicHV0dHkuZXhlXCIsIFwicHdzaC5leGVcIiwgXCJzY3AuZXhlXCIsIFwic2Z0cC5leGVcIiwgXCJzc2guZXhlXCIsIFwic3NoZC5leGVcIiwgXCJ0ZWxuZXQuZXhlXCIsIFwid2lucm0uY21kXCIsIFwid2lucnMuZXhlXCIsIFwid2lucnNob3N0LmV4ZVwiLCBcclxuXCJ3aW5zY3AuZXhlXCIsIFwid21pYy5leGVcIiwgXCJtc3JhLmV4ZVwiLCBcInBsaW5rLmV4ZVwiXSk7XHJcbmxldCBQcml2aWxlZ2VkQWNjb3VudHMgPSBfR2V0V2F0Y2hsaXN0KCdQcml2aWxlZ2VkX0FjY291bnRzJykgfCBwcm9qZWN0IEFjY291bnQgPSB0b2xvd2VyKFNlYXJjaEtleSk7XHJcbkRldmljZU5ldHdvcmtFdmVudHNcclxufCB3aGVyZSBBY3Rpb25UeXBlID09IFwiQ29ubmVjdGlvblN1Y2Nlc3NcIiBhbmQgaXNub3RlbXB0eShSZW1vdGVQb3J0KSBhbmQgKEluaXRpYXRpbmdQcm9jZXNzRmlsZU5hbWUgaW4gKFJlbW90ZUFjY2Vzc0V4ZWN1dGFibGVzKSBvciAoSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSBpbiAoQ29tbW9uUmVtb3RlQWNjZXNzVG9vbHMpIGFuZCBub3QoSW5pdGlhdGluZ1Byb2Nlc3NBY2NvdW50TmFtZSBpbiAoXCJzeXN0ZW1cIiwgXCJsb2NhbCBzZXJ2aWNlXCIsIFwibmV0d29yayBzZXJ2aWNlXCIpIG9yIEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUgZW5kc3dpdGggXCIkXCIpKSlcclxufCB3aGVyZSBJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lICFpbiAoUHJpdmlsZWdlZEFjY291bnRzKVxyXG58IHByb2plY3QgVGltZUdlbmVyYXRlZCwgRGV2aWNlTmFtZSwgSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSwgUmVtb3RlSVAsIFJlbW90ZVBvcnQsIEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUiLCJxdWVyeUZyZXF1ZW5jeSI6IlBUMUgiLCJxdWVyeVBlcmlvZCI6IlBUMUgiLCJ0cmlnZ2VyT3BlcmF0b3IiOiJHcmVhdGVyVGhhbiIsInRyaWdnZXJUaHJlc2hvbGQiOjAsInN1cHByZXNzaW9uRHVyYXRpb24iOiJQVDVIIiwic3VwcHJlc3Npb25FbmFibGVkIjpmYWxzZSwidGFjdGljcyI6WyJDb21tYW5kQW5kQ29udHJvbCJdLCJ0ZWNobmlxdWVzIjpbIlQxMjE5Il0sImluY2lkZW50Q29uZmlndXJhdGlvbiI6eyJjcmVhdGVJbmNpZGVudCI6dHJ1ZSwiZ3JvdXBpbmdDb25maWd1cmF0aW9uIjp7ImVuYWJsZWQiOnRydWUsInJlb3BlbkNsb3NlZEluY2lkZW50IjpmYWxzZSwibG9va2JhY2tEdXJhdGlvbiI6IlBUNUgiLCJtYXRjaGluZ01ldGhvZCI6IkFsbEVudGl0aWVzIiwiZ3JvdXBCeUVudGl0aWVzIjpbXSwiZ3JvdXBCeUFsZXJ0RGV0YWlscyI6W10sImdyb3VwQnlDdXN0b21EZXRhaWxzIjpbXX19LCJldmVudEdyb3VwaW5nU2V0dGluZ3MiOnsiYWdncmVnYXRpb25LaW5kIjoiU2luZ2xlQWxlcnQifSwiZW50aXR5TWFwcGluZ3MiOlt7ImVudGl0eVR5cGUiOiJBY2NvdW50IiwiZmllbGRNYXBwaW5ncyI6W3siaWRlbnRpZmllciI6Ik5hbWUiLCJjb2x1bW5OYW1lIjoiSW5pdGlhdGluZ1Byb2Nlc3NBY2NvdW50TmFtZSJ9XX0seyJlbnRpdHlUeXBlIjoiRmlsZSIsImZpZWxkTWFwcGluZ3MiOlt7ImlkZW50aWZpZXIiOiJOYW1lIiwiY29sdW1uTmFtZSI6IkluaXRpYXRpbmdQcm9jZXNzRmlsZU5hbWUifV19XSwiaWQiOiIvTWljcm9zb2Z0LlNlY3VyaXR5SW5zaWdodHMvYWxlcnRSdWxlcy8xNTEwYTM2MC0wOWIwLTQzNzEtOWQ0OS1lZDZhNDA4MzExNmEiLCJraW5kIjoiU2NoZWR1bGVkIn19">
+
+<td class="rulename"><strong>Suspicious Remote Access Tool activity</strong><br><br>
+<span class="description">Detects any of several known legitimate remote access applications making successful remote port connections.</span><br><br>
+<span>Enabled: <span class='enabled-false'>❌ false (Disabled)</span></span><br>
+<span>Severity:</span> <span class='sev-info'><strong>⚪ Informational</strong></span>
+<br>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#suspicious-remote-access-tool-activity' target='_blank'>📘 Playbook</a>
+</td>
+<td class="query"><pre>let RemoteAccessExecutables = dynamic(["aeroadmin.exe", "agent.exe", "agentmon.exe", "ammyy.exe", "anyconnect.exe", "anydesk.exe", "assist.exe", "ateraagent.exe", "beyondtrust.exe", "bomgar.exe", "chrome-remote-desktop.exe", 
+"citrix.exe", "client.exe", "connectwise.exe", "control.exe", "deskreen.exe", "dwagent.exe", "dwrcc.exe", "dwrcs.exe", "forticlient.exe", "getsupport.exe", "globalprotect.exe", "go2assist.exe", "isllight.exe", "kaseya.exe", 
+"liteviewer.exe", "logmein.exe", "meshagent.exe", "msra.exe", "ncentral.exe", "nomachine.exe", "nxplayer.exe", "openvpn.exe", "parsec.exe", "pcvisit.exe", "pulse.exe", "pulseway.exe", "quickassist.exe", "rdclient.exe", 
+"rdpclip.exe", "realvnc.exe", "receiver.exe", "remoteassist.exe", "remotedesktopmanager.exe", "remotepc.exe", "remoteutilities.exe", "remoteviewer.exe", "rmmagent.exe", "rustdesk.exe", "rutserv.exe", "rutview.exe", 
+"screenconnect.exe", "showmypc.exe", "softether.exe", "splashtop.exe", "supremo.exe", "syncro.exe", "teamviewer.exe", "teamviewer_service.exe", "termsrv.exe", "tscon.exe", "tvnserver.exe", "ultravnc.exe", "viewer.exe", 
+"vmconnect.exe", "vncviewer.exe", "wg.exe", "winvnc.exe", "wireguard.exe", "workspacesapp.exe", "zohoassist.exe"]);
+let CommonRemoteAccessTools = dynamic (["msrdc.exe", "mstsc.exe", "powershell.exe", "psexec.exe", "putty.exe", "pwsh.exe", "scp.exe", "sftp.exe", "ssh.exe", "sshd.exe", "telnet.exe", "winrm.cmd", "winrs.exe", "winrshost.exe", 
+"winscp.exe", "wmic.exe", "msra.exe", "plink.exe"]);
+let PrivilegedAccounts = _GetWatchlist('Privileged_Accounts') | project Account = tolower(SearchKey);
+DeviceNetworkEvents
+| where ActionType == "ConnectionSuccess" and isnotempty(RemotePort) and (InitiatingProcessFileName in (RemoteAccessExecutables) or (InitiatingProcessFileName in (CommonRemoteAccessTools) and not(InitiatingProcessAccountName in ("system", "local service", "network service") or InitiatingProcessAccountName endswith "$")))
+| where InitiatingProcessAccountName !in (PrivilegedAccounts)
+| project TimeGenerated, DeviceName, InitiatingProcessFileName, RemoteIP, RemotePort, InitiatingProcessAccountName</pre></td>
+<td class="props"><div class="props-content"><div class='kv'><strong>name :</strong><span class='val'> 1510a360-09b0-4371-9d49-ed6a4083116a</span></div>
+<div class='kv'><strong>queryFrequency :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>queryPeriod :</strong><span class='val'> PT1H</span></div>
+<div class='kv'><strong>triggerOperator :</strong><span class='val'> GreaterThan</span></div>
+<div class='kv'><strong>triggerThreshold :</strong><span class='val'> 0</span></div>
+<div class='kv'><strong>suppressionDuration :</strong><span class='val'> PT5H</span></div>
+<div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
+<div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
+<div class='kv'><strong>tactics :</strong><span class='val'> CommandAndControl</span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> T1219</span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> </span></div>
+<div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
+<div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":true,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
+<div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
+<div class='kv'><strong>alertDetailsOverride :</strong><span class='val'> </span></div>
+<div class='kv'><strong>customDetails :</strong><span class='val'> </span></div>
+<div class='kv'><strong>sentinelEntitiesMappings :</strong><span class='val'> </span></div>
+<div class='kv'><strong>entityMappings :</strong><span class='val'> @{entityType=Account; fieldMappings=System.Object[]}, @{entityType=File; fieldMappings=System.Object[]}</span></div>
+<div class='kv'><strong>id :</strong><span class='val'> /Microsoft.SecurityInsights/alertRules/1510a360-09b0-4371-9d49-ed6a4083116a</span></div>
+<div class='kv'><strong>kind :</strong><span class='val'> Scheduled</span></div>
+</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
+</tr>
+</tbody>
+</table>
+
+<div id="backToTop" onclick="scrollToTop()">↑ Back to top ↑</div>
+
+<div id="filterModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999;">
+<div style="background:#1e1e1e; color:#fff; width:400px; max-width:90%; margin:10% auto; padding:20px; border-radius:10px; font-family:Arial;">
+<h3 style="margin-top:0;">Filter Rules</h3>
+<input id="filterInputBox" style="width:100%; padding:10px; font-size:14px;" placeholder="Enter search terms..." />
+<pre style="margin-top:10px; font-size:12px; color:#aaa;">~ is the AND operator
+| is the OR operator</pre></div></div>
+
+<script>
+function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
+function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
+const ease = 1 - Math.pow(1 - progress, 3);
+window.scrollTo(0, start * (1 - ease));
+if (progress < 1) {requestAnimationFrame(animateScroll);}}
+requestAnimationFrame(animateScroll);}
+
+window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
+if (window.scrollY > 300) {btn.style.display = 'block';}
+else {btn.style.display = 'none';}});
+
+(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;
+const root = document.documentElement;
+const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
+else {root.setAttribute('data-theme', 'dark');}
+function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';}
+toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
+updateIcon();})();
+
+(function () {const toggles = document.querySelectorAll('.toggle'); const searchBlock = document.getElementById('searchCriteriaBlock'); const searchValue = document.getElementById('searchCriteriaValue'); const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]'); const rows = document.querySelectorAll('#rulesTable tbody tr'); const clearBtn = document.getElementById('clearFilters'); const reverseBtn = document.getElementById('reverseFilters'); const filterHeader = document.getElementById('filterHeader'); const visibleCountEl = document.getElementById('visibleRuleCount'); const activeFilters = new Set(); let reverseMode = false; let includeFilter = null; let excludeFilter = null;
+
+/* CTRL+Z TO CLEAR FILTERS */
+document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {return;}
+e.preventDefault(); activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false; toggles.forEach(t => t.classList.remove('active')); 
+if (reverseBtn) reverseBtn.classList.remove('active');
+if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
+clearHighlights(); applyFilters();}});
+
+/* APPLY FILTERS */
+function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || includeFilter !== null || excludeFilter !== null;
+clearHighlights();
+if (!hasFilters) {rows.forEach(r => r.style.display = '');}
+
+/* SEVERITIES */
+else {rows.forEach(row => {let visible = true;
+activeFilters.forEach(filter => {switch (filter) {case 'disabled': if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
+case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
+case 'template': if (!row.dataset.templateVersion) visible = false; break;
+case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
+case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
+case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
+case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
+const text = row.textContent || '';
+
+/* INCLUDE FILTER (must match) */
+if (includeFilter && !includeFilter.test(text)) {visible = false;}
+/* EXCLUDE FILTER (must NOT match) */
+if (excludeFilter && excludeFilter.test(text)) {visible = false;}
+/* REVERSE FILTER */
+if (reverseMode) visible = !visible;
+row.style.display = visible ? '' : 'none';});}
+
+/* COUNT */
+if (visibleCountEl) {const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none').length; visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
+
+/* UI STATES */
+const hasActiveFilters = activeFilters.size > 0 || includeFilter !== null || excludeFilter !== null;
+if (hasActiveFilters) {clearBtn.classList.remove('hidden');
+if (reverseBtn) reverseBtn.classList.remove('hidden');
+if (filterHeader) filterHeader.classList.remove('hidden');}
+else {clearBtn.classList.add('hidden');
+if (reverseBtn) reverseBtn.classList.add('hidden');
+if (filterHeader) filterHeader.classList.add('hidden');}
+syncTocWithVisibleRows();
+if (includeFilter) {highlightMatches(includeFilter);}}
+
+/* SEARCH OPTION */
+const regexBtn = document.getElementById('regexFilterBtn');
+document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {e.preventDefault();
+if (regexBtn) regexBtn.click();}});
+if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
+if (!input) return;
+
+activeFilters.clear(); includeFilter = null; excludeFilter = null;
+clearHighlights();
+rows.forEach(r => r.style.display = '');
+
+/* INCLUDE REGEX */
+try {if (input.include && input.include.trim()) {includeFilter = new RegExp(input.include.trim(), "i");}
+
+/* EXCLUDE REGEX */
+const excludeText = (input.exclude || '').trim();
+if (excludeText.length > 0) {excludeFilter = new RegExp(excludeText, "i");}
+else {excludeFilter = null;}
+
+/* UI DISPLAY */
+if (searchBlock && searchValue) {let lines = [];
+if (input.include && input.include.trim()) {lines.push("INCLUDE: " + input.include.trim());}
+if (input.exclude && input.exclude.trim()) {lines.push("EXCLUDE: " + input.exclude.trim());}
+searchValue.textContent = lines.join("\n"); searchBlock.classList.remove('hidden');}
+
+applyFilters();}
+catch {alert('Invalid regular expression.');}});}
+
+/* FILTER TOGGLES */
+toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
+if (!filter) return;
+const isSeverity = filter.startsWith('sev-');
+if (activeFilters.has(filter)) { activeFilters.delete(filter); t.classList.remove('active');}
+else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.dataset.filter); st.classList.remove('active');});}
+activeFilters.add(filter); t.classList.add('active');}
+applyFilters();});});
+
+/* REVERSE TOGGLE */
+if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 &&
+!includeFilter &&
+!excludeFilter) return;
+reverseMode = !reverseMode;
+reverseBtn.classList.toggle('active', reverseMode);
+applyFilters();});}
+
+/* CLEAR ACTION */
+clearBtn.addEventListener('click', () => {activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false;
+toggles.forEach(t => t.classList.remove('active'));
+if (reverseBtn) reverseBtn.classList.remove('active');
+if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
+clearHighlights(); applyFilters();});})();
+
+/* TABLE OF CONTENTS TOGGLE */
+(function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
+if (!tocToggle || !tocWrapper) return;
+tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
+
+/* MITRE ATT&CK NAVIGATOR */
+(function () {const link = document.getElementById('copyNavigatorPath');
+const status = document.getElementById('copyStatus');
+if (!link || !navigator.clipboard) return;
+link.addEventListener('click', function (e) {e.preventDefault(); const url = new URL('report_navigator.json', window.location.href).href;
+navigator.clipboard.writeText(url).then(() => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✔ Copied'));
+setTimeout(() => status.textContent = '', 2000);},
+() => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✖ failed'));
+setTimeout(() => status.textContent = '', 2000);});});})();
+
+/* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD */
+(function () {if (!navigator.clipboard) return;
+document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
+if (!pre) return;
+const clone = pre.cloneNode(true); const badge = clone.querySelector('.copy-badge'); if (badge) badge.remove();
+const text = clone.innerText.trim();
+if (!text) return;
+navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
+function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
+if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
+badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
+
+/* DECODE RULE FOR EXPORT */
+function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
+
+/* EXPORT RULE(S) */
+(function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
+
+(function () {document.addEventListener('click', function (e) {if (e.target.closest('.export-rule-btn')) return;
+const cell = e.target.closest('td.rulename');
+if (!cell) return;
+const row = cell.closest('tr');
+if (!row || !row.dataset.ruleJson) return;
+try {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson))); const md = buildMarkdown(rule); navigator.clipboard.writeText(md).then(() => {showPropsCopied(cell);});}
+catch (err) {console.error('Markdown copy failed:', err);}});})();
+
+if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
+if (!row || !row.dataset.ruleJson) return;
+if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
+const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
+const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+"contentVersion": "1.0.0.0",
+"resources": [{type: "Microsoft.SecurityInsights/alertRules",
+apiVersion: "2023-11-01-preview",
+name: rule.name,
+location: rule.location,
+kind: rule.kind,
+properties: rule.properties}]};
+
+downloadJson(armTemplate, sanitize(rule.properties.displayName || rule.name) + '.sentinel.rule.json');});
+
+function sanitize(name) {return (name || 'rule')
+.replace(/[^a-z0-9]/gi, '_')
+.toLowerCase();}})();
+
+/* RULE MARKDOWN CREATION */
+function buildMarkdown(rule) {const p = rule.properties || {};
+function val(v) {if (v === null || v === undefined) return "";
+if (Array.isArray(v)) return v.join(', ');
+if (typeof v === 'object') return JSON.stringify(v);
+return String(v);}
+
+const enabled = p.enabled === true ? "✅ true" : "❌ false (Disabled)";
+
+let severityIcon = "⚪";
+switch (p.severity) {case "High": severityIcon = "🔴"; break;
+case "Medium": severityIcon = "🟡"; break;
+case "Low": severityIcon = "🟠"; break;
+case "Informational": severityIcon = "⚪"; break;}
+
+let templateLine = '';
+if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
+
+const kql = val(p.query);
+
+return ['**' + val(p.displayName) + '**','',
+val(p.description),'',
+'Enabled: **' + enabled + '**',
+'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
+...(templateLine ? [templateLine] : []),'',
+'* * *',
+'```',kql,'```',
+'* * *','',
+'**name :** ' + rule.name,
+'**queryFrequency :** ' + val(p.queryFrequency),
+'**queryPeriod :** ' + val(p.queryPeriod),
+'**triggerOperator :** ' + val(p.triggerOperator),
+'**triggerThreshold :** ' + val(p.triggerThreshold),
+'**suppressionDuration :** ' + val(p.suppressionDuration),
+'**suppressionEnabled :** ' + val(p.suppressionEnabled),
+'**startTimeUtc :** ' + val(p.startTimeUtc),
+'**tactics :** ' + val(p.tactics),
+'**techniques :** ' + val(p.techniques),
+'**subTechniques :** ' + val(p.subTechniques),
+'**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
+'**incidentConfiguration :** ' + val(p.incidentConfiguration),
+'**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
+'**alertDetailsOverride :** ' + val(p.alertDetailsOverride),
+'**customDetails :** ' + val(p.customDetails),
+'**sentinelEntitiesMappings :** ' + val(p.sentinelEntitiesMappings),
+'**entityMappings :** ' + val(p.entityMappings),
+'**id :** ' + val(p.id),
+'**kind :** ' + rule.kind,'',
+'* * *'].join('\n');}
+
+/* RULE MARKDOWN COPY TO CLIPBOARD */
+function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
+if (!badge) {badge = document.createElement('div'); badge.className = 'props-copy-badge'; badge.textContent = '✔ Markdown copied'; cell.appendChild(badge);}
+badge.style.opacity = '1';
+setTimeout(() => {badge.style.opacity = '0';}, 1200);}
+
+function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
+
+/* EXPORT ALL VISIBLE RULES */
+(function () {const btn = document.getElementById('exportVisibleRules');
+if (!btn) return;
+
+btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none');
+if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
+if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
+
+try {const resources = rows.map(row => {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
+return {type: "Microsoft.SecurityInsights/alertRules",
+apiVersion: "2023-11-01-preview",
+name: rule.name,
+location: rule.location,
+kind: rule.kind,
+properties: rule.properties};});
+
+const armTemplate = {"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+contentVersion: "1.0.0.0",
+resources: resources};
+
+downloadJson(armTemplate, 'sentinel_rules_export_' + rows.length + '.json');}
+catch (err) {console.error('Bulk export failed:', err);
+alert('Failed to export visible rules. See console for details.');}});})();
+
+/* UPDATE TABLE OF CONTENTS */
+function syncTocWithVisibleRows() {const visibleIds = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.offsetParent !== null)
+.map(r => r.id));
+document.querySelectorAll('.toc li[data-target]').forEach(el => {const target = el.dataset.target;
+if (!target) return;
+el.hidden = !visibleIds.has(target);});}
+
+/* DOWNLOAD RULE */
+function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{type: 'application/json'});
+const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
+
+/* HIGHLIGHT SEARCH TERMS */
+function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
+function highlightMatches(regex) {if (!regex) return; 
+const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none');
+rows.forEach(row => {row.querySelectorAll('.highlight').forEach(el => {el.replaceWith(document.createTextNode(el.textContent));});
+const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT); const textNodes = []; let node;
+while (node = walker.nextNode()) {if (node.nodeValue && node.nodeValue.trim()) {textNodes.push(node);}}
+textNodes.forEach(textNode => {const source = textNode.nodeValue; const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g'; const r = new RegExp(regex.source, flags);
+let match; let lastIndex = 0; const frag = document.createDocumentFragment();
+while ((match = r.exec(source)) !== null) {const start = match.index; const end = start + match[0].length;
+if (start > lastIndex) {frag.appendChild(document.createTextNode(source.slice(lastIndex, start)));}
+const span = document.createElement('span'); span.className = 'highlight'; span.textContent = match[0]; frag.appendChild(span); lastIndex = end;
+if (match.index === r.lastIndex) r.lastIndex++;}
+if (lastIndex < source.length) {frag.appendChild(document.createTextNode(source.slice(lastIndex)));}
+textNode.replaceWith(frag);});});}
+
+/* TEXT SEARCH */
+function showFilterModal() {const existing = document.getElementById('filterOverlay');
+if (existing) existing.remove();
+return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.style.position = 'relative';
+
+box.innerHTML = '<div id="closeFilterModal" style="position:absolute; top:8px; right:12px; cursor:pointer; font-size:18px; color:#aaa;">✕</div><div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />'; overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); var closeButton = box.querySelector('#closeFilterModal'); includeInput.focus();
+
+function cleanup(result) {document.removeEventListener('keydown', escHandler); document.body.removeChild(overlay); resolve(result);}
+
+function submit() {cleanup({include: includeInput.value, exclude: excludeInput.value});}
+
+function escHandler(e) {if (e.key === 'Escape') {cleanup(null);}}
+
+document.addEventListener('keydown', escHandler); closeButton.onclick = function () {cleanup(null);}; includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();}; excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
+</script>
+
+<br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
+</body></html>
 
