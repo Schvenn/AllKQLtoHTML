@@ -1,5 +1,5 @@
 @{RootModule = 'AllKQLtoHTML.psm1'
-ModuleVersion = '4.9'
+ModuleVersion = '5.0'
 GUID = '1717dd23-d91a-4ed2-bd4b-a03c847cc238'
 Author = 'Craig Plath'
 CompanyName = 'Plath Consulting Incorporated'
@@ -21,8 +21,9 @@ subscription   = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
 workspacename = 'LAW-<env>-<region>-<workload>'
 resourcegroup = 'RG-<env>-<region>-<service>'
 
-WikiIntegration = @{BaseUrl = "https://wiki.company.local/playbooks/"
+WikiIntegration = @{BaseUrl = "https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#"
 Separator = "slug"
-Suffix = ".html"
+Suffix = ""
 LinkText = "📘 Playbook"
 Fallback = "true"}}}
+

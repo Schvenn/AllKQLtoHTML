@@ -1,56 +1,7 @@
 function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateCSV, [switch]$CreateLinks, [switch]$Usage, [switch]$GetAZCommand, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
-# Load PSD1 configuration.
-function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
-if (!(Test-Path $configPath)) {throw "Config file not found at $configPath"}
-$script:config = Import-PowerShellDataFile -Path $configPath
-
-# Pull config values into variables.
-$script:resourcegroup = $config.privatedata.resourcegroup
-$script:workspacename = $config.privatedata.workspacename
-$script:subscription = $config.privatedata.subscription
-$script:version = $config.moduleversion}
-loadconfiguration
-
-# Enable PreserveIds when CreateLinks or CreateCSV is chosen.
-if ($CreateLinks -or $CreateCSV) {$csvPath = Join-Path $baseModulePath "AllKQLtoHTML.csv"; $PreserveIds = $true}
-
-# Add Knowledgebase Links.
-if ($CreateLinks) {$script:wikiLinks = @{}
-if (Test-Path $csvPath) {try {$csv = Import-Csv $csvPath
-foreach ($entry in $csv) {if ([string]::IsNullOrWhiteSpace($entry.uid)) {continue}
-$csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
-if (-not $script:wikiLinks.ContainsKey($csvGuid)) {$script:wikiLinks[$csvGuid] = $entry.link}}
-Write-Host -f green -n "`nLoaded $($script:wikiLinks.Count) wiki links from "; Write-Host -f White $csvPath}
-catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgray $_.Exception.Message}}}
-
-function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
-if ($RuleGuid) {$lookupGuid = $RuleGuid.ToString().Trim().Trim('{}').ToLower()
-if ($script:wikiLinks.ContainsKey($lookupGuid)) {$link = $script:wikiLinks[$lookupGuid]
-if (-not [string]::IsNullOrWhiteSpace($link)) {return $link}}}
-if (-not $config.PrivateData.WikiIntegration.Fallback) {return $null}
-if (-not $config.PrivateData.WikiIntegration.BaseUrl) {return $null}
-
-$name = $DisplayName.Trim()
-
-switch ($config.PrivateData.WikiIntegration.Separator) {"underscore" {$name = $name -replace '\s+', '_'}
-"dash" {$name = $name -replace '\s+', '-'}
-"html" {$name = [uri]::EscapeDataString($name)}
-"slug" {$name = $name.ToLower()
-$name = $name -replace '[^a-z0-9\s-]', ''
-$name = $name -replace '\s+', '-'
-$name = $name -replace '-+', '-'}
-default {$name = [uri]::EscapeDataString($name)}}
-$base = $config.PrivateData.WikiIntegration.BaseUrl
-$suffix = $config.PrivateData.WikiIntegration.Suffix
-return "$base$name$suffix"}
-
-# GetAZCommand
-if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
-
-# Usage switch.
-if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge><-preserveids>  <-createcsv> <-createlinks> <-usage> <-getazcommand> <-help>`n";return}
-
+# -------------------------- HELPER FUNCTIONS -----------------------------------------------------
+	
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
 $breakchars = ',.;?!\/ '; $wrapped = @()
@@ -76,8 +27,8 @@ $character = if ($double) {"="} else {"-"}
 Write-Host -f $colour ($character * $length)
 if ($post) {Write-Host ""}}
 
-function help {# Inline help.
-# Select content.
+# Inline help.
+function help {# Select content.
 $scripthelp = Get-Content -Raw -Path $PSCommandPath; $sections = [regex]::Matches($scripthelp, "(?im)^## (.+?)(?=\r?\n)"); $selection = $null; $lines = @(); $wrappedLines = @(); $position = 0; $pageSize = 30; $inputBuffer = ""
 
 function scripthelp ($section) {$pattern = "(?ims)^## ($([regex]::Escape($section)).*?)(?=^##|\z)"; $match = [regex]::Match($scripthelp, $pattern); $lines = $match.Groups[1].Value.TrimEnd() -split "`r?`n", 2; if ($lines.Count -gt 1) {$wrappedLines = (wordwrap $lines[1] 100) -split "`n", [System.StringSplitOptions]::None}
@@ -133,62 +84,51 @@ if ($char -match '^[Qq]$') {"`n"; return}
 elseif ($char -match '^\d$') {$inputBuffer += $char}
 else {$inputBuffer = ""}}}}}
 
-# External call to help.
-if ($help) {help; return}
-
-# Concat(enate).
-if ($concat) {$directory = Split-Path $InputFile -Parent
-if (-not $directory) {$directory = Get-Location}
-
-$baseName = [IO.Path]::GetFileNameWithoutExtension($InputFile)
-$extension = [IO.Path]::GetExtension($InputFile)
-
-# Find Windows-style copies: file.json, file (1).json, etc.
-$files = Get-ChildItem -Path $directory -File | Where-Object {$_.Name -match "^$([Regex]::Escape($baseName))(\s\(\d+\))?$([Regex]::Escape($extension))$"} | Sort-Object Name
-if ($files.Count -lt 2) {Write-Host -f Cyan "`nNo files were found to concatenate.`n"
-return}
-$outFile = Join-Path $directory "$baseName`_combined$extension"
-if (Test-Path $outFile) {Remove-Item $outFile -Force}
-
-Write-Host -f Cyan "`nConcatenating $($files.Count) files:`n"
-
-# Parse the first file to extract the header.
-$firstTemplate = Get-Content $files[0].FullName -Raw | ConvertFrom-Json
-if (-not $firstTemplate.resources) {throw "First file does not contain a resources array."}
-
-# Create a clean ARM template shell
-$combinedTemplate = [ordered]@{'$schema' = $firstTemplate.'$schema'
-contentVersion = $firstTemplate.contentVersion
-parameters = $firstTemplate.parameters
-resources = @()}
-
-# Collect resources from ALL files safely.
-foreach ($file in $files) {Write-Host -f white "`tParsing`t$($file.Name)"
-$template = Get-Content $file.FullName -Raw | ConvertFrom-Json
-if (-not $template.resources) {throw "File '$($file.Name)' does not contain a resources array."}
-foreach ($resource in $template.resources) {$combinedTemplate.resources += $resource}}
-
-# Serialize final combined template.
-$jsonOut = $combinedTemplate | ConvertTo-Json -Depth 10 -Compress
-Set-Content -Path $outFile -Value $jsonOut -Encoding UTF8
-
-Write-Host -f Cyan "`n✅ Combined ARM template written:`n"
-Write-Host -f white "`t$outFile"
-$InputFile = $outFile}
-
+# Ensure HTML code is displayable.
 function Escape-Html {param ([string]$Text)
 if ($null -eq $Text) {return ""}
 return $Text -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;'}
 
+# Ensure Unicode characaters are displayable.
+function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {return $text}
+try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
+catch {return $text}}
+
+# Get valid or generate unique GUIDs for each rule.
+function Get-RuleUID {param ($r)
+if ($PreserveIds) {if ($r.name -and $r.name -match '([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
+if ($r.id -and $r.id -match '/alertRules/([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}}
+return ([guid]::NewGuid().ToString()).ToLower()}
+
+# Convert Description URLs to clickable links for column 1.
 function Convert-UrlsToLinks {param ([string]$Text)
 if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
 $urlPattern = '(https?:\/\/[^\s<]+)'
 return ($Text -replace $urlPattern, '<a href="$1" target="_blank">$1</a>')}
 
-function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {return $text}
-try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
-catch {return $text}}
+# Get or build Wiki/KB article links for column 1.
+function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
+if ($RuleGuid) {$lookupGuid = $RuleGuid.ToString().Trim().Trim('{}').ToLower()
+if ($script:wikiLinks.ContainsKey($lookupGuid)) {$link = $script:wikiLinks[$lookupGuid]
+if (-not [string]::IsNullOrWhiteSpace($link)) {return $link}}}
+if (-not $config.PrivateData.WikiIntegration.Fallback) {return $null}
+if (-not $config.PrivateData.WikiIntegration.BaseUrl) {return $null}
 
+$name = $DisplayName.Trim()
+
+switch ($config.PrivateData.WikiIntegration.Separator) {"underscore" {$name = $name -replace '\s+', '_'}
+"dash" {$name = $name -replace '\s+', '-'}
+"html" {$name = [uri]::EscapeDataString($name)}
+"slug" {$name = $name.ToLower()
+$name = $name -replace '[^a-z0-9\s-]', ''
+$name = $name -replace '\s+', '-'
+$name = $name -replace '-+', '-'}
+default {$name = [uri]::EscapeDataString($name)}}
+$base = $config.PrivateData.WikiIntegration.BaseUrl
+$suffix = $config.PrivateData.WikiIntegration.Suffix
+return "$base$name$suffix"}
+
+# Create key/value pairs for column 3.
 function Format-Properties {param ($Properties)
 $exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion')
 $out = ""
@@ -201,11 +141,7 @@ else {$valText = Escape-Html "$val"}
 $out += "<div class='kv'><strong>$key :</strong><span class='val'> $valText</span></div>`n"}
 return $out}
 
-function Get-RuleUID {param ($r)
-if ($PreserveIds) {if ($r.name -and $r.name -match '([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
-if ($r.id -and $r.id -match '/alertRules/([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}}
-return ([guid]::NewGuid().ToString()).ToLower()}
-
+# Cleans and reshapes one rule object into a consistent schema.
 function Normalize-RuleObject {param ($r)
 $rawDisplayName = $r.displayName
 if (-not $rawDisplayName -and $r.properties) {$rawDisplayName = $r.properties.displayName}
@@ -259,43 +195,21 @@ entityMappings = $r.entityMappings
 id = $topId
 kind = $topKind}}
 
-# Load and normalize.
-function loadandnormalize {if (-not (Test-Path $InputFile)) {Write-Host -f cyan "`nInput file not found: " -n; Write-Host -f white $InputFile; return}
-$json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
-# Normalize primary rules
-if ($json -is [array]) {$rawRules = $json | Where-Object {$_ -ne $null}}
-elseif ($json.value) {$rawRules = $json.value | Where-Object {$_ -ne $null}}
-elseif ($json.resources) {$rawRules = $json.resources | Where-Object {$_ -ne $null}}
-else {throw "Unsupported JSON format"}
-
-$script:rules = @()
-foreach ($rule in $rawRules) {$n = Normalize-RuleObject $rule
-if (-not $n.displayName) {Write-Host -f r "BROKEN RULE (no displayName)"; continue}
-if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY: $($n.displayName)"; continue}
-$script:rules += $n}
-
-if (-not $script:rules) {$script:rules = @()}
-
-# Merge JSON (only if requested)
-$script:mergeRules = @()
-if ($Merge) {if (-not $MergeInputFile) {throw "The -Merge switch was specified but -MergeInputFile was not provided."}
-if (-not (Test-Path $MergeInputFile)) {throw "Merge input file not found: $MergeInputFile"}
-$mergemessage = "`nThe merge feature was invoked, which combines the results from the Sentinel GUI export (ARM Template) and the Azure Rest API export. If there are overlaps of field data, the ARM template version is given preference.`n"
-Write-Host (wordwrap $mergemessage) -f yellow
-$mergeJson = Get-Content $MergeInputFile -Raw -Encoding UTF8 | ConvertFrom-Json
-if ($mergeJson -is [array]) {$mergeRaw = $mergeJson | Where-Object {$_ -ne $null}}
-elseif ($mergeJson.value) {$mergeRaw = $mergeJson.value | Where-Object {$_ -ne $null}}
-elseif ($mergeJson.resources) {$mergeRaw = $mergeJson.resources | Where-Object {$_ -ne $null}}
-else {throw "Unsupported JSON format in merge file"}
-
-$script:mergeRules = @()
-foreach ($rule in $mergeRaw) {$n = Normalize-RuleObject $rule
-if (-not $n.displayName) {Write-Host -f red "BROKEN RULE (no displayName)"; continue}
-if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY (MERGE): $($n.displayName)"; continue}
-$script:mergeRules += $n}}}
-loadandnormalize
-
-$script:rules = $script:rules + $script:mergeRules
+# Merges rules when required.
+function Merge-Rules {param ($rules)
+$gui = $rules | Where-Object {$_.templateVersion -or $_.incidentConfiguration} | Select-Object -First 1
+$api = $rules | Where-Object {$_ -ne $gui} | Select-Object -First 1
+if (-not $gui) {return $rules[0]}
+if (-not $api) {return $gui}
+Write-Host -f Cyan -n "Results merged for rule: "; Write-Host -f White -n $gui.displayName; Write-Host -f DarkGray " (GUID:" $gui.name ")"
+$merged = [pscustomobject]@{}
+foreach ($prop in $gui.PSObject.Properties.Name) {$guiVal = $gui.$prop; $apiVal = $api.$prop
+if ($guiVal -ne $apiVal -and $guiVal -and $apiVal) {Write-Host -f Yellow -n "   Difference:"; Write-Host -f DarkGray $prop}
+$value = $null
+if ($null -ne $guiVal -and $guiVal -ne "") {$value = $guiVal}
+else {$value = $apiVal}
+$merged | Add-Member -NotePropertyName $prop -NotePropertyValue $value}
+return $merged}
 
 # Generate Mitre ATT&CK Navigator JSON
 function exportnavigatorlayer ([string]$OutputPath, [string]$LayerName = "KQL Coverage", [string]$Domain = "enterprise-attack") {$techniqueMap = @{}
@@ -334,22 +248,124 @@ value = $ruleList})}}
 
 $layer | ConvertTo-Json -Depth 10 -Compress | Set-Content -Encoding UTF8 $OutputPath}
 
-function Merge-Rules {param ($rules)
-$gui = $rules | Where-Object {$_.templateVersion -or $_.incidentConfiguration} | Select-Object -First 1
-$api = $rules | Where-Object {$_ -ne $gui} | Select-Object -First 1
-if (-not $gui) {return $rules[0]}
-if (-not $api) {return $gui}
-Write-Host -f Cyan -n "Results merged for rule: "; Write-Host -f White -n $gui.displayName; Write-Host -f DarkGray " (GUID:" $gui.name ")"
-$merged = [pscustomobject]@{}
-foreach ($prop in $gui.PSObject.Properties.Name) {$guiVal = $gui.$prop; $apiVal = $api.$prop
-if ($guiVal -ne $apiVal -and $guiVal -and $apiVal) {Write-Host -f Yellow -n "   Difference:"; Write-Host -f DarkGray $prop}
-$value = $null
-if ($null -ne $guiVal -and $guiVal -ne "") {$value = $guiVal}
-else {$value = $apiVal}
-$merged | Add-Member -NotePropertyName $prop -NotePropertyValue $value}
-return $merged}
+# -------------------------- PRE-PROCESSING -------------------------------------------------------
 
-# Merge fields.
+# Load PSD1 configuration.
+function loadconfiguration {$script:powershell = Split-Path $profile; $script:baseModulePath = "$powershell\Modules\AllKQLtoHTML"; $script:configPath = Join-Path $baseModulePath "AllKQLtoHTML.psd1"
+if (!(Test-Path $configPath)) {throw "Config file not found at $configPath"}
+$script:config = Import-PowerShellDataFile -Path $configPath
+
+# Pull config values into variables.
+$script:resourcegroup = $config.privatedata.resourcegroup
+$script:workspacename = $config.privatedata.workspacename
+$script:subscription = $config.privatedata.subscription
+$script:version = $config.moduleversion}
+loadconfiguration
+
+# -------------------------- SWITCHES -------------------------------------------------------------
+
+# External call to help.
+if ($help) {help; return}
+
+# Enable PreserveIds when CreateLinks or CreateCSV is chosen.
+if ($CreateLinks -or $CreateCSV) {$csvPath = Join-Path $baseModulePath "AllKQLtoHTML.csv"; $PreserveIds = $true}
+
+# Add Knowledgebase Links.
+if ($CreateLinks) {$script:wikiLinks = @{}
+if (Test-Path $csvPath) {try {$csv = Import-Csv $csvPath
+foreach ($entry in $csv) {if ([string]::IsNullOrWhiteSpace($entry.uid)) {continue}
+$csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
+if (-not $script:wikiLinks.ContainsKey($csvGuid)) {$script:wikiLinks[$csvGuid] = $entry.link}}
+Write-Host -f green -n "`nLoaded $($script:wikiLinks.Count) wiki links from "; Write-Host -f White $csvPath}
+catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgray $_.Exception.Message}}}
+
+# GetAZCommand
+if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
+
+# Usage switch.
+if ($usage -or (-not (Test-Path "Azure_Sentinel_analytics_rules.json") -and ($PSBoundParameters.Count -eq 0))) {Write-Host -f cyan "`nUsage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge><-preserveids>  <-createcsv> <-createlinks> <-usage> <-getazcommand> <-help>`n";return}
+
+# Concat(enate).
+if ($concat) {$directory = Split-Path $InputFile -Parent
+if (-not $directory) {$directory = Get-Location}
+
+$baseName = [IO.Path]::GetFileNameWithoutExtension($InputFile)
+$extension = [IO.Path]::GetExtension($InputFile)
+
+# Find Windows-style copies: file.json, file (1).json, etc.
+$files = Get-ChildItem -Path $directory -File | Where-Object {$_.Name -match "^$([Regex]::Escape($baseName))(\s\(\d+\))?$([Regex]::Escape($extension))$"} | Sort-Object Name
+if ($files.Count -lt 2) {Write-Host -f Cyan "`nNo files were found to concatenate.`n"
+return}
+$outFile = Join-Path $directory "$baseName`_combined$extension"
+if (Test-Path $outFile) {Remove-Item $outFile -Force}
+
+Write-Host -f Cyan "`nConcatenating $($files.Count) files:`n"
+
+# Parse the first file to extract the header.
+$firstTemplate = Get-Content $files[0].FullName -Raw | ConvertFrom-Json
+if (-not $firstTemplate.resources) {throw "First file does not contain a resources array."}
+
+# Create a clean ARM template shell
+$combinedTemplate = [ordered]@{'$schema' = $firstTemplate.'$schema'
+contentVersion = $firstTemplate.contentVersion
+parameters = $firstTemplate.parameters
+resources = @()}
+
+# Collect resources from ALL files safely.
+foreach ($file in $files) {Write-Host -f white "`tParsing`t$($file.Name)"
+$template = Get-Content $file.FullName -Raw | ConvertFrom-Json
+if (-not $template.resources) {throw "File '$($file.Name)' does not contain a resources array."}
+foreach ($resource in $template.resources) {$combinedTemplate.resources += $resource}}
+
+# Serialize final combined template.
+$jsonOut = $combinedTemplate | ConvertTo-Json -Depth 10 -Compress
+Set-Content -Path $outFile -Value $jsonOut -Encoding UTF8
+
+Write-Host -f Cyan "`n✅ Combined ARM template written:`n"
+Write-Host -f white "`t$outFile"
+$InputFile = $outFile}
+
+# -------------------------- GENERATE FILES -------------------------------------------------------
+
+# Load and normalize.
+function loadandnormalize {if (-not (Test-Path $InputFile)) {Write-Host -f cyan "`nInput file not found: " -n; Write-Host -f white $InputFile; return}
+$json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
+# Normalize primary rules
+if ($json -is [array]) {$rawRules = $json | Where-Object {$_ -ne $null}}
+elseif ($json.value) {$rawRules = $json.value | Where-Object {$_ -ne $null}}
+elseif ($json.resources) {$rawRules = $json.resources | Where-Object {$_ -ne $null}}
+else {throw "Unsupported JSON format"}
+
+$script:rules = @()
+foreach ($rule in $rawRules) {$n = Normalize-RuleObject $rule
+if (-not $n.displayName) {Write-Host -f r "BROKEN RULE (no displayName)"; continue}
+if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY: $($n.displayName)"; continue}
+$script:rules += $n}
+
+if (-not $script:rules) {$script:rules = @()}
+
+# Merge JSON (only if requested)
+$script:mergeRules = @()
+if ($Merge) {if (-not $MergeInputFile) {throw "The -Merge switch was specified but -MergeInputFile was not provided."}
+if (-not (Test-Path $MergeInputFile)) {throw "Merge input file not found: $MergeInputFile"}
+$mergemessage = "`nThe merge feature was invoked, which combines the results from the Sentinel GUI export (ARM Template) and the Azure Rest API export. If there are overlaps of field data, the ARM template version is given preference.`n"
+Write-Host (wordwrap $mergemessage) -f yellow
+$mergeJson = Get-Content $MergeInputFile -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($mergeJson -is [array]) {$mergeRaw = $mergeJson | Where-Object {$_ -ne $null}}
+elseif ($mergeJson.value) {$mergeRaw = $mergeJson.value | Where-Object {$_ -ne $null}}
+elseif ($mergeJson.resources) {$mergeRaw = $mergeJson.resources | Where-Object {$_ -ne $null}}
+else {throw "Unsupported JSON format in merge file"}
+
+$script:mergeRules = @()
+foreach ($rule in $mergeRaw) {$n = Normalize-RuleObject $rule
+if (-not $n.displayName) {Write-Host -f red "BROKEN RULE (no displayName)"; continue}
+if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY (MERGE): $($n.displayName)"; continue}
+$script:mergeRules += $n}}}
+loadandnormalize
+
+$script:rules = $script:rules + $script:mergeRules
+
+# Merge files.
 $script:rules = $script:rules | Group-Object name | ForEach-Object {if ($_.Count -eq 1) {$_.Group[0]}
 else {Merge-Rules $_.Group}}
 
@@ -368,21 +384,6 @@ statistics
 
 # Sort rules alphabetically.
 $script:rules = $script:rules | Sort-Object displayName
-
-# Create CSV file.
-if ($CreateCSV) {Write-Host -f Cyan -n "`nGenerating CSV file: "; Write-Host -f White " AllKQLtoHTML.csv"; $csvOutput = @(); $seen = @{}
-foreach ($r in $script:rules) {if (-not $r.displayName) {continue}
-$uid = Get-RuleUID $r
-if ([string]::IsNullOrWhiteSpace($uid)) {continue}
-$uidNormalized = $uid.ToString().Trim().Trim('{}').ToLower()
-if ($seen.ContainsKey($uidNormalized)) {continue}
-$seen[$uidNormalized] = $true
-$csvOutput += [pscustomobject]@{rulename = $r.displayName
-uid = $uidNormalized
-link = ""}}
-
-try {$csvOutput | Sort-Object rulename | Export-Csv -Path "AllKQLtoHTML.csv" -NoTypeInformation -Encoding UTF8; Write-Host -f Green "✅ CSV created with $($csvOutput.Count) rules."}
-catch {Write-Host -f Red "❌ Failed to create CSV file"; Write-Host -f DarkGray $_.Exception.Message}}
 
 # Donut chart math (degrees for conic-gradient)
 function builddonut {$script:severityTotal = $severityInfo + $severityLow + $severityMedium + $severityHigh
@@ -492,7 +493,7 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br><br>
-<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text</span></td>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+F)</span></span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
@@ -505,7 +506,7 @@ function buildstats {$script:statsBlock = @"
 <td class="stats-right">
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
-<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters</span></strong><br>
+<span id="clearFilters" class="toggle clear-filters hidden">❎ Clear Filters <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+Z)</span></span></strong><br>
 
 <div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 </td>
@@ -515,511 +516,31 @@ function buildstats {$script:statsBlock = @"
 buildstats
 
 # Generate HTML and write file
-function writepage {$html = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Azure Sentinel Analytics Rules</title>
-
-<style>
-/* BASE FALLBACK (used before JS / old browsers) */
-:root {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #995599; --link-hover: #ff0000; --link-visited: #6b84c4; --link-active: #44ff44;}
-
-/* BASE STYLES */
-body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
-
-#mitrePanel {position: fixed; top: 70px; right: -225px; width: 260px; height: auto; display: flex; align-items: center; z-index: 1000; transition: right 0.3s ease;}
-#mitrePanel:hover {right: 0px; padding-right: 0px;}
-#mitreTab {width: 44px; height: 44px; min-width: 44px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;}
-#mitreTab img {width: 24px; height: 24px; border-radius: 15%;}
-#mitreContent {margin-left: 0px; padding: 10px 12px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 13px; line-height: 1.4;}
-#mitreContent a {font-weight: bold; color: var(--link-normal);}
-#mitreContent a:hover {color: var(--red); text-decoration: underline;}
-
-#exportVisibleRules {background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; font-size: 13px;}
-#exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
-#searchCriteriaValue {white-space: pre-line;}
-
-#filterInputBox {width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px;}
-
-table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
-th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
-th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
-tr:nth-child(even) td {background: var(--row-even);}
-tr:hover td {background: var(--row-hover);}
-
-td.rulename .description a {display: inline; word-break: break-all;}
-td.rulename {position: relative; cursor: pointer;}
-td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease;}
-
-td.rulename:hover::after {opacity: 1;}
-
-td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
-td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
-td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none;}
-td.query pre:hover::after {opacity: 1;}
-.copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
-
-td.props {position: relative;}
-.export-rule-btn {position: absolute; top: 6px; right: 6px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; font-size: 14px; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 2;}
-td.props:hover .export-rule-btn {opacity: 1;}
-.export-rule-btn:hover {background: var(--row-hover);}
-.export-rule-btn:active {transform: scale(0.95);}
-.props-content, .kv .val {word-break: break-word; overflow-wrap: anywhere;}
-
-.props-copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
-
-.highlight {background-color: #ff0; color: #000; border-radius: 2px; padding: 0; margin: 0;}
-:root[data-theme="dark"] .highlight {background-color: #ff0; color: #000;}
-
-pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
-
-.stats-table {width: auto; table-layout: auto; border-collapse: separate; background: none;}
-.stats-table td {border: none; padding-right: 24px; vertical-align: top; white-space: nowrap;}
-.stats-table tr:hover td {background: unset;}
-.hidden {visibility: hidden; pointer-events: none;}
-
-.stats-left span {line-height: 1.3;}
-.stats-middle span {line-height: 1.3;}
-.stat-green {color: var(--green);}
-.stat-red {color: var(--red);}
-.stat-gray {color: #888;}
-.stat-muted {color: var(--text-muted);}
-
-.filter-header {font-weight: bold; display: block; cursor: default; line-height: 1.3;}
-.reverse-filter {color: #666;}
-.reverse-filter.active {font-weight: bold; font-style: italic; text-decoration: underline;}
-.clear-filters {margin-top: 1px; display: block; color: var(--text-muted);}
-.clear-filters:hover {color: var(--text-main);}
-
-.sev-info {color: var(--text-main);}
-.sev-low {color: #ff8c00;}
-.sev-medium {color: var(--yellow);}
-.sev-high {color: var(--red);}
-.stat-yellow {color: var(--yellow);}
-
-.toggle {cursor: pointer; user-select: none;}
-.toggle:hover {text-decoration: underline; cursor: pointer;}
-.toggle.active {font-weight: bold; font-style: italic; text-decoration: none;}
-.toggle:hover.active {text-decoration: underline;}
-
-.severity-donut {position: relative; width: 120px; height: 120px; margin-top: 6px;}
-.donut {position: relative; width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#ffffff 0deg 45deg, #ff8c00 45deg 135deg,#ffd166 135deg 260deg, #d32f2f 260deg 360deg);}
-.donut::before {content: ""; position: absolute; inset: 30%; background: var(--bg-panel); border-radius: 50%;}
-.donut-label {position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; text-align: center; color: var(--text-muted); pointer-events: none;}
-
-.kv {margin-bottom: 4px;}
-.kv .val {margin-left: 6px; color: var(--text-muted);}
-
-.toc-toggle {cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;}
-.toc-arrow {font-size: 0.9em; transition: transform 0.2s ease;}
-.toc-collapsed .toc-arrow {transform: rotate(-900deg);}
-.toc-collapsed #tocContent {display: none;}
-.toc ul {column-count: 3; column-gap: 30px;}
-
-.enabled-true {font-size: 16px; color: var(--green); font-weight: bold;}
-.enabled-false {font-size: 16px; color: var(--red); font-weight: bold;}
-
-.template-version {font-size: 13px; color: var(--text-muted);}
-
-.description {font-size: 16px; color: var(--text-muted); display: inline-block; max-width: 100%; overflow-wrap: anywhere; word-break: break-word;}
-.description a {word-break: break-all; overflow-wrap: anywhere;}
-
-/* BACK TO TOP */
-#backToTop {position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background-color: #064; color: #fff; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); z-index: 1000;}
-#backToTop:hover {background-color: #0a6;}
-
-/* LINKS (privacy-safe + status-safe) */
-a {text-decoration: none; word-break: break-all; overflow-wrap: anywhere;}
-a:visited {color: var(--link-visited);}
-a:hover {color: var(--red); text-decoration: underline;}
-a:active {color: var(--link-active); text-decoration: underline;}
-
-/* Force enabled-false to NEVER change */
-a.enabled-false {text-decoration: none;}
-a.enabled-false:visited {color: #bb4444}
-a.enabled-false:hover {text-decoration: underline;}
-a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
-
-/* Theme toggle */
-#themeToggle {position: fixed; top: 20px; right: 20px; padding: 6px 10px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; z-index: 1001;}
-
-/* Manual override beats system preference */
-:root[data-theme="light"] {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #0000FF; --link-hover: #ff0000; --link-visited: #000088; --link-active: #009900; color-scheme: light;}
-
-:root[data-theme="dark"] {--bg-main: #0e0e0e; --bg-panel: #141414; --bg-header: #1f1f1f; --bg-code: #161616; --border-main: #2a2a2a; --text-main: #e6e6e6; --text-muted: #aaa; --green: #6ddf7c; --red: #ff6b6b; --yellow: #ffd166; --row-even: #222222; --row-hover: #303055; --link-normal: #aabbee; --link-hover: #995599; --link-visited: #6666bb; --link-active: #ffff00; color-scheme: dark;}
-</style>
-
-<meta name="color-scheme" content="light dark">
-</head>
-
-<body>
-<h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: $snapshotDate (created by AllKQLtoHTML v$script:version)</span>
-
-<button id="themeToggle" title="Toggle light/dark mode">🌙</button>
-<div id="mitrePanel"><div id="mitreTab"><img
-src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUIWKUAU6MAVaRvkcEOXKddhbs9cbFLerX///+Rqs4AUaK5yd8ATaAAUKKLpcvr8PYARp6asdLe5vAASJ9VgLjx9fkASp/C0OPJ1ud5mMSpvNgATqH3+vzS3esAQpyAnsdwksEdYqql8pYrAAAA80lEQVR4AWIYQABojqwSJYRhAEjlLYNL1p37X/I1xW+w81OLDMEYM2+tMXb/6Jzz4878OXfYvtoUyPK49UBRbh6rGmjauO2AXjaPZUHgqMXkROC8eZSewOWsHVG2TUsi4UauKDez+hyAqKQ6yv2xPOY3eL5UKepc4bU2fdyhd6r0PoWHDzxX3fMLircqHYFvCvjFSJ5Qt8VYkbMBnJl9BiDNJ6t7KQ101ezjgEfS9tMnlhe4zkaq2Ms4Q/o2qTIVn32u46gNgTpPrGrNQu0J6tDjfAG0VzUPOuB5koa9PT5P8WepUagwIiI2aouUYyMRk/wg/29jDlzI7K5BAAAAAElFTkSuQmCC" alt="MITRE ATT&CK"/></div>
-
-<div id="mitreContent"><p><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank" rel="noopener noreferrer">MITRE ATT&amp;CK Navigator</a><br><br>
-Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><span id="copyStatus" style="margin-left:6px; color: var(--text-muted);"></span><br>
-<span style="font-size:12px; color:var(--text-muted);">(Use in “Open Existing Layer”)</span></p></div></div>
-
-$statsBlock
-
-<div class="toc-wrapper"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
-<div id="tocContent" class="toc"><ul>$script:toc</ul></div></div><br>
-
-<table id="rulesTable">
-<colgroup><col style="width:15%;"><col style="width:42.5%;"><col style="width:42.5%;"></colgroup>
-
-<thead>
-<tr><th>Rule Name</th><th>Query Logic</th><th>Properties</th></tr>
-</thead>
-
-<tbody>
-$script:rows
-</tbody>
-</table>
-
-<div id="backToTop" onclick="scrollToTop()">↑ Back to top ↑</div>
-
-<div id="filterModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999;">
-<div style="background:#1e1e1e; color:#fff; width:400px; max-width:90%; margin:10% auto; padding:20px; border-radius:10px; font-family:Arial;">
-<h3 style="margin-top:0;">Filter Rules</h3>
-<input id="filterInputBox" style="width:100%; padding:10px; font-size:14px;" placeholder="Enter search terms..." />
-<pre style="margin-top:10px; font-size:12px; color:#aaa;">~ is the AND operator
-| is the OR operator</pre></div></div>
-
-<script>
-function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
-function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
-const ease = 1 - Math.pow(1 - progress, 3);
-window.scrollTo(0, start * (1 - ease));
-if (progress < 1) {requestAnimationFrame(animateScroll);}}
-requestAnimationFrame(animateScroll);}
-
-
-window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
-if (window.scrollY > 300) {btn.style.display = 'block';}
-else {btn.style.display = 'none';}});
-
-(function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;
-const root = document.documentElement;
-const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
-else {root.setAttribute('data-theme', 'dark');}
-
-function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';}
-
-toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
-updateIcon();})();
-
-
-(function () {const toggles = document.querySelectorAll('.toggle'); const searchBlock = document.getElementById('searchCriteriaBlock'); const searchValue = document.getElementById('searchCriteriaValue'); const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]'); const rows = document.querySelectorAll('#rulesTable tbody tr'); const clearBtn = document.getElementById('clearFilters'); const reverseBtn = document.getElementById('reverseFilters'); const filterHeader = document.getElementById('filterHeader'); const visibleCountEl = document.getElementById('visibleRuleCount'); const activeFilters = new Set(); let reverseMode = false; let includeFilter = null; let excludeFilter = null;
-
-/* APPLY FILTERS */
-function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || includeFilter !== null || excludeFilter !== null;
-clearHighlights();
-if (!hasFilters) {rows.forEach(r => r.style.display = '');}
-else {rows.forEach(row => {let visible = true;
-activeFilters.forEach(filter => {switch (filter) {case 'disabled': if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
-case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
-case 'template': if (!row.dataset.templateVersion) visible = false; break;
-case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
-case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
-case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
-case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
-const text = row.textContent || '';
-
-/* INCLUDE FILTER (must match) */
-if (includeFilter && !includeFilter.test(text)) {visible = false;}
-
-/* EXCLUDE FILTER (must NOT match) */
-if (excludeFilter && excludeFilter.test(text)) {visible = false;}
-
-if (reverseMode) visible = !visible;
-
-row.style.display = visible ? '' : 'none';});}
-
-/* COUNT */
-if (visibleCountEl) {const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none').length; visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
-
-/* UI STATE */
-const hasActiveFilters = activeFilters.size > 0 || includeFilter !== null || excludeFilter !== null;
-
-if (hasActiveFilters) {clearBtn.classList.remove('hidden');
-if (reverseBtn) reverseBtn.classList.remove('hidden');
-if (filterHeader) filterHeader.classList.remove('hidden');}
-else {clearBtn.classList.add('hidden');
-if (reverseBtn) reverseBtn.classList.add('hidden');
-if (filterHeader) filterHeader.classList.add('hidden');}
-
-syncTocWithVisibleRows();
-if (includeFilter) {highlightMatches(includeFilter);}}
-
-/* SEARCH BUTTON */
-const regexBtn = document.getElementById('regexFilterBtn');
-
-document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {e.preventDefault();
-if (regexBtn) regexBtn.click();}});
-
-if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
-if (!input) return;
-
-activeFilters.clear(); includeFilter = null; excludeFilter = null;
-clearHighlights();
-rows.forEach(r => r.style.display = '');
-
-/* INCLUDE REGEX */
-try {if (input.include && input.include.trim()) {includeFilter = new RegExp(input.include.trim(), "i");}
-
-/* EXCLUDE REGEX */
-const excludeText = (input.exclude || '').trim();
-
-if (excludeText.length > 0) {excludeFilter = new RegExp(excludeText, "i");}
-else {excludeFilter = null;}
-
-/* UI DISPLAY */
-if (searchBlock && searchValue) {let lines = [];
-if (input.include && input.include.trim()) {lines.push("INCLUDE: " + input.include.trim());}
-if (input.exclude && input.exclude.trim()) {lines.push("EXCLUDE: " + input.exclude.trim());}
-searchValue.textContent = lines.join("\n"); searchBlock.classList.remove('hidden');}
-
-applyFilters();}
-catch {alert('Invalid regular expression.');}});}
-
-/* FILTER TOGGLES */
-toggles.forEach(t => {t.addEventListener('click', () => {const filter = t.dataset.filter;
-if (!filter) return;
-const isSeverity = filter.startsWith('sev-');
-if (activeFilters.has(filter)) { activeFilters.delete(filter); t.classList.remove('active');}
-else {if (isSeverity) {severityToggles.forEach(st => {activeFilters.delete(st.dataset.filter); st.classList.remove('active');});}
-activeFilters.add(filter); t.classList.add('active');}
-applyFilters();});});
-
-/* REVERSE */
-if (reverseBtn) {reverseBtn.addEventListener('click', () => {if (activeFilters.size === 0 &&
-!includeFilter &&
-!excludeFilter) return;
-
-reverseMode = !reverseMode;
-reverseBtn.classList.toggle('active', reverseMode);
-applyFilters();});}
-
-/* CLEAR */
-clearBtn.addEventListener('click', () => {activeFilters.clear(); includeFilter = null; excludeFilter = null; reverseMode = false;
-toggles.forEach(t => t.classList.remove('active'));
-if (reverseBtn) reverseBtn.classList.remove('active');
-if (searchBlock && searchValue) {searchValue.textContent = ''; searchBlock.classList.add('hidden');}
-clearHighlights(); applyFilters();});})();
-
-(function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
-if (!tocToggle || !tocWrapper) return;
-tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
-
-
-(function () {const link = document.getElementById('copyNavigatorPath');
-const status = document.getElementById('copyStatus');
-if (!link || !navigator.clipboard) return;
-link.addEventListener('click', function (e) {e.preventDefault(); const url = new URL('report_navigator.json', window.location.href).href;
-navigator.clipboard.writeText(url).then(() => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✔ Copied'));
-setTimeout(() => status.textContent = '', 2000);},
-() => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✖ failed'));
-setTimeout(() => status.textContent = '', 2000);});});})();
-
-
-(function () {if (!navigator.clipboard) return;
-document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
-if (!pre) return;
-const clone = pre.cloneNode(true); const badge = clone.querySelector('.copy-badge'); if (badge) badge.remove();
-const text = clone.innerText.trim();
-
-if (!text) return;
-navigator.clipboard.writeText(text).then(() => {showCopied(pre);});});
-
-function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
-if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
-
-badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
-
-function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
-
-(function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
-
-(function () {document.addEventListener('click', function (e) {if (e.target.closest('.export-rule-btn')) return;
-const cell = e.target.closest('td.rulename');
-if (!cell) return;
-const row = cell.closest('tr');
-if (!row || !row.dataset.ruleJson) return;
-try {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson))); const md = buildMarkdown(rule); navigator.clipboard.writeText(md).then(() => {showPropsCopied(cell);});}
-catch (err) {console.error('Markdown copy failed:', err);}});})();
-
-if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
-if (!row || !row.dataset.ruleJson) return;
-if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
-const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
-const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-"contentVersion": "1.0.0.0",
-"resources": [{type: "Microsoft.SecurityInsights/alertRules",
-apiVersion: "2023-11-01-preview",
-name: rule.name,
-location: rule.location,
-kind: rule.kind,
-properties: rule.properties}]};
-
-downloadJson(armTemplate, sanitize(rule.properties.displayName || rule.name) + '.sentinel.rule.json');});
-
-function sanitize(name) {return (name || 'rule')
-.replace(/[^a-z0-9]/gi, '_')
-.toLowerCase();}})();
-
-function buildMarkdown(rule) {const p = rule.properties || {};
-function val(v) {if (v === null || v === undefined) return "";
-if (Array.isArray(v)) return v.join(', ');
-if (typeof v === 'object') return JSON.stringify(v);
-return String(v);}
-
-const enabled = p.enabled === true ? "✅ true" : "❌ false (Disabled)";
-
-let severityIcon = "⚪";
-switch (p.severity) {case "High": severityIcon = "🔴"; break;
-case "Medium": severityIcon = "🟡"; break;
-case "Low": severityIcon = "🟠"; break;
-case "Informational": severityIcon = "⚪"; break;}
-
-let templateLine = '';
-if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
-
-const kql = val(p.query);
-
-return ['**' + val(p.displayName) + '**','',
-val(p.description),'',
-'Enabled: **' + enabled + '**',
-'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
-...(templateLine ? [templateLine] : []),'',
-'* * *',
-'``````',kql,'``````',
-'* * *','',
-'**name :** ' + rule.name,
-'**queryFrequency :** ' + val(p.queryFrequency),
-'**queryPeriod :** ' + val(p.queryPeriod),
-'**triggerOperator :** ' + val(p.triggerOperator),
-'**triggerThreshold :** ' + val(p.triggerThreshold),
-'**suppressionDuration :** ' + val(p.suppressionDuration),
-'**suppressionEnabled :** ' + val(p.suppressionEnabled),
-'**startTimeUtc :** ' + val(p.startTimeUtc),
-'**tactics :** ' + val(p.tactics),
-'**techniques :** ' + val(p.techniques),
-'**subTechniques :** ' + val(p.subTechniques),
-'**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
-'**incidentConfiguration :** ' + val(p.incidentConfiguration),
-'**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
-'**alertDetailsOverride :** ' + val(p.alertDetailsOverride),
-'**customDetails :** ' + val(p.customDetails),
-'**sentinelEntitiesMappings :** ' + val(p.sentinelEntitiesMappings),
-'**entityMappings :** ' + val(p.entityMappings),
-'**id :** ' + val(p.id),
-'**kind :** ' + rule.kind,'',
-'* * *'].join('\n');}
-
-function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
-if (!badge) {badge = document.createElement('div'); badge.className = 'props-copy-badge'; badge.textContent = '✔ Markdown copied'; cell.appendChild(badge);}
-badge.style.opacity = '1';
-setTimeout(() => {badge.style.opacity = '0';}, 1200);}
-
-
-function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
-
-(function () {const btn = document.getElementById('exportVisibleRules');
-if (!btn) return;
-
-btn.addEventListener('click', function () {const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
-.filter(r => r.style.display !== 'none');
-if (rows.length === 0) {alert('There are no visible rules to export.'); return;}
-if (!confirm('Export ' + rows.length + ' visible rules as a single Sentinel import JSON file?')) {return;}
-
-try {const resources = rows.map(row => {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson)));
-return {type: "Microsoft.SecurityInsights/alertRules",
-apiVersion: "2023-11-01-preview",
-name: rule.name,
-location: rule.location,
-kind: rule.kind,
-properties: rule.properties};});
-
-const armTemplate = {"`$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-contentVersion: "1.0.0.0",
-resources: resources};
-
-downloadJson(armTemplate, 'sentinel_rules_export_' + rows.length + '.json');}
-catch (err) {console.error('Bulk export failed:', err);
-alert('Failed to export visible rules. See console for details.');}});})();
-
-
-function syncTocWithVisibleRows() {const visibleIds = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
-.filter(r => r.offsetParent !== null)
-.map(r => r.id));
-
-document.querySelectorAll('.toc li[data-target]').forEach(el => {const target = el.dataset.target;
-if (!target) return;
-el.hidden = !visibleIds.has(target);});}
-
-
-/* Download */
-function downloadJson(obj, filename) {const blob = new Blob([JSON.stringify(obj, null, 2)],{type: 'application/json'});
-const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);}
-
-
-/* Highlight search terms */
-function clearHighlights() {document.querySelectorAll('.highlight').forEach(el => {const parent = el.parentNode; parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize();});}
-
-function highlightMatches(regex) {if (!regex) return; 
-const rows = Array.from(document.querySelectorAll('#rulesTable tbody tr'))
-.filter(r => r.style.display !== 'none');
-
-// remove old highlights
-rows.forEach(row => {row.querySelectorAll('.highlight').forEach(el => {el.replaceWith(document.createTextNode(el.textContent));});
-
-const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT); const textNodes = []; let node;
-while (node = walker.nextNode()) {if (node.nodeValue && node.nodeValue.trim()) {textNodes.push(node);}}
-
-textNodes.forEach(textNode => {const source = textNode.nodeValue; const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g'; const r = new RegExp(regex.source, flags);
-
-let match; let lastIndex = 0; const frag = document.createDocumentFragment();
-while ((match = r.exec(source)) !== null) {const start = match.index; const end = start + match[0].length;
-if (start > lastIndex) {frag.appendChild(document.createTextNode(source.slice(lastIndex, start)));}
-const span = document.createElement('span'); span.className = 'highlight'; span.textContent = match[0]; frag.appendChild(span); lastIndex = end;
-if (match.index === r.lastIndex) r.lastIndex++;}
-if (lastIndex < source.length) {frag.appendChild(document.createTextNode(source.slice(lastIndex)));}
-textNode.replaceWith(frag);});});}
-
-
-function walkTextNodes(node, callback) {const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false); let current;
-while (current = walker.nextNode()) {callback(current);}}
-
-/* Search function */
-function showFilterModal() {const existing = document.getElementById('filterOverlay');
-if (existing) existing.remove();
-return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.style.position = 'relative';
-
-box.innerHTML = '<div id="closeFilterModal" style="position:absolute; top:8px; right:12px; cursor:pointer; font-size:18px; color:#aaa;">✕</div><div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />'; overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); var closeButton = box.querySelector('#closeFilterModal'); includeInput.focus();
-
-function cleanup(result) {document.removeEventListener('keydown', escHandler); document.body.removeChild(overlay); resolve(result);}
-
-function submit() {cleanup({include: includeInput.value, exclude: excludeInput.value});}
-
-function escHandler(e) {if (e.key === 'Escape') {cleanup(null);}}
-
-document.addEventListener('keydown', escHandler); closeButton.onclick = function () {cleanup(null);}; includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();}; excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
-</script>
-
-<br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
-</body></html>
-"@
-
-Set-Content -Path $OutputFile -Value $html -Encoding UTF8
-Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
+function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; 
+
+$html = $html.Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
+Replace("{{VERSION}}", [string]$script:version).
+Replace("{{STATSBLOCK}}", [string]$statsBlock).
+Replace("{{TOC}}", [string]$script:toc).
+Replace("{{ROWS}}", [string]$script:rows)
+
+Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
+
+# Create CSV file.
+if ($CreateCSV) {Write-Host -f Cyan -n "`nGenerating CSV file: "; Write-Host -f White " AllKQLtoHTML.csv"; $csvOutput = @(); $seen = @{}
+foreach ($r in $script:rules) {if (-not $r.displayName) {continue}
+$uid = Get-RuleUID $r
+if ([string]::IsNullOrWhiteSpace($uid)) {continue}
+$uidNormalized = $uid.ToString().Trim().Trim('{}').ToLower()
+if ($seen.ContainsKey($uidNormalized)) {continue}
+$seen[$uidNormalized] = $true
+$csvOutput += [pscustomobject]@{rulename = $r.displayName
+uid = $uidNormalized
+link = ""}}
+
+try {$csvOutput | Sort-Object rulename | Export-Csv -Path "AllKQLtoHTML.csv" -NoTypeInformation -Encoding UTF8; Write-Host -f Green "✅ CSV created with $($csvOutput.Count) rules."}
+catch {Write-Host -f Red "❌ Failed to create CSV file"; Write-Host -f DarkGray $_.Exception.Message}}
 
 exportnavigatorlayer -OutputPath "report_navigator.json"
 Invoke-Item $OutputFile}
