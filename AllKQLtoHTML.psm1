@@ -1000,8 +1000,9 @@ while (current = walker.nextNode()) {callback(current);}}
 /* Search function */
 function showFilterModal() {const existing = document.getElementById('filterOverlay');
 if (existing) existing.remove();
-return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.innerHTML = '<div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />';
-overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); includeInput.focus();
+return new Promise(resolve => {const overlay = document.createElement('div'); overlay.id = 'filterOverlay'; overlay.style.position = 'fixed'; overlay.style.left = '0'; overlay.style.top = '0'; overlay.style.width = '100%'; overlay.style.height = '100%'; overlay.style.background = 'rgba(0,0,0,0.6)'; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center'; overlay.style.zIndex = '9999'; const box = document.createElement('div'); box.style.background = '#1e1e1e'; box.style.padding = '20px'; box.style.borderRadius = '10px'; box.style.width = '420px'; box.style.color = 'white'; box.style.fontFamily = 'sans-serif'; box.style.position = 'relative';
+
+box.innerHTML = '<div id="closeFilterModal" style="position:absolute; top:8px; right:12px; cursor:pointer; font-size:18px; color:#aaa;">✕</div><div style="display:flex; justify-content:center; align-items:baseline; gap:6px; font-weight:bold;">Filter Rules <span style="font-size:12px; font-weight:normal;">(Regex)</span></div><br><label style="font-size:12px;">Include:&nbsp;&nbsp;</label><input id="includeInput" style="width:350px; margin-bottom:10px; padding:6px; background-color: #557755;" /><br><label style="font-size:12px;">& Exclude:&nbsp;&nbsp;&nbsp;</label><input id="excludeInput" style="width:332px; padding:6px; background-color: #775555;" />'; overlay.appendChild(box); document.body.appendChild(overlay); var includeInput = box.querySelector('#includeInput'); var excludeInput = box.querySelector('#excludeInput'); var closeButton = box.querySelector('#closeFilterModal'); includeInput.focus();
 
 function cleanup(result) {document.removeEventListener('keydown', escHandler); document.body.removeChild(overlay); resolve(result);}
 
@@ -1009,9 +1010,7 @@ function submit() {cleanup({include: includeInput.value, exclude: excludeInput.v
 
 function escHandler(e) {if (e.key === 'Escape') {cleanup(null);}}
 
-document.addEventListener('keydown', escHandler);
-includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();};
-excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
+document.addEventListener('keydown', escHandler); closeButton.onclick = function () {cleanup(null);}; includeInput.onkeydown = function (e) {if (e.key === 'Enter') excludeInput.focus();}; excludeInput.onkeydown = function (e) {if (e.key === 'Enter') submit();};});}
 </script>
 
 <br><span style="font-size: 11px;">AllKQLtoHTML is provided free for commercial and personal use, under the MIT License, Copyright © 2026 by Craig Plath. All rights reserved.</span>
