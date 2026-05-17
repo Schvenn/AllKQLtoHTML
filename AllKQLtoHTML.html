@@ -9,6 +9,13 @@
 
 body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); color: var(--text-main);}
 
+#topControls {position: fixed; top: 20px; right: 20px; display: flex; gap: 4px; z-index: 10; align-items: center;}
+#topControls button {width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; box-sizing: border-box;}
+
+.kql-icon {width:14px; height:14px; border-radius:50%; display:inline-block;}
+.kql-off-icon {background:#ffffff; box-shadow:0 0 2px rgba(255,255,255,0.6);}
+.kql-on-icon {background: conic-gradient(#00c853,#458bc5,#e07b7b,#d19a66,#bb86fc,#00c853); box-shadow:0 0 4px rgba(255,255,255,0.2);}
+
 #mitrePanel {position: fixed; top: 70px; right: -225px; width: 260px; height: auto; display: flex; align-items: center; z-index: 1000; transition: right 0.3s ease;}
 #mitrePanel:hover {right: 0px; padding-right: 0px;}
 #mitreTab {width: 44px; height: 44px; min-width: 44px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;}
@@ -21,11 +28,11 @@ body {font-family: Arial, sans-serif; margin: 20px; background: var(--bg-main); 
 #exportVisibleRules:hover {opacity: 1; background: var(--row-hover);}
 #searchCriteriaValue {white-space: pre-line;}
 
-#filterInputBox {width: 100%; box-sizing: border-box; padding: 10px; font-size: 14px;}
+#filterInputBox {width: 100%; box-sizing: border-box; padding: 10px; font-size: 10px;}
 
 table {width: 100%; border-collapse: collapse; table-layout: fixed; background: var(--bg-panel);}
 th, td {border: 1px solid var(--border-main); padding: 8px; vertical-align: top;}
-th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
+thead, th {position: sticky; top: 0; z-index: 2; background: var(--bg-header); font-weight: bold;}
 tr:nth-child(even) td {background: var(--row-even);}
 tr:hover td {background: var(--row-hover);}
 
@@ -34,7 +41,14 @@ td.rulename {position: relative; cursor: pointer;}
 td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none; transition: opacity 0.15s ease;}
 td.rulename:hover::after {opacity: 1;}
 
-td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto}
+.kql-comment {color:#00c853; font-weight:bold; font-style:italic; background:rgba(0,200,83,0.08); padding:0 2px; border-radius:3px;}
+.kql-pipe {color:#cc0000; font-weight:bold;}
+.kql-structure {color:#458bc5;}
+.kql-table {color:#e07b7b;}
+.kql-data {color:#d19a66;}
+body.kql-disabled .kql-pipe, body.kql-disabled .kql-structure, body.kql-disabled .kql-table, body.kql-disabled .kql-data {color:#eeeeee !important;}
+
+td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto; background-color:#151515; color:#eeeeee}
 td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
 td.query pre::after {content: "Click to copy query"; position: absolute; top: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-panel); border-radius: 4px; padding: 4px 6px; opacity: 0; pointer-events: none;}
 td.query pre:hover::after {opacity: 1;}
@@ -118,21 +132,22 @@ a.enabled-false:visited {color: #bb4444}
 a.enabled-false:hover {text-decoration: underline;}
 a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
-#themeToggle {position: fixed; top: 20px; right: 20px; padding: 6px 10px; font-size: 16px; border-radius: 6px; border: 1px solid var(--border-main); background: var(--bg-panel); color: var(--text-main); cursor: pointer; z-index: 1001;}
-
 :root[data-theme="light"] {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #0000FF; --link-hover: #ff0000; --link-visited: #000088; --link-active: #009900; color-scheme: light;}
 
 :root[data-theme="dark"] {--bg-main: #0e0e0e; --bg-panel: #141414; --bg-header: #1f1f1f; --bg-code: #161616; --border-main: #2a2a2a; --text-main: #e6e6e6; --text-muted: #aaa; --green: #6ddf7c; --red: #ff6b6b; --yellow: #ffd166; --row-even: #222222; --row-hover: #303055; --link-normal: #aabbee; --link-hover: #995599; --link-visited: #6666bb; --link-active: #ffff00; color-scheme: dark;}
 </style>
 
 <meta name="color-scheme" content="light dark">
+
+<script>window.kqlTheme = {comment: "{{COMMENT_COLOR}}", commentBg: "{{COMMENT_BG}}", table: "{{TABLE_COLOR}}", structure: "{{STRUCTURE_COLOR}}", func: "{{FUNCTION_COLOR}}", disabled: "#eeeeee"};</script>
 </head>
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
 <span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: {{SNAPSHOTDATE}} (created by AllKQLtoHTML v{{VERSION}})</span>
 
-<button id="themeToggle" title="Toggle light/dark mode">🌙</button>
+<div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
+
 <div id="mitrePanel"><div id="mitreTab"><img
 src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAZlBMVEUIWKUAU6MAVaRvkcEOXKddhbs9cbFLerX///+Rqs4AUaK5yd8ATaAAUKKLpcvr8PYARp6asdLe5vAASJ9VgLjx9fkASp/C0OPJ1ud5mMSpvNgATqH3+vzS3esAQpyAnsdwksEdYqql8pYrAAAA80lEQVR4AWIYQABojqwSJYRhAEjlLYNL1p37X/I1xW+w81OLDMEYM2+tMXb/6Jzz4878OXfYvtoUyPK49UBRbh6rGmjauO2AXjaPZUHgqMXkROC8eZSewOWsHVG2TUsi4UauKDez+hyAqKQ6yv2xPOY3eL5UKepc4bU2fdyhd6r0PoWHDzxX3fMLircqHYFvCvjFSJ5Qt8VYkbMBnJl9BiDNJ6t7KQ101ezjgEfS9tMnlhe4zkaq2Ms4Q/o2qTIVn32u46gNgTpPrGrNQu0J6tDjfAG0VzUPOuB5koa9PT5P8WepUagwIiI2aouUYyMRk/wg/29jDlzI7K5BAAAAAElFTkSuQmCC" alt="MITRE ATT&CK"/></div>
 
@@ -167,6 +182,16 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 | is the OR operator</pre></div></div>
 
 <script>
+/* CONTEXT TOGGLE */
+let kqlEnabled = true;
+function updateKqlIcon() {const icon = document.getElementById('kqlIcon'); icon.classList.remove('kql-on-icon', 'kql-off-icon');
+if (kqlEnabled) {icon.classList.add('kql-on-icon');}
+else {icon.classList.add('kql-off-icon');}}
+function toggleKqlContext() {kqlEnabled = !kqlEnabled; document.body.classList.toggle('kql-disabled', !kqlEnabled); updateKqlIcon();}
+document.getElementById('kqlToggle').addEventListener('click', toggleKqlContext);
+updateKqlIcon();
+
+/* SCROLL TO TOP */
 function scrollToTop() {const duration = 400; const start = window.scrollY; const startTime = performance.now();
 function animateScroll(currentTime) {const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1);
 const ease = 1 - Math.pow(1 - progress, 3);
@@ -174,10 +199,12 @@ window.scrollTo(0, start * (1 - ease));
 if (progress < 1) {requestAnimationFrame(animateScroll);}}
 requestAnimationFrame(animateScroll);}
 
+/* EVENT LISTENER FOR SCROLL TO TOP */
 window.addEventListener('scroll', function () {const btn = document.getElementById('backToTop');
 if (window.scrollY > 300) {btn.style.display = 'block';}
 else {btn.style.display = 'none';}});
 
+/* THEME TOGGLE */
 (function () {const toggle = document.getElementById('themeToggle'); if (!toggle) return;
 const root = document.documentElement;
 const stored = localStorage.getItem('theme'); if (stored === 'dark' || stored === 'light') {root.setAttribute('data-theme', stored);}
@@ -186,6 +213,7 @@ function updateIcon() {toggle.textContent = root.getAttribute('data-theme') === 
 toggle.addEventListener('click', () => {const current = root.getAttribute('data-theme'); const next = current === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', next); localStorage.setItem('theme', next); updateIcon();});
 updateIcon();})();
 
+/* START OF FILTERING TOGGLES */
 (function () {const toggles = document.querySelectorAll('.toggle'); const searchBlock = document.getElementById('searchCriteriaBlock'); const searchValue = document.getElementById('searchCriteriaValue'); const severityToggles = document.querySelectorAll('.toggle[data-filter^="sev-"]'); const rows = document.querySelectorAll('#rulesTable tbody tr'); const clearBtn = document.getElementById('clearFilters'); const reverseBtn = document.getElementById('reverseFilters'); const filterHeader = document.getElementById('filterHeader'); const visibleCountEl = document.getElementById('visibleRuleCount'); const activeFilters = new Set(); let reverseMode = false; let includeFilter = null; let excludeFilter = null;
 
 /* CTRL+Z TO CLEAR FILTERS */
@@ -239,7 +267,6 @@ document.addEventListener('keydown', function (e) {if ((e.ctrlKey || e.metaKey) 
 if (regexBtn) regexBtn.click();}});
 if (regexBtn) {regexBtn.addEventListener('click', async () => {const input = await showFilterModal();
 if (!input) return;
-
 activeFilters.clear(); includeFilter = null; excludeFilter = null;
 clearHighlights();
 rows.forEach(r => r.style.display = '');
@@ -257,7 +284,6 @@ if (searchBlock && searchValue) {let lines = [];
 if (input.include && input.include.trim()) {lines.push("INCLUDE: " + input.include.trim());}
 if (input.exclude && input.exclude.trim()) {lines.push("EXCLUDE: " + input.exclude.trim());}
 searchValue.textContent = lines.join("\n"); searchBlock.classList.remove('hidden');}
-
 applyFilters();}
 catch {alert('Invalid regular expression.');}});}
 
@@ -401,9 +427,8 @@ if (!badge) {badge = document.createElement('div'); badge.className = 'props-cop
 badge.style.opacity = '1';
 setTimeout(() => {badge.style.opacity = '0';}, 1200);}
 
-function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
-
 /* EXPORT ALL VISIBLE RULES */
+function decodeHtmlEntities(str) {const txt = document.createElement('textarea'); txt.innerHTML = str; return txt.value;}
 (function () {const btn = document.getElementById('exportVisibleRules');
 if (!btn) return;
 
