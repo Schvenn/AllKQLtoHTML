@@ -97,9 +97,11 @@ catch {return $text}}
 # Colourize KQL logic.
 function Highlight-KqlComments {param([string]$text);
 # Comments
-$text = $text -replace '(?im)(^|[\s])(//\s.*)(\r?\n)', '$1<span class="kql-comment">$2</span>$3'
+$text = $text -replace '(?im)(^|[\s])(//\s*.*)(\r?\n)', '$1<span class="kql-comment">$2</span>$3'
 # Tables
 $text = $text -replace '(?im)(^\x28?\s*)(\w+)(\s*\r?\n)', '$1<span class="kql-table">$2</span>$3'
+# Serialize
+$text = $text -replace '(?im)(^\x28?\s*)(serialize)(\s*\r?\n)', '$1<span class="kql-structure">$2</span>$3'
 # Structure
 $text = $text -replace '(?im)(^(\s*.?\s*))(case|distinct|evaluate|extend|invoke|join|let|limit|mv-(apply|expand)|project(-\w+)?|range|render|replace@|serialize|summarize|(sort|order)\sby|take|top|union|where)\s', '$1<span class="kql-structure">$3 </span>'
 # Data
