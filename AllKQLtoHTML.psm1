@@ -97,7 +97,7 @@ catch {return $text}}
 # Colourize KQL logic.
 function Highlight-KqlComments {param([string]$text);
 # Comments
-$text = $text -replace '(?im)(^|[\s])(//\s*.*)(\r?\n)', '$1<span class="kql-comment">$2</span>$3'
+$text = $text -replace '(?im)(^|[\s])(//\s*.*)(\r\n)', '$1<span class="kql-comment">$2</span>$3'
 # Tables
 $text = $text -replace '(?im)(^\x28?\s*)(\w+)(\s*\r?\n)', '$1<span class="kql-table">$2</span>$3'
 # Serialize
