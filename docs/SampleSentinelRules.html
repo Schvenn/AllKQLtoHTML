@@ -144,7 +144,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/17/2026 @ 03:15:54 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/17/2026 @ 03:34:19 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -206,8 +206,7 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <br>
 <br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
 </td>
-<td class="query"><pre><span class="kql-comment">// Curl dowloading a script file.
-</span>
+<td class="query"><pre><span class="kql-comment">// Curl dowloading a script file.</span>
 <span class="kql-structure">let </span>ScriptRegex = @"\.(?i)(PS[DM]?1|BAT|CMD|VB[ES]|JSE?|WS[FH]|HTA|PY|RB|P1|(BA|K|Z)?SH|PHP)(\W|$)";
 union(SecurityEvent
 <span class="kql-pipe">|</span> <span class="kql-structure">where </span>EventID == 4688 and (NewProcessName endswith @"\curl.exe" or CommandLine has "curl ") and CommandLine matches regex ScriptRegex
@@ -246,8 +245,7 @@ union(SecurityEvent
 <br>
 <br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#multiple-network-discovery-commands-run-in-a-short-period-of-time' target='_blank'>📘 Playbook</a>
 </td>
-<td class="query"><pre><span class="kql-comment">// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.
-</span>
+<td class="query"><pre><span class="kql-comment">// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.</span>
 <span class="kql-structure">let </span>TimeWindow = 10m;
 <span class="kql-structure">let </span>DiscoveryTools = <span class="kql-data">dynamic</span>(["net.exe", "net1.exe", "ipconfig.exe", "hostname.exe", "whoami.exe", "nltest.exe", "nbtstat.exe", "arp.exe", "route.exe", "quser.exe", "query.exe", "qwinsta.exe", "ping.exe", "tracert.exe", "netsh.exe", "dsquery.exe", "dsget.exe", "wmic.exe", "nslookup.exe", "whois.exe"]);
 <span class="kql-structure">let </span>PowerShellDiscoveryTerms = <span class="kql-data">dynamic</span>(["get-netipconfiguration", "get-netipaddress", "get-netroute", "get-nettcpconnection", "get-netneighbor", "get-netadapter", "get-dnsclientserveraddress", "resolve-dnsname", "test-connection", "get-adcomputer", "get-aduser", "get-addomain", "get-adforest", "get-smbconnection", "get-smbshare", "get-localgroup", "get-localuser", "get-ciminstance win32_networkadapterconfiguration"]);
@@ -264,8 +262,7 @@ union(SecurityEvent
 <span class="kql-pipe">|</span> <span class="kql-structure">extend </span>DiscoveryTechnique = case(NormalizedProcess in ("powershell.exe","powershell_ise.exe", "pwsh.exe"), "PowerShell", NormalizedProcess);
 <span class="kql-table">DiscoveryEvents</span>
 <span class="kql-pipe">|</span> <span class="kql-structure">summarize </span>DiscoveryCount = <span class="kql-data">dcount</span>(DiscoveryTechnique), ToolsUsed = <span class="kql-data">array_sort_asc</span>(<span class="kql-data">make_set</span>(DiscoveryTechnique)), Commands = <span class="kql-data">make_set</span>(CommandLine) by Device, Account, <span class="kql-data">bin</span>(TimeGenerated, TimeWindow)
-<span class="kql-pipe">|</span> <span class="kql-structure">where </span>not (<span class="kql-data">set_has_element</span>(ToolsUsed, "net.exe") and <span class="kql-data">set_has_element</span>(ToolsUsed, "ipconfig.exe") and <span class="kql-data">set_has_element</span>(ToolsUsed, "netsh.exe") and <span class="kql-data">array_length</span>(ToolsUsed) == 3) <span class="kql-comment">// Not necessary if DiscoveryCount set to 4 or higher.
-</span>
+<span class="kql-pipe">|</span> <span class="kql-structure">where </span>not (<span class="kql-data">set_has_element</span>(ToolsUsed, "net.exe") and <span class="kql-data">set_has_element</span>(ToolsUsed, "ipconfig.exe") and <span class="kql-data">set_has_element</span>(ToolsUsed, "netsh.exe") and <span class="kql-data">array_length</span>(ToolsUsed) == 3) <span class="kql-comment">// Not necessary if DiscoveryCount set to 4 or higher.</span>
 <span class="kql-pipe">|</span> <span class="kql-structure">where </span>DiscoveryCount &gt; 3 and not (Account == "system" or Account endswith "$")
 <span class="kql-pipe">|</span> <span class="kql-structure">sort by </span>TimeGenerated desc</pre></td>
 <td class="props"><div class="props-content"><div class='kv'><strong>name :</strong><span class='val'> 4089aab5-c537-462f-a171-e738d34ee72e</span></div>
