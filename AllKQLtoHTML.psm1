@@ -105,7 +105,7 @@ $text = $text -replace '(?im)(^\x28?\s*)(serialize)(\s*\r?\n)', '$1<span class="
 # Structure
 $text = $text -replace '(?im)(^(\s*.?\s*))(case|distinct|evaluate|extend|invoke|join|let|limit|mv-(apply|expand)|project(-\w+)?|range|render|replace@|serialize|summarize|(sort|order)\sby|take|top|union|where)\s', '$1<span class="kql-structure">$3 </span>'
 # Data
-$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg|bin|coalesce|d?count|datetime_diff|(end|start)ofday|dynamic|extract|extract(_all)?|format_datetime|iff|make_(list|set)|max|min|now|pack_array|parse(_\w+)?|replace(_regex|_string)?|set_has_element|split|substring|sum|take_any(if)?|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim)(\s*\x28)', '$1<span class="kql-data">$2</span>('
+$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg|bin|coalesce|d?count|datetime_diff|(end|start)ofday|dynamic|extract|extract(_all)?|format_datetime|_getwatchlist|iff|make_(list|set)|max|min|now|pack_array|parse(_\w+)?|replace(_regex|_string)?|set_has_element|split|substring|sum|take_any(if)?|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim)(\s*\x28)', '$1<span class="kql-data">$2</span>('
 # Pipe
 $text = $text -replace '(?m)^\s*\x7c', '<span class="kql-pipe">|</span>'
 return $text}
