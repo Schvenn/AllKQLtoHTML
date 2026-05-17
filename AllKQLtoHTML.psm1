@@ -94,6 +94,20 @@ function Normalize-UnicodeDecorations ([string]$text) {if ($null -eq $text) {ret
 try {return [Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(1252).GetBytes($text))}
 catch {return $text}}
 
+# Colourize KQL logic.
+function Highlight-KqlComments {param([string]$text);
+# Comments
+$text = $text -replace '(?im)(^|[\s])(//\s.*)(\r\n)', '$1<span class="kql-comment">$2</span>$3'
+# Tables
+$text = $text -replace '(?im)(^\x28?)(\w+)(\r\n)', '$1<span class="kql-table">$2</span>$3'
+# Structure
+$text = $text -replace '(?im)(^(.?\s*))(case|coalesce|distinct|evaluate|extend|invoke|join|let|limit|mv-expand|project(-\w+)?|render|replace(_regex)?|serialize|summarize|(sort|order)\sby|take|top|union|where) ', '$1<span class="kql-structure">$3 </span>'
+# Data
+$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_length|avg|bin|d?count|datetime_diff|(end|start)ofday|extract|extract(_all)?|format_datetime|iff|make_(list|set)|max|min|now|parse(-\w+)?|set_has_element|split|substring|sum|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim)(\s*\x28)', '$1<span class="kql-data">$2</span>$9'
+# Pipe
+$text = $text -replace '(?m)^\s*\x7c', '<span class="kql-pipe">|</span>'
+return $text}
+
 # Get valid or generate unique GUIDs for each rule.
 function Get-RuleUID {param ($r)
 if ($PreserveIds) {if ($r.name -and $r.name -match '([0-9a-fA-F-]{36})') {return $matches[1].ToLower()}
@@ -434,8 +448,7 @@ $ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($ruleExpor
 $name = Escape-Html $r.displayName
 $id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
 else {"rule_" + [guid]::NewGuid().ToString("N")}
-$qry = Escape-Html (Normalize-UnicodeDecorations $qry)
-
+$qry = Escape-Html (Normalize-UnicodeDecorations $qry); $qry = Highlight-KqlComments $qry
 $descRaw = Normalize-UnicodeDecorations $r.description; $descEscaped = Escape-Html $descRaw; $desc = Convert-UrlsToLinks $descEscaped
 
 $enabled = $r.enabled
@@ -522,7 +535,12 @@ $html = $html.Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
 Replace("{{VERSION}}", [string]$script:version).
 Replace("{{STATSBLOCK}}", [string]$statsBlock).
 Replace("{{TOC}}", [string]$script:toc).
-Replace("{{ROWS}}", [string]$script:rows)
+Replace("{{ROWS}}", [string]$script:rows).
+Replace("{{KQL_COMMENT}}", $script:KqlTheme.Comment).
+Replace("{{KQL_COMMENT_BG}}", $script:KqlTheme.CommentBg).
+Replace("{{KQL_TABLE}}", $script:KqlTheme.Table).
+Replace("{{KQL_STRUCTURE}}", $script:KqlTheme.Structure).
+Replace("{{KQL_FUNCTION}}", $script:KqlTheme.Function)
 
 Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
