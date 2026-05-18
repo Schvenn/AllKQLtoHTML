@@ -99,15 +99,25 @@ function Highlight-KqlComments {param([string]$text);
 # Comments
 $text = $text -replace '(?im)(^|[\s])(//\s*.*)(\r\n)', '$1<span class="kql-comment">$2</span>$3'
 # Tables
-$text = $text -replace '(?im)(^\x28?\s*)(\w+)(\s*\r?\n)', '$1<span class="kql-table">$2</span>$3'
+$text = $text -replace '(?im)(^(union|join)?\x28?\s*)(\w+)(\s*\r?\n)', '$1<span class="kql-table">$3</span>$4'
 # Serialize
 $text = $text -replace '(?im)(^\x28?\s*)(serialize)(\s*\r?\n)', '$1<span class="kql-structure">$2</span>$3'
 # Structure
-$text = $text -replace '(?im)(^(\s*.?\s*))(case|distinct|evaluate|extend|invoke|join|let|limit|mv-(apply|expand)|project(-\w+)?|range|render|replace@|serialize|summarize|(sort|order)\sby|take|top|union|where)\s', '$1<span class="kql-structure">$3 </span>'
+$text = $text -replace '(?im)(\s*\x7C?\s*)(case|distinct|evaluate|extend|invoke|join|let|limit|mv-(apply|expand)|project(-\w+)?|range|render|replace@|serialize|summarize|(sort|order)\sby|take|top|union|where)\s', '$1<span class="kql-structure">$2 </span>'
 # Data
-$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg|bin|coalesce|d?count|datetime_diff|(end|start)ofday|dynamic|extract|extract(_all)?|format_datetime|_getwatchlist|iff|make_(list|set)|max|min|now|pack_array|parse(_\w+)?|replace(_regex|_string)?|set_has_element|split|substring|sum|take_any(if)?|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim)(\s*\x28)', '$1<span class="kql-data">$2</span>('
-# Pipe
-$text = $text -replace '(?m)^\s*\x7c', '<span class="kql-pipe">|</span>'
+$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg|bin|coalesce|d?count|datatable|datetime_diff|(end|start)ofday|dynamic|extract|extract(_all)?|format_datetime|_getwatchlist|iff|make_(list|set)|max|min|now|pack_array|parse(_\w+)?|replace(_regex|_string)?|set_has_element|split|substring|sum|take_any(if)?|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim|union)(\s*\x28)', '$1<span class="kql-data">$2</span>('
+# Brackets
+$text = $text -replace '([\x28\x29\x5B\x5D\x7B\x7D]|@[\x22\x27]|[\x22\x27]@)', '<span class="kql-brackets">$1</span>'
+# Pipes (Conditional)
+$lines = $text -split "`r?`n"
+$text = ($lines | ForEach-Object {$line = $_
+$regexMatch = [regex]::Match($line, '(?i)(regex|replace)')
+$hasRegex = $regexMatch.Success
+$regexPos = if ($hasRegex) {$regexMatch.Index} else {[int]::MaxValue}
+if ($line -match '\|') {$line = [regex]::Replace($line, '\|', {param($m)
+if ($hasRegex -and $m.Index -gt $regexPos) {'<span class="kql-brackets">|</span>'}
+else {'<span class="kql-pipe">|</span>'}})}
+$line}) -join "`r`n"
 return $text}
 
 # Get valid or generate unique GUIDs for each rule.
