@@ -42,11 +42,12 @@ td.rulename::after {content: "Click to copy markdown"; position: absolute; top: 
 td.rulename:hover::after {opacity: 1;}
 
 .kql-comment {color:#00c853; font-weight:bold; font-style:italic; background:rgba(0,200,83,0.08); padding:0 2px; border-radius:3px;}
-.kql-pipe {color:#cc0000; font-weight:bold;}
 .kql-structure {color:#458bc5;}
 .kql-table {color:#e07b7b;}
 .kql-data {color:#d19a66;}
-body.kql-disabled .kql-pipe, body.kql-disabled .kql-structure, body.kql-disabled .kql-table, body.kql-disabled .kql-data {color:#eeeeee !important;}
+.kql-pipe {color:#cc0000; font-weight:bold;}
+.kql-brackets {color:#FFD866; font-weight:bold;}
+ body.kql-disabled .kql-structure, body.kql-disabled .kql-table, body.kql-disabled .kql-data, body.kql-disabled .kql-pipe, body.kql-disabled .kql-brackets {color:#eeeeee !important;}
 
 td.query pre {cursor: pointer; position: relative; line-height: 1.35em; max-height: calc(1.35em * 30); overflow-y: auto; background-color:#151515; color:#eeeeee}
 td.query pre:hover {outline: 2px dashed var(--border-main); outline-offset: 2px;}
