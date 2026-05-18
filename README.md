@@ -2,7 +2,7 @@
 This script will read Sentinel JSON files containing Analytics rules and create a single page HTML output for easy search and reference, as well as a report_navigator.json file for use with the Mitre ATT&CK Navigator heatmap.
 
 The webpage features statistics about the rules, filtering, the ability to copy queries to the clipboard and more. Check out the screenshots to see some of what it can do, or try it yourself with this sample page using two effective endpoint rules: 
-<a href="https://schvenn.github.io/AllKQLtoHTML/SampleSentinelRules.html" target="_blank">Sample Sentinel Rules</a>
+[Sample Sentinel Rules](https://schvenn.github.io/AllKQLtoHTML/SampleSentinelRules.html)
 
 	Usage: AllKQLtoHTML <file1.json> <file2.json> <outfile.html> <-concat> <-merge> <-preserveids> <-createlinks> <-usage> <-getazcommand> <-help>
 
