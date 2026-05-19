@@ -139,14 +139,37 @@ if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
 $urlPattern = '(https?:\/\/[^\s<]+)'
 return ($Text -replace $urlPattern, '<a href="$1" target="_blank">$1</a>')}
 
+# Get MITRE ATT&CK TTP tooltip.
+function Get-MitreTitle {param($id)
+if ($script:MitreLookup.ContainsKey($id)) {$obj = $script:MitreLookup[$id]; $name = $obj.name; $desc = Get-FirstSentence $obj.description
+if ($desc) {return "$name`:`n$desc"}
+return $name}
+return "MITRE ATT&CK Technique $id"}
+
+# Get first sentence of MITRE ATT&CK TTP description.
+function Get-FirstSentence {param([string]$text)
+if ([string]::IsNullOrWhiteSpace($text)) {return ""}
+$match = [regex]::Match($text, '^(.*?\.)\s')
+if ($match.Success) {return $match.Groups[1].Value.Trim()}
+return $text.Trim()}
+
 # Convert Mitre TTPs to clickable links for column 3.
 function Convert-MitreToLinks {param ([string]$Text)
 if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
-$items = $Text -split '\s*,\s*'; $items = $items | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {if ($_ -match '\.') {$parts = $_ -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
-else {$url = "https://attack.mitre.org/techniques/$_"}
-"<a href='$url' target='_blank'>$_</a>"}
-else {Escape-Html $_}}
+$items = ($Text -split '\s*,\s*') | Where-Object {$_ -and $_.Trim() -ne ''};
+$items = $items | ForEach-Object {$id = $_.Trim()
+if ($id -match '\bT\d{4}(?:\.\d{3})?\b') {if ($id -match '\.') {$parts = $id -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
+else {$url = "https://attack.mitre.org/techniques/$id"}
+$title = Get-MitreTitle $id
+"<a href='$url' target='_blank' title='$title'>$id</a>"}
+else {Escape-Html $id}}
 return ($items -join ', ')}
+
+# Download the latest MITRE dataset if a TTP is unrecognized and the cache is at least a day old.
+function Refresh-MitreLookup {if ($script:MitreLookupRefreshAttempted) {return}
+$script:MitreLookupRefreshAttempted = $true; Write-Host -f Yellow "Refreshing MITRE STIX dataset..."
+Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
+Load-MitreLookup}
 
 # Get or build Wiki/KB article links for column 1.
 function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
@@ -308,6 +331,26 @@ $script:workspacename = $config.privatedata.workspacename
 $script:subscription = $config.privatedata.subscription
 $script:version = $config.moduleversion}
 loadconfiguration
+
+# Load MITRE ATT&CK TTPs.
+function Load-MitreLookup {if ($script:MitreLookup) {return}
+$script:MitreLookup = @{}; $script:MitreLookupLastLoadTime = $null; $script:MitreLookupRefreshAttempted = $false; $script:MitreUri = "https://raw.githubusercontent.com/mitre/cti/master/enterprise-attack/enterprise-attack.json"; $cacheDir = Join-Path $baseModulePath "cache"; $script:MitreCacheFile = Join-Path $baseModulePath "cache\enterprise-attack.json"; $download = $true
+if (-not (Test-Path $cacheDir)) {New-Item -ItemType Directory -Path $cacheDir | Out-Null}
+if (Test-Path $script:MitreCacheFile) {$age = (Get-Date) - (Get-Item $script:MitreCacheFile).LastWriteTime
+if ($age.Days -lt 30) {$download = $false}}
+if ($download) {Write-Host -f Cyan "Downloading MITRE ATT&CK STIX dataset..."; Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $cacheFile -Encoding UTF8}
+else {Write-Host -f DarkGray "Using the cached MITRE dataset."}
+$data = Get-Content $script:MitreCacheFile -Raw | ConvertFrom-Json
+$script:MitreLookupLastLoadTime = [datetime](Get-Item $script:MitreCacheFile).LastWriteTime; $script:MitreLookup = @{}
+foreach ($obj in $data.objects) {if ($obj.type -ne "attack-pattern") {continue}
+if (-not $obj.external_references) {continue}
+$ref = $obj.external_references | Where-Object {$_.source_name -eq "mitre-attack"} | Select-Object -First 1
+if (-not $ref.external_id) {continue}
+$id = $ref.external_id; 
+$script:MitreLookup[$id] = [pscustomobject]@{name = $obj.name;
+description = if ($obj.description) {$obj.description.Trim()} else {""}}}
+Write-Host -f Green "MITRE lookup ready: $($script:MitreLookup.Count) techniques"}
+Load-MitreLookup
 
 # -------------------------- SWITCHES -------------------------------------------------------------
 
