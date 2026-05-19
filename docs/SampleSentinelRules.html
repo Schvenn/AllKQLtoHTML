@@ -147,7 +147,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/19/2026 @ 12:47:22 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/19/2026 @ 05:03:00 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -559,6 +559,12 @@ if (Array.isArray(v)) return v.join(', ');
 if (typeof v === 'object') return JSON.stringify(v);
 return String(v);}
 
+function mitre(v) {const text = val(v);
+return text.replace(/\b(T\d{4})(?:\.(\d{3}))?\b/g, (m, technique, sub) => {const url = sub
+? 'https://attack.mitre.org/techniques/' + technique + '/' + sub
+: 'https://attack.mitre.org/techniques/' + technique;
+return '[' + m + '](' + url + ')';});}
+
 const enabled = p.enabled === true ? "✅ true" : "❌ false (Disabled)";
 
 let severityIcon = "⚪";
@@ -589,8 +595,8 @@ val(p.description),'',
 '**suppressionEnabled :** ' + val(p.suppressionEnabled),
 '**startTimeUtc :** ' + val(p.startTimeUtc),
 '**tactics :** ' + val(p.tactics),
-'**techniques :** ' + val(p.techniques),
-'**subTechniques :** ' + val(p.subTechniques),
+'**techniques :** ' + mitre(p.techniques),
+'**subTechniques :** ' + mitre(p.subTechniques),
 '**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
 '**incidentConfiguration :** ' + val(p.incidentConfiguration),
 '**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
