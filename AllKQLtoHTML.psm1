@@ -96,16 +96,20 @@ catch {return $text}}
 
 # Colourize KQL logic.
 function Highlight-KqlComments {param([string]$text);
-# Comments
-$text = $text -replace '(?im)(^|[\s])(//\s*.*)(\r\n)', '$1<span class="kql-comment">$2</span>$3'
-# Tables
-$text = $text -replace '(?im)(^(union|join)?\x28?\s*)(\w+)(\s*\r?\n)', '$1<span class="kql-table">$3</span>$4'
+# Store Comment lines.
+$comments = @{}; $text = [regex]::Replace($text, '(?m)//.*$', {param($m); $key = "###CMT_{0}###" -f $m.Index; $comments[$key] = $m.Value; return $key})
+# Operators
+$text = $text -replace '([\w\s])(\>=?|\<=?|={1,3}|\!(~|=)|=~)', '$1 <span class="kql-operators">$2</span> '
+# Tables (with optional predecates)
+$text = $text -replace '(?im)(^(find|join|lookup|materialize|search|union)?)(\x28?\s*)(\w+)(\s*\r?\n)', '<span class="kql-data">$1</span>$3<span class="kql-table">$4</span>$5'
 # Serialize
 $text = $text -replace '(?im)(^\x28?\s*)(serialize)(\s*\r?\n)', '$1<span class="kql-structure">$2</span>$3'
-# Structure
-$text = $text -replace '(?im)(\s*\x7C?\s*)(case|distinct|evaluate|extend|invoke|join|let|limit|mv-(apply|expand)|project(-\w+)?|range|render|replace@|serialize|summarize|(sort|order)\sby|take|top|union|where)\s', '$1<span class="kql-structure">$2 </span>'
-# Data
-$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg|bin|coalesce|d?count|datatable|datetime_diff|(end|start)ofday|dynamic|extract|extract(_all)?|format_datetime|_getwatchlist|iff|make_(list|set)|max|min|now|pack_array|parse(_\w+)?|replace(_regex|_string)?|set_has_element|split|substring|sum|take_any(if)?|to(bool|dynamic|double|int|long|real|string)|tolower|toupper|trim|union)(\s*\x28)', '$1<span class="kql-data">$2</span>('
+# Structure (always followed by a space)
+$text = $text -replace '(?im)(\s*\x7C?\s*)(case|evaluate|extend|facet|fork|invoke|isfuzzy|join( kind=\w+)?|let|limit|lookup|mv-(apply|expand)|parse-where|partition|project(-\w+)?|range|reduce|render|scan|search|sample(-distinct)?|serialize|step|summarize|(sort|order)\sby|take|top(-hitters|nested)?|union|where)\s', '$1<span class="kql-structure">$2</span> '
+# Filters (followed by a space, but sometimes a bracket)
+$text = $text -replace '(?im)(\W)(and( not)?|as|between|by|contains|distinct|(ends|starts)with|has(_any|prefix|suffix)?|!?in~?|matches regex|not|on|or|with)([\s\x28])', '$1<span class="kql-filters">$2</span>$6'
+# Data (always followed by a bracket)
+$text = $text -replace '(?im)(\s*)(ago|arg_(max|min)|array_(\w+)?|avg(if)?|bag_unpack|bin|coalesce|column_ifexists|d?count(if)?|datatable|datetime_diff|(end|start)ofday|(to)?dynamic|externaldata|extract|extract(_all)?|format_datetime|_getwatchlist|iff|iif|indexof|is(not)?(empty|null)|make_(list|set)|max(if)?|min(if)?|now|pack(_all|_array)|parse(_\w+)?|partition|percentiles?|rand|repeat|replace(_regex|_string)?|reverse|round|row_number|session_count|set_has_element|split|stdev|strcat(_array|_delim)?|strlen|substring|sum(if)?|take_any(if)?|to(bool|date|guid|dynamic|double|int|long|lower|real|scalar|string|time|upper)|translate|trim|unixtime_milliseconds_todatetime|url_(de|en)code|variance|zip)(\s*\x28)', '$1<span class="kql-data">$2</span>('
 # Brackets
 $text = $text -replace '([\x28\x29\x5B\x5D\x7B\x7D]|@[\x22\x27]|[\x22\x27]@)', '<span class="kql-brackets">$1</span>'
 # Pipes (Conditional)
@@ -118,7 +122,10 @@ if ($line -match '\|') {$line = [regex]::Replace($line, '\|', {param($m)
 if ($hasRegex -and $m.Index -gt $regexPos) {'<span class="kql-brackets">|</span>'}
 else {'<span class="kql-pipe">|</span>'}})}
 $line}) -join "`r`n"
-return $text}
+# Restore Comment lines and then highlight them.
+foreach ($key in $comments.Keys) {$text = $text -replace [regex]::Escape($key), "<span class='kql-comment'>$($comments[$key].TrimEnd("`r","`n"))</span>"}
+$text = $text -replace '  ',' '
+return $text;}
 
 # Get valid or generate unique GUIDs for each rule.
 function Get-RuleUID {param ($r)
@@ -518,7 +525,7 @@ function buildstats {$script:statsBlock = @"
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: $templateVersionCount</span><br><br>
-<span id="regexFilterBtn" class="text-filter toggle" title="Filter visible rules by search or regex">🔍 Filter by Text <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+F)</span></span></td>
+<span id="regexFilterBtn" class="text-filter toggle" title="Filter by Text">🔍 Filter by Text <span style="display:inline; font-size:9px; opacity:0.7; text-decoration: none;">(CTRL+X)</span></span></td>
 
 <td class="stats-middle"><strong><span class="stats-header">Severity Breakdown:</span><br>
 <span class="sev-info toggle" data-filter="sev-informational">⚪ Informational: $severityInfo</span><br>
