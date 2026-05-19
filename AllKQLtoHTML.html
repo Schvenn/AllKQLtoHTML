@@ -381,6 +381,12 @@ if (Array.isArray(v)) return v.join(', ');
 if (typeof v === 'object') return JSON.stringify(v);
 return String(v);}
 
+function mitre(v) {const text = val(v);
+return text.replace(/\b(T\d{4})(?:\.(\d{3}))?\b/g, (m, technique, sub) => {const url = sub
+? 'https://attack.mitre.org/techniques/' + technique + '/' + sub
+: 'https://attack.mitre.org/techniques/' + technique;
+return '[' + m + '](' + url + ')';});}
+
 const enabled = p.enabled === true ? "✅ true" : "❌ false (Disabled)";
 
 let severityIcon = "⚪";
@@ -411,8 +417,8 @@ val(p.description),'',
 '**suppressionEnabled :** ' + val(p.suppressionEnabled),
 '**startTimeUtc :** ' + val(p.startTimeUtc),
 '**tactics :** ' + val(p.tactics),
-'**techniques :** ' + val(p.techniques),
-'**subTechniques :** ' + val(p.subTechniques),
+'**techniques :** ' + mitre(p.techniques),
+'**subTechniques :** ' + mitre(p.subTechniques),
 '**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
 '**incidentConfiguration :** ' + val(p.incidentConfiguration),
 '**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
