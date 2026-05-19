@@ -139,6 +139,15 @@ if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
 $urlPattern = '(https?:\/\/[^\s<]+)'
 return ($Text -replace $urlPattern, '<a href="$1" target="_blank">$1</a>')}
 
+# Convert Mitre TTPs to clickable links for column 3.
+function Convert-MitreToLinks {param ([string]$Text)
+if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
+$items = $Text -split '\s*,\s*'; $items = $items | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {if ($_ -match '\.') {$parts = $_ -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
+else {$url = "https://attack.mitre.org/techniques/$_"}
+"<a href='$url' target='_blank'>$_</a>"}
+else {Escape-Html $_}}
+return ($items -join ', ')}
+
 # Get or build Wiki/KB article links for column 1.
 function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
 if ($RuleGuid) {$lookupGuid = $RuleGuid.ToString().Trim().Trim('{}').ToLower()
@@ -163,15 +172,20 @@ return "$base$name$suffix"}
 
 # Create key/value pairs for column 3.
 function Format-Properties {param ($Properties)
-$exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion')
-$out = ""
+$exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion'); $out = ""
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
-$key = Escape-Html $p.Name
-$val = $p.Value
-if ($val -is [Array]) {$valText = ($val | ForEach-Object {Escape-Html "$_"}) -join ', '}
+$key = Escape-Html $p.Name; $val = $p.Value
+# ---------------- MITRE ENRICHMENT ----------------
+if ($p.Name -in @('techniques','subTechniques')) {if ($val -is [Array]) {$valText = ($val | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {Convert-MitreToLinks $_} 
+else {Escape-Html "$_"}}) -join ', '}
+else {$valText = Escape-Html "$val"}}
+# ---------------- ARRAY HANDLING ----------------
+elseif ($val -is [Array]) {$valText = ($val | ForEach-Object {Escape-Html "$_"}) -join ', '}
+# ---------------- OBJECT HANDLING ----------------
 elseif ($val -is [psobject] -and -not ($val -is [string])) {$valText = Escape-Html ($val | ConvertTo-Json -Depth 5 -Compress)}
+# ---------------- SCALAR ----------------
 else {$valText = Escape-Html "$val"}
-$out += "<div class='kv'><strong>$key :</strong><span class='val'> $valText</span></div>`n"}
+$out += "<div class='kv'><strong>$key :</strong><span class='val'> $valText</span></div>`n"}
 return $out}
 
 # Cleans and reshapes one rule object into a consistent schema.
