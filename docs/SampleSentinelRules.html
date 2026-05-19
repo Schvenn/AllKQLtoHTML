@@ -147,7 +147,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/18/2026 @ 11:22:28 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.2)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/19/2026 @ 12:47:22 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -227,8 +227,17 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
 <div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
 <div class='kv'><strong>tactics :</strong><span class='val'> CommandAndControl, Execution</span></div>
-<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1059' target='_blank'>T1059</a>, <a href='https://attack.mitre.org/techniques/T1204' target='_blank'>T1204</a></span></div>
-<div class='kv'><strong>subTechniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1204/002' target='_blank'>T1204.002</a>, <a href='https://attack.mitre.org/techniques/T1059/001' target='_blank'>T1059.001</a>, <a href='https://attack.mitre.org/techniques/T1059/003' target='_blank'>T1059.003</a>, <a href='https://attack.mitre.org/techniques/T1059/004' target='_blank'>T1059.004</a>, <a href='https://attack.mitre.org/techniques/T1059/005' target='_blank'>T1059.005</a>, <a href='https://attack.mitre.org/techniques/T1059/006' target='_blank'>T1059.006</a>, <a href='https://attack.mitre.org/techniques/T1059/007' target='_blank'>T1059.007</a></span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1059' target='_blank' title='Command and Scripting Interpreter:
+Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries.'>T1059</a>, <a href='https://attack.mitre.org/techniques/T1204' target='_blank' title='User Execution:
+An adversary may rely upon specific actions by a user in order to gain execution.'>T1204</a></span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1204/002' target='_blank' title='Malicious File:
+An adversary may rely upon a user opening a malicious file in order to gain execution.'>T1204.002</a>, <a href='https://attack.mitre.org/techniques/T1059/001' target='_blank' title='PowerShell:
+Adversaries may abuse PowerShell commands and scripts for execution.'>T1059.001</a>, <a href='https://attack.mitre.org/techniques/T1059/003' target='_blank' title='Windows Command Shell:
+Adversaries may abuse the Windows command shell for execution.'>T1059.003</a>, <a href='https://attack.mitre.org/techniques/T1059/004' target='_blank' title='Unix Shell:
+Adversaries may abuse Unix shell commands and scripts for execution.'>T1059.004</a>, <a href='https://attack.mitre.org/techniques/T1059/005' target='_blank' title='Visual Basic:
+Adversaries may abuse Visual Basic (VB) for execution.'>T1059.005</a>, <a href='https://attack.mitre.org/techniques/T1059/006' target='_blank' title='Python:
+Adversaries may abuse Python commands and scripts for execution.'>T1059.006</a>, <a href='https://attack.mitre.org/techniques/T1059/007' target='_blank' title='JavaScript:
+Adversaries may abuse various implementations of JavaScript for execution.'>T1059.007</a></span></div>
 <div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
 <div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
 <div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
@@ -277,8 +286,15 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
 <div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
 <div class='kv'><strong>tactics :</strong><span class='val'> Discovery</span></div>
-<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1082' target='_blank'>T1082</a>, <a href='https://attack.mitre.org/techniques/T1016' target='_blank'>T1016</a>, <a href='https://attack.mitre.org/techniques/T1049' target='_blank'>T1049</a>, <a href='https://attack.mitre.org/techniques/T1018' target='_blank'>T1018</a>, <a href='https://attack.mitre.org/techniques/T1069' target='_blank'>T1069</a>, <a href='https://attack.mitre.org/techniques/T1033' target='_blank'>T1033</a></span></div>
-<div class='kv'><strong>subTechniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1069/001' target='_blank'>T1069.001</a></span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1082' target='_blank' title='System Information Discovery:
+An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture.'>T1082</a>, <a href='https://attack.mitre.org/techniques/T1016' target='_blank' title='System Network Configuration Discovery:
+Adversaries may look for details about the network configuration and settings, such as IP and/or MAC addresses, of systems they access or through information discovery of remote systems.'>T1016</a>, <a href='https://attack.mitre.org/techniques/T1049' target='_blank' title='System Network Connections Discovery:
+Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.'>T1049</a>, <a href='https://attack.mitre.org/techniques/T1018' target='_blank' title='Remote System Discovery:
+Adversaries may attempt to get a listing of other systems by IP address, hostname, or other logical identifier on a network that may be used for Lateral Movement from the current system.'>T1018</a>, <a href='https://attack.mitre.org/techniques/T1069' target='_blank' title='Permission Groups Discovery:
+Adversaries may attempt to discover group and permission settings.'>T1069</a>, <a href='https://attack.mitre.org/techniques/T1033' target='_blank' title='System Owner/User Discovery:
+Adversaries may attempt to identify the primary user, currently logged in user, set of users that commonly uses a system, or whether a user is actively using the system.'>T1033</a></span></div>
+<div class='kv'><strong>subTechniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1069/001' target='_blank' title='Local Groups:
+Adversaries may attempt to find local system groups and permission settings.'>T1069.001</a></span></div>
 <div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
 <div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
 <div class='kv'><strong>eventGroupingSettings :</strong><span class='val'> {"aggregationKind":"SingleAlert"}</span></div>
@@ -320,7 +336,8 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <div class='kv'><strong>suppressionEnabled :</strong><span class='val'> False</span></div>
 <div class='kv'><strong>startTimeUtc :</strong><span class='val'> </span></div>
 <div class='kv'><strong>tactics :</strong><span class='val'> CommandAndControl</span></div>
-<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1219' target='_blank'>T1219</a></span></div>
+<div class='kv'><strong>techniques :</strong><span class='val'> <a href='https://attack.mitre.org/techniques/T1219' target='_blank' title='Remote Access Tools:
+An adversary may use legitimate remote access tools to establish an interactive command and control channel within a network.'>T1219</a></span></div>
 <div class='kv'><strong>subTechniques :</strong><span class='val'> </span></div>
 <div class='kv'><strong>alertRuleTemplateName :</strong><span class='val'> </span></div>
 <div class='kv'><strong>incidentConfiguration :</strong><span class='val'> {"createIncident":true,"groupingConfiguration":{"enabled":true,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}</span></div>
