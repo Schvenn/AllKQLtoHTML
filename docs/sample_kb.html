@@ -24,8 +24,51 @@ body {background-color: #090909; color: #ffffff;}
 
 <p>As shown above, the script supports multiple KB integration methods, including direct CSV mappings, generated links, anchor links, and search-based URLs. CSV mappings and script generated links can also be used together in a hybrid configuration.</p>
 
-<p>The rest of this page is a knowledgebase format example for demonstration purposes only.</p>
+<p>The rest of this page is a knowledgebase format example for demonstration purposes only, with the first three sections demonstrating what the markdown text would look like if it was copied from column 1 of the first rule into a compatible wiki or knowledgebase resource.</p>
 <hr></hr>
+<h1>Curl downloading a script file</h1>
+
+Captures curl activity that involves downloaded executable script files, which is unusual in any corporate environment.<br>
+<br>
+Enabled: **✅ true**<br>
+Severity: **🔴 High**<br>
+<br>
+<hr>
+<pre>
+// Curl dowloading a script file.
+let ScriptRegex = @"\.(?i)(PS[DM]?1|BAT|CMD|VB[ES]|JSE?|WS[FH]|HTA|PY|RB|P1|(BA|K|Z)?SH|PHP)(\W|$)";
+union(SecurityEvent
+| where EventID == 4688 and (NewProcessName endswith @"\curl.exe" or CommandLine has "curl ") and CommandLine matches regex ScriptRegex
+| project TimeGenerated, Device = Computer, Account = SubjectUserName, ParentProcess = ParentProcessName, Process = NewProcessName, CommandLine = CommandLine, Source = "SecurityEvent"),
+(DeviceProcessEvents
+| where (FileName == "curl.exe" or ProcessCommandLine has "curl ") and ProcessCommandLine matches regex ScriptRegex
+| project TimeGenerated, Device = DeviceName, Account = AccountName, ParentProcess = InitiatingProcessParentFileName, Process = FileName, CommandLine = ProcessCommandLine, Source = "DeviceProcessEvents")
+| order by TimeGenerated desc
+</pre>
+<hr>
+<br>
+<b>name :</b> 76b54938-52aa-4ab1-a487-a4f55d74723c<br>
+<b>queryFrequency :</b> PT1H<br>
+<b>queryPeriod :</b> PT1H<br>
+<b>triggerOperator :</b> GreaterThan<br>
+<b>triggerThreshold :</b> 0<br>
+<b>suppressionDuration :</b> PT5H<br>
+<b>suppressionEnabled :</b> false<br>
+<b>startTimeUtc :</b> <br>
+<b>tactics :</b> CommandAndControl, Execution<br>
+<b>techniques :</b> T1059, T1204<br>
+<b>subTechniques :</b> T1204.002, T1059.001, T1059.003, T1059.004, T1059.005, T1059.006, T1059.007<br>
+<b>alertRuleTemplateName :</b> <br>
+<b>incidentConfiguration :</b><br> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}<br>
+<b>eventGroupingSettings :</b> {"aggregationKind":"SingleAlert"}<br>
+<b>alertDetailsOverride :</b> <br>
+<b>customDetails :</b> <br>
+<b>sentinelEntitiesMappings :</b> <br>
+<b>entityMappings :</b> [object Object], [object Object], [object Object]<br>
+<b>id :</b> /Microsoft.SecurityInsights/alertRules/76b54938-52aa-4ab1-a487-a4f55d74723c<br>
+<b>kind :</b> Scheduled<br>
+<br>
+<hr>
 <h2>Playbook:</h2>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, ba-na-na sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ac erat enim. Curabitur enim quam, fringilla a hendrerit a, laoreet vel sem. Nam pellentesque lectus tortor. Quisque euismod et mauris vitae ullamcorper.</p>
 
