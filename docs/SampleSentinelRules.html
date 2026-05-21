@@ -147,7 +147,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/19/2026 @ 05:03:00 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/20/2026 @ 08:24:23 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -552,11 +552,43 @@ function sanitize(name) {return (name || 'rule')
 .replace(/[^a-z0-9]/gi, '_')
 .toLowerCase();}})();
 
+/* BUILD MITRE DESCRIPTIONS FOR MARKDOWN CREATION */
+const mitreRaw = `76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059|Command and Scripting Interpreter|Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1204|User Execution|An adversary may rely upon specific actions by a user in order to gain execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1204.002|Malicious File|An adversary may rely upon a user opening a malicious file in order to gain execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.001|PowerShell|Adversaries may abuse PowerShell commands and scripts for execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.003|Windows Command Shell|Adversaries may abuse the Windows command shell for execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.004|Unix Shell|Adversaries may abuse Unix shell commands and scripts for execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.005|Visual Basic|Adversaries may abuse Visual Basic (VB) for execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.006|Python|Adversaries may abuse Python commands and scripts for execution.
+76b54938-52aa-4ab1-a487-a4f55d74723c|CommandAndControl, Execution|T1059.007|JavaScript|Adversaries may abuse various implementations of JavaScript for execution.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1082|System Information Discovery|An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1016|System Network Configuration Discovery|Adversaries may look for details about the network configuration and settings, such as IP and/or MAC addresses, of systems they access or through information discovery of remote systems.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1049|System Network Connections Discovery|Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1018|Remote System Discovery|Adversaries may attempt to get a listing of other systems by IP address, hostname, or other logical identifier on a network that may be used for Lateral Movement from the current system.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1069|Permission Groups Discovery|Adversaries may attempt to discover group and permission settings.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1033|System Owner/User Discovery|Adversaries may attempt to identify the primary user, currently logged in user, set of users that commonly uses a system, or whether a user is actively using the system.
+4089aab5-c537-462f-a171-e738d34ee72e|Discovery|T1069.001|Local Groups|Adversaries may attempt to find local system groups and permission settings.
+1510a360-09b0-4371-9d49-ed6a4083116a|CommandAndControl|T1219|Remote Access Tools|An adversary may use legitimate remote access tools to establish an interactive command and control channel within a network.` || ""; const mitreByRule = {};
+if (mitreRaw) {mitreRaw.split('\n').forEach(line => {const parts = line.split('|');
+if (parts.length < 5) return;
+const rule = parts[0]; const tactic = parts[1]; const techId = parts[2]; const name = parts[3]; const desc = parts.slice(4).join('|');
+if (!mitreByRule[rule]) mitreByRule[rule] = []; mitreByRule[rule].push({ tactic, techId, name, desc });});}
+
 /* RULE MARKDOWN CREATION */
-function buildMarkdown(rule) {const p = rule.properties || {};
+function buildMarkdown(rule) {const p = rule.properties || {}; //const ruleMitre = mitreByRule[rule.name] || mitreByRule[rule.displayName] || mitreByRule[rule.properties?.displayName] || [];
 function val(v) {if (v === null || v === undefined) return "";
 if (Array.isArray(v)) return v.join(', ');
 if (typeof v === 'object') return JSON.stringify(v);
+return String(v);}
+
+function formatObject(v) {if (v === null || v === undefined) return "";
+if (Array.isArray(v)) {return v.map(formatObject).join(", ");}
+if (typeof v === "object") {return Object.entries(v)
+.map(([k, val]) => {if (Array.isArray(val)) {return `${k}=[${val.map(formatObject).join(", ")}]`;}
+if (typeof val === "object") {return `${k}=${formatObject(val)}`;}
+return `${k}=${val}`;})
+.join("; ");}
 return String(v);}
 
 function mitre(v) {const text = val(v);
@@ -576,7 +608,28 @@ case "Informational": severityIcon = "⚪"; break;}
 let templateLine = '';
 if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
 
-const kql = val(p.query);
+const kql = val(p.query); const today = new Date().toLocaleDateString('en-US');
+
+const mitreRefs = [];
+(p.techniques || []).forEach(t => {mitreRefs.push(`https://attack.mitre.org/techniques/${t.replace("T","")}`);});
+(p.subTechniques || []).forEach(st => {if (!st) return;
+const parts = st.split("."); mitreRefs.push(`https://attack.mitre.org/techniques/${parts[0].replace("T","")}/${parts[1]}`);});
+
+const unique = [...new Set(mitreRefs)];
+const parsed = unique.map(url => {const parts = url.split('/techniques/')[1]?.split('/') || []; const tech = parseInt(parts[0], 10) || 9999; const sub = parseInt(parts[1], 10) || 0;
+return { url, tech, sub };});
+parsed.sort((a, b) => {if (a.tech !== b.tech) return a.tech - b.tech; return a.sub - b.sub;});
+const referencesBlock = parsed.map(x => `- ${x.url}`).join("\n");
+
+const ruleKey = rule?.name;
+
+const ruleMitreRaw = mitreByRule[ruleKey] || [];
+const ruleMitre = [...ruleMitreRaw].sort((a, b) => {const aTech = parseInt((a.techId.match(/\d+/) || [9999])[0], 10); const bTech = parseInt((b.techId.match(/\d+/) || [9999])[0], 10); const aSub = (a.techId.split('.')[1] || 0); const bSub = (b.techId.split('.')[1] || 0);
+if (aTech !== bTech) return aTech - bTech; return aSub - bSub;});
+
+const playbook = ruleMitre.length
+? ruleMitre.map(m => `- Tactics: ${m.tactic}\n[${m.techId}] ${m.name}\nDescription: ${m.desc}`).join('\n\n')
+: 'None';
 
 return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
@@ -603,10 +656,23 @@ val(p.description),'',
 '**alertDetailsOverride :** ' + val(p.alertDetailsOverride),
 '**customDetails :** ' + val(p.customDetails),
 '**sentinelEntitiesMappings :** ' + val(p.sentinelEntitiesMappings),
-'**entityMappings :** ' + val(p.entityMappings),
+'**entityMappings :** ' + formatObject(p.entityMappings),
 '**id :** ' + val(p.id),
 '**kind :** ' + rule.kind,'',
-'* * *'].join('\n');}
+'* * *','',
+'**Playbook:**','',
+'*MITRE ATT&CK Details:*',
+playbook,'',
+'* * *','',
+'**References:**',
+referencesBlock,'',
+'* * *','',
+'| Created On: | ' + today + ' |',
+'|---|---|',
+'| Author: | |',
+'| Last Update: | ' + today + ' |',
+'| Updated By: | |',
+'| Tickets: | |'].join('\n');}
 
 /* RULE MARKDOWN COPY TO CLIPBOARD */
 function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
