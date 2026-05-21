@@ -99,7 +99,7 @@ function Highlight-KqlComments {param([string]$text);
 # Store Comment lines.
 $comments = @{}; $text = [regex]::Replace($text, '(?m)//.*$', {param($m); $key = "###CMT_{0}###" -f $m.Index; $comments[$key] = $m.Value; return $key})
 # Operators
-$text = $text -replace '([\w\s])(\>=?|\<=?|={1,3}|\!(~|=)|=~)', '$1 <span class="kql-operators">$2</span> '
+$text = $text -replace '([\w\s])(\>=?|\<=?|\!(~|=)|=~|={1,3})', '$1 <span class="kql-operators">$2</span> '
 # Tables (with optional predecates)
 $text = $text -replace '(?im)(^(find|join|lookup|materialize|search|union)?)(\x28?\s*)(\w+)(\s*\r?\n)', '<span class="kql-data">$1</span>$3<span class="kql-table">$4</span>$5'
 # Serialize
@@ -138,38 +138,6 @@ function Convert-UrlsToLinks {param ([string]$Text)
 if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
 $urlPattern = '(https?:\/\/[^\s<]+)'
 return ($Text -replace $urlPattern, '<a href="$1" target="_blank">$1</a>')}
-
-# Get MITRE ATT&CK TTP tooltip.
-function Get-MitreTitle {param($id)
-if ($script:MitreLookup.ContainsKey($id)) {$obj = $script:MitreLookup[$id]; $name = $obj.name; $desc = Get-FirstSentence $obj.description
-if ($desc) {return "$name`:`n$desc"}
-return $name}
-return "MITRE ATT&CK Technique $id"}
-
-# Get first sentence of MITRE ATT&CK TTP description.
-function Get-FirstSentence {param([string]$text)
-if ([string]::IsNullOrWhiteSpace($text)) {return ""}
-$match = [regex]::Match($text, '^(.*?\.)\s')
-if ($match.Success) {return $match.Groups[1].Value.Trim()}
-return $text.Trim()}
-
-# Convert Mitre TTPs to clickable links for column 3.
-function Convert-MitreToLinks {param ([string]$Text)
-if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
-$items = ($Text -split '\s*,\s*') | Where-Object {$_ -and $_.Trim() -ne ''};
-$items = $items | ForEach-Object {$id = $_.Trim()
-if ($id -match '\bT\d{4}(?:\.\d{3})?\b') {if ($id -match '\.') {$parts = $id -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
-else {$url = "https://attack.mitre.org/techniques/$id"}
-$title = Get-MitreTitle $id
-"<a href='$url' target='_blank' title='$title'>$id</a>"}
-else {Escape-Html $id}}
-return ($items -join ', ')}
-
-# Download the latest MITRE dataset if a TTP is unrecognized and the cache is at least a day old.
-function Refresh-MitreLookup {if ($script:MitreLookupRefreshAttempted) {return}
-$script:MitreLookupRefreshAttempted = $true; Write-Host -f Yellow "Refreshing MITRE STIX dataset..."
-Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
-Load-MitreLookup}
 
 # Get or build Wiki/KB article links for column 1.
 function Get-RuleWikiLink ([string]$DisplayName, [string]$RuleGuid) {if (-not $CreateLinks) {return $null}
@@ -281,6 +249,8 @@ else {$value = $apiVal}
 $merged | Add-Member -NotePropertyName $prop -NotePropertyValue $value}
 return $merged}
 
+# -------------------------- MITRE ATT&CK Functions -----------------------------------------------
+
 # Generate Mitre ATT&CK Navigator JSON
 function exportnavigatorlayer ([string]$OutputPath, [string]$LayerName = "KQL Coverage", [string]$Domain = "enterprise-attack") {$techniqueMap = @{}
 foreach ($r in $script:rules) {$ruleName = $r.displayName
@@ -317,6 +287,54 @@ metadata = @(@{name = "Rules"
 value = $ruleList})}}
 
 $layer | ConvertTo-Json -Depth 10 -Compress | Set-Content -Encoding UTF8 $OutputPath}
+
+# Get MITRE ATT&CK TTP tooltip.
+function Get-MitreTitle {param($id)
+if ($script:MitreLookup.ContainsKey($id)) {$obj = $script:MitreLookup[$id]; $name = $obj.name; $desc = Get-FirstSentence $obj.description
+if ($desc) {return "$name`:`n$desc"}
+return $name}
+return "MITRE ATT&CK Technique $id"}
+
+# Get first sentence of MITRE ATT&CK TTP description.
+function Get-FirstSentence {param([string]$text)
+if ([string]::IsNullOrWhiteSpace($text)) {return ""}
+$match = [regex]::Match($text, '^(.*?\.)\s')
+if ($match.Success) {return $match.Groups[1].Value.Trim()}
+return $text.Trim()}
+
+# Convert Mitre TTPs to clickable links for column 3.
+function Convert-MitreToLinks {param ([string]$Text)
+if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
+$items = ($Text -split '\s*,\s*') | Where-Object {$_ -and $_.Trim() -ne ''};
+$items = $items | ForEach-Object {$id = $_.Trim()
+if ($id -match '\bT\d{4}(?:\.\d{3})?\b') {if ($id -match '\.') {$parts = $id -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
+else {$url = "https://attack.mitre.org/techniques/$id"}
+$title = Get-MitreTitle $id
+"<a href='$url' target='_blank' title='$title'>$id</a>"}
+else {Escape-Html $id}}
+return ($items -join ', ')}
+
+# Download the latest MITRE dataset if a TTP is unrecognized and the cache is at least a day old.
+function Refresh-MitreLookup {if ($script:MitreLookupRefreshAttempted) {return}
+$script:MitreLookupRefreshAttempted = $true; Write-Host -f Yellow "Refreshing MITRE STIX dataset..."
+Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
+Load-MitreLookup}
+
+# Provide MITRE text for markdown.
+function Build-MitreBlock {$lines = @()
+foreach ($rule in $script:rules) {$tactics = if ($rule.tactics) {($rule.tactics | Sort-Object) -join ", "}
+else {""}
+$techList = @()
+if ($rule.techniques) {$techList += $rule.techniques}
+if ($rule.subTechniques) {$techList += $rule.subTechniques}
+foreach ($t in $techList) {if (-not $t) {continue}
+$obj = $script:MitreLookup[$t]
+$name = if ($obj) {$obj.name}
+else {$t}
+$desc = if ($obj) {Get-FirstSentence $obj.description}
+else {""}
+$lines += "$($rule.name)|$tactics|$t|$name|$desc"}}
+return ($lines -join "`n")}
 
 # -------------------------- PRE-PROCESSING -------------------------------------------------------
 
@@ -490,11 +508,17 @@ $script:degMediumEnd = [Math]::Round($degInfo + $degLow + $degMedium, 1)}
 builddonut
 
 # Build rows.
-function buildrows {$script:rows = ""; $script:toc = ""
+function buildrows {$script:rows = ""; $script:toc = ""; $usedMitre = @{}
 foreach ($r in $script:rules) {$qry = $r.query
 if (-not $qry -and $r.properties) {$qry = $r.properties.query}
 if (-not $qry -and $r.value) {$qry = $r.value.query}
 if ([string]::IsNullOrWhiteSpace($qry)) {Write-Host "SKIPPED NO QUERY: $($r.displayName)";continue}
+
+foreach ($t in @($r.techniques + $r.subTechniques)) {if (-not $t) {continue}
+if ($usedMitre.ContainsKey($t)) {continue}
+if ($script:MitreLookup.ContainsKey($t)) {$obj = $script:MitreLookup[$t]
+$usedMitre[$t] = @{name = $obj.name
+description = Get-FirstSentence $obj.description}}}
 
 # Build export-safe rule object
 $guid = Get-RuleUID $r
@@ -565,7 +589,8 @@ $wikiHtml
 <td class="query"><pre>$qry</pre></td>
 <td class="props"><div class="props-content">$props</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
 </tr>
-"@}}
+"@}
+$mitreJson = $usedMitre | ConvertTo-Json -Depth 5 -Compress}
 buildrows
 
 # Final error check.
@@ -605,12 +630,13 @@ function buildstats {$script:statsBlock = @"
 buildstats
 
 # Generate HTML and write file
-function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; 
+function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; $mitreBlock = Build-MitreBlock
 
 $html = $html.Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
 Replace("{{VERSION}}", [string]$script:version).
 Replace("{{STATSBLOCK}}", [string]$statsBlock).
 Replace("{{TOC}}", [string]$script:toc).
+Replace("{{MITREBLOCK}}", $mitreBlock).
 Replace("{{ROWS}}", [string]$script:rows).
 Replace("{{KQL_COMMENT}}", $script:KqlTheme.Comment).
 Replace("{{KQL_COMMENT_BG}}", $script:KqlTheme.CommentBg).
