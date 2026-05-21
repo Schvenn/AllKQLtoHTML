@@ -147,7 +147,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/20/2026 @ 08:24:23 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 05/20/2026 @ 10:04:28 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.1)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -631,6 +631,14 @@ const playbook = ruleMitre.length
 ? ruleMitre.map(m => `- Tactics: ${m.tactic}\n[${m.techId}] ${m.name}\nDescription: ${m.desc}`).join('\n\n')
 : 'None';
 
+function sortMitre(v) {if (!Array.isArray(v)) return val(v);
+return [...v]
+.filter(Boolean)
+.sort((a, b) => {
+const aParts = String(a).match(/^T(\d{4})(?:\.(\d{3}))?$/i) || []; const bParts = String(b).match(/^T(\d{4})(?:\.(\d{3}))?$/i) || []; const aTech = parseInt(aParts[1] || '9999', 10); const bTech = parseInt(bParts[1] || '9999', 10); const aSub = parseInt(aParts[2] || '0', 10); const bSub = parseInt(bParts[2] || '0', 10);
+if (aTech !== bTech) return aTech - bTech; return aSub - bSub;})
+.join(', ');}
+
 return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
 'Enabled: **' + enabled + '**',
@@ -648,8 +656,8 @@ val(p.description),'',
 '**suppressionEnabled :** ' + val(p.suppressionEnabled),
 '**startTimeUtc :** ' + val(p.startTimeUtc),
 '**tactics :** ' + val(p.tactics),
-'**techniques :** ' + mitre(p.techniques),
-'**subTechniques :** ' + mitre(p.subTechniques),
+'**techniques :** ' + mitre(sortMitre(p.techniques)),
+'**subTechniques :** ' + mitre(sortMitre(p.subTechniques)),
 '**alertRuleTemplateName :** ' + val(p.alertRuleTemplateName),
 '**incidentConfiguration :** ' + val(p.incidentConfiguration),
 '**eventGroupingSettings :** ' + val(p.eventGroupingSettings),
@@ -667,6 +675,7 @@ playbook,'',
 '**References:**',
 referencesBlock,'',
 '* * *','',
+'**Audit Table:**',
 '| Created On: | ' + today + ' |',
 '|---|---|',
 '| Author: | |',
