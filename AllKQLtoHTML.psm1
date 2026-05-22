@@ -97,7 +97,7 @@ catch {return $text}}
 # Colourize KQL logic.
 function Highlight-KqlComments {param([string]$text);
 # Store Comment lines.
-$comments = @{}; $text = [regex]::Replace($text, '(?m)//.*$', {param($m); $key = "###CMT_{0}###" -f $m.Index; $comments[$key] = $m.Value; return $key})
+$comments = @{}; $text = [regex]::Replace($text, '(?m)(?<!:)\/\/.*$', {param($m); $key = "###CMT_{0}###" -f $m.Index; $comments[$key] = $m.Value; return $key})
 # Operators
 $text = $text -replace '([\w\s])(\>=?|\<=?|\!(~|=)|=~|={1,3})', '$1 <span class="kql-operators">$2</span> '
 # Tables (with optional predecates)
