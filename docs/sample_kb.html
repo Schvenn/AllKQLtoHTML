@@ -38,12 +38,15 @@ Severity: <b>🔴 High</b><br>
 <hr>
 <pre>
 // Curl dowloading a script file.
-let ScriptRegex = @"\.(?i)(PS[DM]?1|BAT|CMD|VB[ES]|JSE?|WS[FH]|HTA|PY|RB|P1|(BA|K|Z)?SH|PHP)(\W|$)";
+let ScriptExtensions = dynamic([".bash", ".bat", ".cmd", ".hta", ".js", ".jse", ".ksh", ".p1", ".php", ".ps1", ".psd1", ".psm1", ".py", ".rb", ".sh", ".vbe", ".vbs", ".wsf", ".wsh", ".zsh"]);
+let DownloadProtocols = dynamic(["ftp://", "ftps://", "http://", "https://", "sftp://"]);
 union(SecurityEvent
-| where EventID == 4688 and (NewProcessName endswith @"\curl.exe" or CommandLine has "curl ") and CommandLine matches regex ScriptRegex
+| extend CommandLine = tolower(CommandLine), NewProcessName = tolower(NewProcessName)
+| where EventID == 4688 and NewProcessName endswith @"\curl.exe" and CommandLine has_any (DownloadProtocols) and CommandLine has_any (ScriptExtensions)
 | project TimeGenerated, Device = Computer, Account = SubjectUserName, ParentProcess = ParentProcessName, Process = NewProcessName, CommandLine = CommandLine, Source = "SecurityEvent"),
 (DeviceProcessEvents
-| where (FileName == "curl.exe" or ProcessCommandLine has "curl ") and ProcessCommandLine matches regex ScriptRegex
+| extend ProcessCommandLine = tolower(ProcessCommandLine), FileName = tolower(FileName)
+| where FileName =~ "curl.exe" and ProcessCommandLine has_any (DownloadProtocols) and ProcessCommandLine has_any (ScriptExtensions)
 | project TimeGenerated, Device = DeviceName, Account = AccountName, ParentProcess = InitiatingProcessParentFileName, Process = FileName, CommandLine = ProcessCommandLine, Source = "DeviceProcessEvents")
 | order by TimeGenerated desc
 </pre>
@@ -58,15 +61,15 @@ union(SecurityEvent
 <b>suppressionEnabled :</b> false<br>
 <b>startTimeUtc :</b> <br>
 <b>tactics :</b> CommandAndControl, Execution<br>
-<b>techniques :</b> T1059, T1204<br>
-<b>subTechniques :</b> T1204.002, T1059.001, T1059.003, T1059.004, T1059.005, T1059.006, T1059.007<br>
+<b>techniques :</b> <a href="https://attack.mitre.org/techniques/T1059">T1059</a>, <a href="https://attack.mitre.org/techniques/T1105">T1105</a><br>
+<b>subTechniques :</b>
 <b>alertRuleTemplateName :</b> <br>
 <b>incidentConfiguration :</b><br> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}<br>
 <b>eventGroupingSettings :</b> {"aggregationKind":"SingleAlert"}<br>
 <b>alertDetailsOverride :</b> <br>
 <b>customDetails :</b> <br>
 <b>sentinelEntitiesMappings :</b> <br>
-<b>entityMappings :</b> [object Object], [object Object], [object Object]<br>
+<b>entityMappings :</b> entityType=Account; fieldMappings=[identifier=Name; columnName=Account], entityType=File; fieldMappings=[identifier=Name; columnName=Process], entityType=Process; fieldMappings=[identifier=CommandLine; columnName=CommandLine]<br>
 <b>id :</b> /Microsoft.SecurityInsights/alertRules/76b54938-52aa-4ab1-a487-a4f55d74723c<br>
 <b>kind :</b> Scheduled<br>
 <br>
@@ -84,16 +87,16 @@ union(SecurityEvent
 
 <hr></hr>
 <h3>References:</h3>
-<ul><li>Link 1: <font color=yellow>blarg</font></li>
-<li>Link 2: <font color=yellow>some external link</font></li>
-<li>Link 3: <font color=yellow>some internal policy</font></li></ul>
+- <a href="https://attack.mitre.org/techniques/1059">https://attack.mitre.org/techniques/1059</a>
+- <a href="https://attack.mitre.org/techniques/1059">https://attack.mitre.org/techniques/1105</a>
 
 <hr></hr>
+<h2>Audit Table:</h2>
 <table>
-<tr><td><b>Created On:</b></td><td>5/1/2026</td></tr>
-<tr><td><b>Authour:</b></td><td>BWayne</td></tr>
-<tr><td><b>Last Update:</b></td><td>5/6/2026</td></tr>
-<tr><td><b>Updated By:</b></td><td>ENigma</td></tr>
-<tr><td><b>Tickets:</b></td><td>SIR00013479, SIR00021735, SIR00043129</td></tr>
+<tr><td><b>Created On:</b></td><td>9/1/2024</td></tr>
+<tr><td><b>Authour:</b></td><td>CPlath</td></tr>
+<tr><td><b>Last Update:</b></td><td>5/22/2026</td></tr>
+<tr><td><b>Updated By:</b></td><td>CPlath</td></tr>
+<tr><td><b>Tickets:</b></td><td>SIR000####, SIR000####, SIR000####</td></tr>
 </table>
 </body>
