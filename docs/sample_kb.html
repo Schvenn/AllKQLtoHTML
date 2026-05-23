@@ -76,8 +76,12 @@ union(SecurityEvent
 <b>kind :</b> Scheduled<br>
 <br>
 <hr>
-<h3>Playbook:</h3>
-<br>
+<ol><li>Upload the downloaded script file to VirusTotal.com and review vendor detections, behavioral indicators, and sandbox analysis results.</li>
+<li>Review the contents and logic of the downloaded script using Microsoft Copilot or another AI-assisted analysis tool in order to determine the script’s purpose and potential impact.</li>
+<li>Check the reputation of the download URL, domain, and associated IP address using VirusTotal.com and other threat intelligence sources.</li>
+<li>Determine the parent process that initiated the curl command and trace the full process chain back to the original originating process.</li>
+<li>Review the host involved for additional suspicious activity, including persistence mechanisms, follow-on execution, additional network connections, and evidence of lateral movement.</li>
+<li>Investigate the user account associated with the activity for signs of compromise, unusual authentication activity, or privilege misuse.</li></ol>
 <h3>MITRE ATT&CK Details:</h3>
 - Tactics: CommandAndControl, Execution<br>
 [T1059] Command and Scripting Interpreter<br>
