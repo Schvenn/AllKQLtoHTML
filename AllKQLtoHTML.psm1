@@ -161,22 +161,43 @@ $base = $config.PrivateData.WikiIntegration.BaseUrl
 $suffix = $config.PrivateData.WikiIntegration.Suffix
 return "$base$name$suffix"}
 
-# Create key/value pairs for column 3.
+# Recursively expand JSON values deep enough to see all levels.
+function Expand-PropertyValue {param($Value, [int]$Depth = 0)
+$indent = (" " * ($Depth * 2))
+if ($null -eq $Value) {return ""}
+if ($Value -is [string]) {return $Value}
+if ($Value -is [array]) {return ($Value | ForEach-Object {Expand-PropertyValue $_ ($Depth + 1)}) -join "`n"}
+if ($Value -is [psobject]) {$pairs = foreach ($p in $Value.PSObject.Properties) {$expanded = Expand-PropertyValue $p.Value ($Depth + 1) 
+"$indent$($p.Name): $expanded"}
+return ($pairs -join "`n")}
+return "$Value"}
+
+# Create key/value pairs for column 3 and provide special formatting instructions for specific rows.
 function Format-Properties {param ($Properties)
 $exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion'); $out = ""
+
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name; $val = $p.Value
+
+# ---------------- ENTITY MAPPINGS ----------------
+if ($p.Name -in @("entityMappings", "incidentConfiguration", "groupingConfiguration", "customDetails", "alertDetailsOverride")) {$lines = foreach ($mapping in $val) {$entityType = Escape-Html $mapping.entityType
+foreach ($field in $mapping.fieldMappings) {$identifier = Escape-Html $field.identifier; $column = Escape-Html $field.columnName; "$entityType : $identifier : <span class='ent-col'>$column</span>"}}
+$valText = $lines -join "`n"}
+
 # ---------------- MITRE ENRICHMENT ----------------
-if ($p.Name -in @('techniques','subTechniques')) {if ($val -is [Array]) {$valText = ($val | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {Convert-MitreToLinks $_} 
+elseif ($p.Name -in @('techniques','subTechniques')) {if ($val -is [Array]) {$valText = ($val | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {Convert-MitreToLinks $_} 
 else {Escape-Html "$_"}}) -join ', '}
 else {$valText = Escape-Html "$val"}}
-# ---------------- ARRAY HANDLING ----------------
-elseif ($val -is [Array]) {$valText = ($val | ForEach-Object {Escape-Html "$_"}) -join ', '}
-# ---------------- OBJECT HANDLING ----------------
-elseif ($val -is [psobject] -and -not ($val -is [string])) {$valText = Escape-Html ($val | ConvertTo-Json -Depth 5 -Compress)}
+
+# ---------------- SIMPLE ARRAY HANDLING (TACTICS ETC) ----------------
+elseif ($p.Name -in @('tactics')) {$valText = Escape-Html ($val -join ', ')}
+
+# ---------------- COMPLEX OBJECT HANDLING -------
+elseif ($val -is [array] -or ($val -is [psobject] -and -not ($val -is [string]))) {$valText = Escape-Html (Expand-PropertyValue $val)}
+
 # ---------------- SCALAR ----------------
 else {$valText = Escape-Html "$val"}
-$out += "<div class='kv'><strong>$key :</strong><span class='val'> $valText</span></div>`n"}
+$out += "<div class='kv'><strong>$key`: </strong><span class='val'>$valText</span></div> "}
 return $out}
 
 # Cleans and reshapes one rule object into a consistent schema.
