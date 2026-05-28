@@ -163,11 +163,15 @@ return "$base$name$suffix"}
 
 # Recursively expand JSON values deep enough to see all levels.
 function Expand-PropertyValue {param($Value, [int]$Depth = 0)
-if ($null -eq $Value) {return ""}
-if ($Value -is [string]) {return $Value}
-if ($Value -is [array]) {return ($Value | ForEach-Object {Expand-PropertyValue $_ ($Depth + 1)}) -join "`n"}
-if ($Value -is [psobject]) {$pairs = foreach ($p in $Value.PSObject.Properties) {$expanded = Expand-PropertyValue $p.Value ($Depth + 1) 
-"$($p.Name): $expanded"}
+if ($null -eq $Value) {return "{null}"}
+if ($Value -is [string]) {if ([string]::IsNullOrWhiteSpace($Value)) {return "{null}"}
+return $Value}
+if ($Value -is [array]) {if ($Value.Count -eq 0) {return "{null}"}
+return ($Value | ForEach-Object {Expand-PropertyValue $_ ($Depth + 1)}) -join "`n"}
+if ($Value -is [psobject]) {$pairs = foreach ($p in $Value.PSObject.Properties) {$expanded = Expand-PropertyValue $p.Value ($Depth + 1)
+if ([string]::IsNullOrWhiteSpace($expanded)) {"$($p.Name): {null}"}
+else {"$($p.Name): $expanded"}}
+if (-not $pairs -or $pairs.Count -eq 0) {return "{null}"}
 return ($pairs -join "`n")}
 return "$Value"}
 
@@ -563,7 +567,7 @@ continue}
 $ruleDisplayObject[$prop.Name] = $prop.Value
 
 if ($null -eq $prop.Value) {continue}
-if ($prop.Value -is [array] -and $prop.Value.Count -eq 0) {continue}
+if ($prop.Value -is [array] -and $prop.Value.Count -eq 0) {$valText = "{null}"}
 if ($prop.Value -is [string] -and [string]::IsNullOrWhiteSpace($prop.Value)) {continue}
 $ruleExportObject.properties[$prop.Name] = $prop.Value}
 
