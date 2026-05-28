@@ -178,23 +178,27 @@ $exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'temp
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name; $val = $p.Value
 
-# ---------------- ENTITY MAPPINGS ----------------
+# ---------------- ENTITY MAPPINGS ----------------------------------------------------------------
 if ($p.Name -eq "entityMappings") {$lines = foreach ($mapping in $val) {$entityType = Escape-Html $mapping.entityType
 foreach ($field in $mapping.fieldMappings) {$identifier = Escape-Html $field.identifier; $column = Escape-Html $field.columnName; "$entityType`: $identifier`: <span class='ent-col'>$column</span>"}}
 $valText = $lines -join "`n"}
 
-# ---------------- MITRE ENRICHMENT ----------------
+# ---------------- CUSTOM DETAILS -----------------------------------------------------------------
+elseif ($p.Name -eq "customDetails") {$lines = foreach ($item in $val.PSObject.Properties) {$k = Escape-Html $item.Name; $v = Escape-Html $item.Value; "$k : <span class='ent-col'>$v</span>"}
+$valText = $lines -join "`n"}
+
+# ---------------- MITRE ENRICHMENT ---------------------------------------------------------------
 elseif ($p.Name -in @('techniques','subTechniques')) {if ($val -is [Array]) {$valText = ($val | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {Convert-MitreToLinks $_} 
 else {Escape-Html "$_"}}) -join ', '}
 else {$valText = Escape-Html "$val"}}
 
-# ---------------- SIMPLE ARRAY HANDLING (TACTICS ETC) ----------------
+# ---------------- SIMPLE ARRAY HANDLING (TACTICS ETC) --------------------------------------------
 elseif ($p.Name -in @('tactics')) {$valText = Escape-Html ($val -join ', ')}
 
-# ---------------- COMPLEX OBJECT HANDLING -------
+# ---------------- COMPLEX OBJECT HANDLING --------------------------------------------------------
 elseif ($val -is [array] -or ($val -is [psobject] -and -not ($val -is [string]))) {$valText = Escape-Html (Expand-PropertyValue $val)}
 
-# ---------------- SCALAR ----------------
+# ---------------- SCALAR -------------------------------------------------------------------------
 else {$valText = Escape-Html "$val"}
 $out += "<div class='kv'><strong>$key`: </strong><span class='val'>$valText</span></div> "}
 return $out}
