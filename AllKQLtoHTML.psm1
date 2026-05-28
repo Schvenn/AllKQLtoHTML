@@ -163,12 +163,11 @@ return "$base$name$suffix"}
 
 # Recursively expand JSON values deep enough to see all levels.
 function Expand-PropertyValue {param($Value, [int]$Depth = 0)
-$indent = (" " * ($Depth * 2))
 if ($null -eq $Value) {return ""}
 if ($Value -is [string]) {return $Value}
 if ($Value -is [array]) {return ($Value | ForEach-Object {Expand-PropertyValue $_ ($Depth + 1)}) -join "`n"}
 if ($Value -is [psobject]) {$pairs = foreach ($p in $Value.PSObject.Properties) {$expanded = Expand-PropertyValue $p.Value ($Depth + 1) 
-"$indent$($p.Name): $expanded"}
+"$($p.Name): $expanded"}
 return ($pairs -join "`n")}
 return "$Value"}
 
@@ -180,8 +179,8 @@ foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name)
 $key = Escape-Html $p.Name; $val = $p.Value
 
 # ---------------- ENTITY MAPPINGS ----------------
-if ($p.Name -in @("entityMappings", "incidentConfiguration", "groupingConfiguration", "customDetails", "alertDetailsOverride")) {$lines = foreach ($mapping in $val) {$entityType = Escape-Html $mapping.entityType
-foreach ($field in $mapping.fieldMappings) {$identifier = Escape-Html $field.identifier; $column = Escape-Html $field.columnName; "$entityType : $identifier : <span class='ent-col'>$column</span>"}}
+if ($p.Name -eq "entityMappings") {$lines = foreach ($mapping in $val) {$entityType = Escape-Html $mapping.entityType
+foreach ($field in $mapping.fieldMappings) {$identifier = Escape-Html $field.identifier; $column = Escape-Html $field.columnName; "$entityType`: $identifier`: <span class='ent-col'>$column</span>"}}
 $valText = $lines -join "`n"}
 
 # ---------------- MITRE ENRICHMENT ----------------
