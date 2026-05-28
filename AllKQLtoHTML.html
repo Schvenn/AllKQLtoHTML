@@ -391,13 +391,23 @@ if (Array.isArray(v)) return v.join(', ');
 if (typeof v === 'object') return JSON.stringify(v);
 return String(v);}
 
-function formatObjectList(v) {if (!Array.isArray(v)) return formatObject(v);
-return v.map(item => formatObject(item)).join(",\n");}
+/* MULTI-VALUE ENTITIES*/
+function formatObjectList(v) {if (v === null || v === undefined) return "";
+if (Array.isArray(v)) {if (v.length === 0) return "";
+return v.map(formatObjectList).join("\n");}
+if (typeof v === "object") {return Object.entries(v).map(([k, val]) => {if (val === null || val === undefined || val === "" || (Array.isArray(val) && val.length === 0)) {return `${k}: {null}`;}
+if (typeof val === "object") {return `${k}: ${Object.entries(val).map(([ik, iv]) => iv === null || iv === undefined || iv === "" || (Array.isArray(iv) && iv.length === 0)
+? `${ik}: {null}`
+: `${ik}: ${iv}`).join("\n")}`;}
+return `${k}: ${val}`;}).join("\n");}
+return String(v);}
 
+/* SENTINEL ENTITIES MAPPINGS */
 function formatEntityMappingsMarkdown(v) {if (!Array.isArray(v)) return "";
 return v.map(mapping => {const entityType = mapping.entityType || "";
 return (mapping.fieldMappings || []).map(field =>`${entityType}: ${field.identifier}: **_${field.columnName}_**`).join("\n");}).join("\n");}
 
+/* CUSTOM DETAIL MAPPINGS */
 function formatCustomDetailsMarkdown(v) {if (!v) return "";
 const entries = Object.entries(v);
 return entries.map(([k, val]) => {return `${k}: **_${val}_**`;}).join("\n");}
@@ -483,7 +493,7 @@ val(p.description),'',
 '**eventGroupingSettings:** ' + formatObjectList(p.eventGroupingSettings),
 '**alertDetailsOverride:** ' + formatObjectList(p.alertDetailsOverride),
 '**customDetails:** ' + formatCustomDetailsMarkdown(p.customDetails),
-'**sentinelEntitiesMappings:** ' + formatObjectList(p.sentinelEntitiesMappings),
+'**Sentinel Entities Mappings:** ',
 '**entityMappings:** ' + formatEntityMappingsMarkdown(p.entityMappings),
 '**id:** ' + val(p.id),
 '**kind:** ' + rule.kind,'',
