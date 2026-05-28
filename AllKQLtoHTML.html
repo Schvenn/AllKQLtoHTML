@@ -396,7 +396,7 @@ return v.map(item => formatObject(item)).join(",\n");}
 
 function formatEntityMappingsMarkdown(v) {if (!Array.isArray(v)) return "";
 return v.map(mapping => {const entityType = mapping.entityType || "";
-return (mapping.fieldMappings || []).map(field =>`${entityType}: ${field.identifier}: **_${field.columnName}+**`).join("\n");}).join("\n");}
+return (mapping.fieldMappings || []).map(field =>`${entityType}: ${field.identifier}: **_${field.columnName}_**`).join("\n");}).join("\n");}
 
 function formatObject(v) {if (v === null || v === undefined) return "";
 if (Array.isArray(v)) {return v.map(formatObject).join(", ");}
