@@ -58,7 +58,7 @@ td.query pre:hover::after {opacity: 1;}
 .copy-badge {position: absolute; bottom: 6px; right: 8px; font-size: 11px; font-weight: bold; color: var(--green); background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 2px 6px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none;}
 
 .val {white-space: pre-wrap;}
-.ent-col {color: #aa77aa; font-weight: bold;}
+.ent-col {color: #aa77aa;}
 
 td.props {position: relative;}
 .export-rule-btn {position: absolute; top: 6px; right: 6px; background: var(--bg-panel); border: 1px solid var(--border-main); border-radius: 4px; padding: 4px 6px; font-size: 14px; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 2;}
@@ -394,6 +394,10 @@ return String(v);}
 function formatObjectList(v) {if (!Array.isArray(v)) return formatObject(v);
 return v.map(item => formatObject(item)).join(",\n");}
 
+function formatEntityMappingsMarkdown(v) {if (!Array.isArray(v)) return "";
+return v.map(mapping => {const entityType = mapping.entityType || "";
+return (mapping.fieldMappings || []).map(field =>`${entityType} : ${field.identifier} : ${field.columnName}`).join("\n");}).join("\n");}
+
 function formatObject(v) {if (v === null || v === undefined) return "";
 if (Array.isArray(v)) {return v.map(formatObject).join(", ");}
 if (typeof v === "object") {return Object.entries(v)
@@ -476,7 +480,7 @@ val(p.description),'',
 '**alertDetailsOverride:** ' + formatObjectList(p.alertDetailsOverride),
 '**customDetails:** ' + formatObjectList(p.customDetails),
 '**sentinelEntitiesMappings:** ' + formatObjectList(p.sentinelEntitiesMappings),
-'**entityMappings:** ' + formatObjectList(p.entityMappings),
+'**entityMappings:** ' + formatEntityMappingsMarkdown(p.entityMappings),
 '**id:** ' + val(p.id),
 '**kind:** ' + rule.kind,'',
 '* * *','',
