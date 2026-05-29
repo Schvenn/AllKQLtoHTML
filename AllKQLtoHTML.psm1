@@ -184,11 +184,13 @@ $key = Escape-Html $p.Name; $val = $p.Value
 
 # ---------------- ALERTDETAILS MAPPINGS ----------------------------------------------------------
 if ($p.Name -eq "alertDetailsOverride") {$lines = foreach ($item in $val.PSObject.Properties) {$k = Escape-Html $item.Name; $v = $item.Value
-if ($k -match 'Severity|ColumnName|Field|Property') {$v = "<span class='ent-col'>$v</span>"}
-if ($null -eq $v) {$v = "{null}"}
-elseif ($v -is [array]) {$v = ($v | ForEach-Object { "$_" }) -join ', '}
+if ($null -eq $v -or [string]::IsNullOrWhiteSpace("$v")) {$v = "{null}"}
+if ($v -is [array]) {$v = ($v | ForEach-Object { "$_" }) -join ', '}
 elseif ($v -is [psobject] -and -not ($v -is [string])) {$v = Expand-PropertyValue $v}
-$v = $v -replace '{{([^}]+)}}', "{{<span class='ent-col'>`$1</span>}}"; "$k`: <span class='alert-col'>$v</span>"}
+if ($k -match 'Severity|ColumnName|Field|Property' -and $v -ne "{null}") {$v = "<span class='ent-col'>$v</span>"}
+$v = $v -replace '{{([^}]+)}}', "{{<span class='ent-col'>`$1</span>}}"; 
+if ($v -ne "{null}") {"$k`: <span class='alert-col'>$v</span>"}
+else {"$k`: $v"}}
 $valText = $lines -join "`n"}
 
 # ---------------- ENTITY MAPPINGS ----------------------------------------------------------------
