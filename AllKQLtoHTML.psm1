@@ -683,6 +683,9 @@ Replace("{{KQL_TABLE}}", $script:KqlTheme.Table).
 Replace("{{KQL_STRUCTURE}}", $script:KqlTheme.Structure).
 Replace("{{KQL_FUNCTION}}", $script:KqlTheme.Function)
 
+# One last swing at the bat to replace garbage UTF encoded characters.
+$html = $html -replace 'â€“', '-'; $html = $html -replace 'â€”', '—';
+
 Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
 
