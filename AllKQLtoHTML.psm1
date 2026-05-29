@@ -684,7 +684,7 @@ Replace("{{KQL_STRUCTURE}}", $script:KqlTheme.Structure).
 Replace("{{KQL_FUNCTION}}", $script:KqlTheme.Function)
 
 # One last swing at the bat to replace garbage UTF encoded characters.
-$html = $html -replace 'â€“', '-'; $html = $html -replace 'â€”', '—';
+$html = $html -replace 'â€“', '-'; $html = $html -replace 'â€”', '—'; $html = $html -replace '[“”]', '"';
 
 Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
@@ -704,7 +704,7 @@ link = ""}}
 try {$csvOutput | Sort-Object rulename | Export-Csv -Path "AllKQLtoHTML.csv" -NoTypeInformation -Encoding UTF8; Write-Host -f Green "✅ CSV created with $($csvOutput.Count) rules."}
 catch {Write-Host -f Red "❌ Failed to create CSV file"; Write-Host -f DarkGray $_.Exception.Message}}
 
-exportnavigatorlayer -OutputPath "report_navigator.json"
+exportnavigatorlayer -OutputPath "report_navigator.json" 
 Invoke-Item $OutputFile}
 
 Set-Alias SentinelRules AllKQLtoHTML
