@@ -683,8 +683,9 @@ Replace("{{KQL_TABLE}}", $script:KqlTheme.Table).
 Replace("{{KQL_STRUCTURE}}", $script:KqlTheme.Structure).
 Replace("{{KQL_FUNCTION}}", $script:KqlTheme.Function)
 
-# One last swing at the bat to replace garbage UTF encoded characters.
+# One last swing at the bat to replace garbage UTF encoded characters and empty spans.
 $html = $html -replace 'â€“', '-'; $html = $html -replace 'â€”', '—'; $html = $html -replace '[“”]', '"';
+$html = $html -replace '\x3Cspan class=[\x22\x27][\w\s\-]+[\x22\x27]\x3E\x3C\x2Fspan\x3E','';
 
 Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
