@@ -543,7 +543,9 @@ else {$degInfo = $degLow = $degMedium = $degHigh = 0}
 # Cumulative angles (required for conic-gradient)
 $script:degInfoEnd = [Math]::Round($degInfo, 1)
 $script:degLowEnd = [Math]::Round($degInfo + $degLow, 1)
-$script:degMediumEnd = [Math]::Round($degInfo + $degLow + $degMedium, 1)}
+$script:degMediumEnd = [Math]::Round($degInfo + $degLow + $degMedium, 1)
+
+$script:donutGradient = "conic-gradient(" + "#ffffff 0deg $($degInfoEnd)deg, " + "#ff8c00 $($degInfoEnd)deg $($degLowEnd)deg, " + "#ffd166 $($degLowEnd)deg $($degMediumEnd)deg, " + "#d32f2f $($degMediumEnd)deg 360deg" + ")"}
 builddonut
 
 # Build rows.
@@ -671,7 +673,8 @@ buildstats
 # Generate HTML and write file
 function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; $mitreBlock = Build-MitreBlock
 
-$html = $html.Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
+$html = $html.Replace("{{DONUTGRADIENT}}", [string]$script:donutGradient).
+Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
 Replace("{{VERSION}}", [string]$script:version).
 Replace("{{STATSBLOCK}}", [string]$statsBlock).
 Replace("{{TOC}}", [string]$script:toc).
