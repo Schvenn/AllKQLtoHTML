@@ -515,7 +515,12 @@ referencesBlock,'',
 '| Author: | |',
 '| Last Update: | ' + today + ' |',
 '| Updated By: | |',
-'| Tickets: | |'].join('\n');}
+'| Tickets: | |'].join('\n')
+.replace(/â€“/g, '-')
+.replace(/â€”/g, '—')
+.replace(/[“”]/g, '"')
+.replace(/â€˜|â€™/g, "'")
+.replace(/â€¦/g, '...');}
 
 /* RULE MARKDOWN COPY TO CLIPBOARD */
 function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
