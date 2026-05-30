@@ -326,7 +326,7 @@ clearHighlights(); applyFilters();});})();
 if (!tocToggle || !tocWrapper) return;
 tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
 
-/* MITRE ATT&CK NAVIGATOR */
+/* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD*/
 (function () {const link = document.getElementById('copyNavigatorPath');
 const status = document.getElementById('copyStatus');
 if (!link || !navigator.clipboard) return;
@@ -336,7 +336,7 @@ setTimeout(() => status.textContent = '', 2000);},
 () => {status.textContent = ''; status.appendChild(document.createElement('br')); status.appendChild(document.createTextNode('✖ failed'));
 setTimeout(() => status.textContent = '', 2000);});});})();
 
-/* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD */
+/* COPY KQL TO CLIPBOARD */
 (function () {if (!navigator.clipboard) return;
 document.addEventListener('click', function (e) {const pre = e.target.closest('td.query pre');
 if (!pre) return;
@@ -348,20 +348,21 @@ function showCopied(pre) {let badge = pre.querySelector('.copy-badge');
 if (!badge) {badge = document.createElement('div'); badge.className = 'copy-badge'; badge.textContent = '✔ Copied'; pre.appendChild(badge);}
 badge.style.opacity = '1'; setTimeout(() => {badge.style.opacity = '0';}, 1200);}})();
 
-/* DECODE RULE FOR EXPORT */
-function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
-
-/* EXPORT RULE(S) */
-(function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
-
+/* FULL RULE MARKDOWN TO CLIPBOARD */
 (function () {document.addEventListener('click', function (e) {if (e.target.closest('.export-rule-btn')) return;
 const cell = e.target.closest('td.rulename');
 if (!cell) return;
 const row = cell.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
-try {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson))); const md = buildMarkdown(rule); navigator.clipboard.writeText(md).then(() => {showPropsCopied(cell);});}
+try {const rule = JSON.parse(base64ToUtf8(decodeHtmlEntities(row.dataset.ruleJson))); 
+const pre = row.querySelector('td.query pre'); const kql = pre ? pre.cloneNode(true) : null; const md = buildMarkdown(rule, kql); navigator.clipboard.writeText(md).then(() => {showPropsCopied(cell);});}
 catch (err) {console.error('Markdown copy failed:', err);}});})();
 
+/* DECODE RULE FOR EXPORT */
+function base64ToUtf8(base64) {const binary = atob(base64); const bytes = Uint8Array.from(binary, c => c.charCodeAt(0)); return new TextDecoder().decode(bytes);}
+
+/* EXPORT RULE(S) */
+(function () {document.addEventListener('click', function (e) {const btn = e.target.closest('.export-rule-btn');
 if (!btn) return; e.preventDefault(); e.stopPropagation(); const row = btn.closest('tr');
 if (!row || !row.dataset.ruleJson) return;
 if (!confirm('Export this rule as a Sentinel importable JSON file?')) {return;}
@@ -389,7 +390,12 @@ const rule = parts[0]; const tactic = parts[1]; const techId = parts[2]; const n
 if (!mitreByRule[rule]) mitreByRule[rule] = []; mitreByRule[rule].push({ tactic, techId, name, desc });});}
 
 /* RULE MARKDOWN CREATION */
-function buildMarkdown(rule) {const p = rule.properties || {}; //const ruleMitre = mitreByRule[rule.name] || mitreByRule[rule.displayName] || mitreByRule[rule.properties?.displayName] || [];
+function buildMarkdown(rule, preNode) {const p = rule.properties || {};
+
+const kql = preNode ? (() => {const clone = preNode.cloneNode(true); const badge = clone.querySelector('.copy-badge');
+if (badge) badge.remove();
+return clone.innerText.trim();})() : "";
+
 function val(v) {if (v === null || v === undefined) return "";
 if (Array.isArray(v)) return v.join(', ');
 if (typeof v === 'object') return JSON.stringify(v);
@@ -441,8 +447,7 @@ case "Informational": severityIcon = "⚪"; break;}
 
 let templateLine = '';
 if (p.templateVersion) {templateLine = 'Template Version: **' + val(p.templateVersion) + '**';}
-
-const kql = val(p.query); const today = new Date().toLocaleDateString('en-US');
+const today = new Date().toLocaleDateString('en-US');
 
 const mitreRefs = [];
 (p.techniques || []).forEach(t => {mitreRefs.push(`https://attack.mitre.org/techniques/${t.replace("T","")}`);});
@@ -516,11 +521,10 @@ referencesBlock,'',
 '| Last Update: | ' + today + ' |',
 '| Updated By: | |',
 '| Tickets: | |'].join('\n')
-.replace(/â€“/g, '-')
-.replace(/â€”/g, '—')
-.replace(/[“”]/g, '"')
-.replace(/â€˜|â€™/g, "'")
-.replace(/â€¦/g, '...');}
+.replace(/\u00E2\u20AC(\u201C|\u201D)/g, '-')
+.replace(/[\u201C\u201D]/g, '"')
+.replace(/\u00E2\u20AC(\u02DC|\u2122)/g, "'")
+.replace(/\u00E2\u20AC\u00A6/g, '...');}
 
 /* RULE MARKDOWN COPY TO CLIPBOARD */
 function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
