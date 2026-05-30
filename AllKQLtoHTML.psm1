@@ -477,6 +477,7 @@ $InputFile = $outFile}
 # Load and normalize.
 function loadandnormalize {if (-not (Test-Path $InputFile)) {Write-Host -f cyan "`nInput file not found: " -n; Write-Host -f white $InputFile; return}
 $json = Get-Content $InputFile -Raw -Encoding UTF8 | ConvertFrom-Json
+
 # Normalize primary rules
 if ($json -is [array]) {$rawRules = $json | Where-Object {$_ -ne $null}}
 elseif ($json.value) {$rawRules = $json.value | Where-Object {$_ -ne $null}}
@@ -583,9 +584,7 @@ if ($null -eq $prop.Value) {continue}
 if ($prop.Value -is [array] -and $prop.Value.Count -eq 0) {$valText = "{null}"}
 if ($prop.Value -is [string] -and [string]::IsNullOrWhiteSpace($prop.Value)) {continue}
 $ruleExportObject.properties[$prop.Name] = $prop.Value}
-
 $ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($ruleExportObject | ConvertTo-Json -Depth 10 -Compress)))
-
 $name = Escape-Html $r.displayName
 $id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
 else {"rule_" + [guid]::NewGuid().ToString("N")}
@@ -687,8 +686,8 @@ Replace("{{KQL_STRUCTURE}}", $script:KqlTheme.Structure).
 Replace("{{KQL_FUNCTION}}", $script:KqlTheme.Function)
 
 # One last swing at the bat to replace garbage UTF encoded characters and empty spans.
-$html = $html -replace 'â€“', '-'; $html = $html -replace 'â€”', '—'; $html = $html -replace '[“”]', '"';
-$html = $html -replace '\x3Cspan class=[\x22\x27][\w\s\-]+[\x22\x27]\x3E\x3C\x2Fspan\x3E','';
+$html = [string]$html -replace '(â€“|â€”)', '-' -replace '[“”]', '"' -replace '(â€˜|â€™)', "'" -replace 'â€¦', '...';
+$html = [string]$html -replace '\x3Cspan class=[\x22\x27][\w\s\-]+[\x22\x27]\x3E\x3C\x2Fspan\x3E','';
 
 Set-Content -Path $OutputFile -Value $html -Encoding UTF8; Write-Host -f cyan "`n✅ Generated $OutputFile`n"}
 writepage
