@@ -1,7 +1,7 @@
 function AllKQLtoHTML ([string]$InputFile = "Azure_Sentinel_analytics_rules.json", [string]$MergeInputFile = "All_Azure_Sentinel_rules.json", [string]$OutputFile = "AllSentinelRules.html", [switch]$Concat, [switch]$Merge, [switch]$PreserveIds, [switch]$CreateCSV, [switch]$CreateLinks, [switch]$Usage, [switch]$GetAZCommand, [switch]$help) {#Convert Sentinel JSON exports to an HTML file for easy searching with CTRL+F.
 
 # -------------------------- HELPER FUNCTIONS -----------------------------------------------------
-	
+
 # Modify fields sent to it with proper word wrapping.
 function wordwrap ($field, $maximumlinelength) {if ($null -eq $field) {return $null}
 $breakchars = ',.;?!\/ '; $wrapped = @()
@@ -185,7 +185,7 @@ $key = Escape-Html $p.Name; $val = $p.Value
 # ---------------- ALERTDETAILS MAPPINGS ----------------------------------------------------------
 if ($p.Name -eq "alertDetailsOverride") {$lines = foreach ($item in $val.PSObject.Properties) {$k = Escape-Html $item.Name; $v = $item.Value
 if ($null -eq $v -or [string]::IsNullOrWhiteSpace("$v")) {$v = "{null}"}
-if ($v -is [array]) {$v = ($v | ForEach-Object { "$_" }) -join ', '}
+if ($v -is [array]) {$v = ($v | ForEach-Object {"$_"}) -join ', '}
 elseif ($v -is [psobject] -and -not ($v -is [string])) {$v = Expand-PropertyValue $v}
 if ($k -match 'Severity|ColumnName|Field|Property' -and $v -ne "{null}") {$v = "<span class='ent-col'>$v</span>"}
 $v = $v -replace '{{([^}]+)}}', "{{<span class='ent-col'>`$1</span>}}"; 
@@ -208,7 +208,7 @@ else {Escape-Html "$_"}}) -join ', '}
 else {$valText = Escape-Html "$val"}}
 
 # ---------------- SIMPLE ARRAY HANDLING (TACTICS ETC) --------------------------------------------
-elseif ($p.Name -in @('tactics')) {$valText = Escape-Html ($val -join ', ')}
+elseif ($p.Name -in @('tactics','techniques','subTechniques')) {$valText = ($val | ForEach-Object {$_.ToString()}) -join ', '}
 
 # ---------------- COMPLEX OBJECT HANDLING --------------------------------------------------------
 elseif ($val -is [array] -or ($val -is [psobject] -and -not ($val -is [string]))) {$valText = Escape-Html (Expand-PropertyValue $val)}
@@ -235,6 +235,16 @@ if ($topId) {$topId = "/Microsoft.SecurityInsights/alertRules/$topId"}
 
 $topKind = $r.kind
 
+# Build MITRE properties for each rule (single-pass safe merge)
+$tactics = @(@($r.tactics; $r.properties.tactics) | Where-Object {$_})
+$techniques = @($r.techniques, $r.properties.techniques) | Where-Object {$_} | ForEach-Object {$_}
+$subTechniques = @($r.subTechniques, $r.properties.subTechniques) | Where-Object {$_} | ForEach-Object {$_}
+
+# HARD FORCE ARRAY TYPE
+$tactics = @($tactics)
+$techniques = @($techniques)
+$subTechniques = @($subTechniques)
+
 if ($r.properties -and $r.properties -is [psobject]) {foreach ($p in $r.properties.PSObject.Properties) {if (-not $r.PSObject.Properties[$p.Name]) {Add-Member -InputObject $r -NotePropertyName $p.Name -NotePropertyValue $p.Value}}}
 
 # Sentinel ARM resource
@@ -257,9 +267,9 @@ suppressionDuration = "$($r.suppressionDuration)"
 suppressionEnabled = $r.suppressionEnabled
 startTimeUtc = $r.startTimeUtc
 # MITRE mapping
-tactics = $r.tactics
-techniques = $r.techniques
-subTechniques = $r.subTechniques
+tactics = $tactics
+techniques = $techniques
+subTechniques = $subTechniques
 alertRuleTemplateName = $r.alertRuleTemplateName
 # Incident behavior
 incidentConfiguration = $r.incidentConfiguration
@@ -290,7 +300,7 @@ return $merged}
 
 # -------------------------- MITRE ATT&CK Functions -----------------------------------------------
 
-# Generate Mitre ATT&CK Navigator JSON
+# Generate Mitre ATT&CK Navigator JSON.
 function exportnavigatorlayer ([string]$OutputPath, [string]$LayerName = "KQL Coverage", [string]$Domain = "enterprise-attack") {$techniqueMap = @{}
 foreach ($r in $script:rules) {$ruleName = $r.displayName
 if ([string]::IsNullOrWhiteSpace($ruleName)) {continue}
@@ -337,8 +347,8 @@ return "MITRE ATT&CK Technique $id"}
 # Get first sentence of MITRE ATT&CK TTP description.
 function Get-FirstSentence {param([string]$text)
 if ([string]::IsNullOrWhiteSpace($text)) {return ""}
-$match = [regex]::Match($text, '^(.*?\.)\s')
-if ($match.Success) {return $match.Groups[1].Value.Trim()}
+$match = [regex]::Match($text, '^(.*?\.)[\s\x28]')
+if ($match.Success) {$text = $match.Groups[1].Value.Trim(); $text = $text -replace '\x5b([^\x5d]+)\x5d\x28[^\x29+]+\x29', '$1'; $text = $text -replace '\x28[Citation^\x29]+\x29\s', ' '; return $text}
 return $text.Trim()}
 
 # Convert Mitre TTPs to clickable links for column 3.
@@ -359,21 +369,54 @@ $script:MitreLookupRefreshAttempted = $true; Write-Host -f Yellow "Refreshing MI
 Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
 Load-MitreLookup}
 
-# Provide MITRE text for markdown.
-function Build-MitreBlock {$lines = @()
-foreach ($rule in $script:rules) {$tactics = if ($rule.tactics) {($rule.tactics | Sort-Object) -join ", "}
-else {""}
-$techList = @()
-if ($rule.techniques) {$techList += $rule.techniques}
-if ($rule.subTechniques) {$techList += $rule.subTechniques}
-foreach ($t in $techList) {if (-not $t) {continue}
-$obj = $script:MitreLookup[$t]
-$name = if ($obj) {$obj.name}
-else {$t}
-$desc = if ($obj) {Get-FirstSentence $obj.description}
-else {""}
-$lines += "$($rule.name)|$tactics|$t|$name|$desc"}}
-return ($lines -join "`n")}
+# Create MITRE matrix structure.
+function Initialize-MitreMatrix {$script:mitreMatrix = [ordered]@{Reconnaissance = @{}
+ResourceDevelopment = @{}
+InitialAccess = @{}
+Execution = @{}
+Persistence = @{}
+PrivilegeEscalation = @{}
+Stealth = @{}
+DefenseEvasion = @{}
+DefenseImpairment = @{}
+CredentialAccess = @{}
+Discovery = @{}
+LateralMovement = @{}
+Collection = @{}
+CommandAndControl = @{}
+Exfiltration = @{}
+Impact = @{}}}
+
+# Built MITRE matrix output.
+function Build-MitreMiniColumn {if (-not $script:mitreMatrix -or $script:mitreMatrix.Count -eq 0) {return ""}
+$preferredOrder = @("Reconnaissance", "ResourceDevelopment", "InitialAccess", "Execution", "Persistence", "PrivilegeEscalation", "Stealth", "DefenseEvasion", 
+"DefenseImpairment", "CredentialAccess", "Discovery", "LateralMovement",  "Collection", "CommandAndControl", "Exfiltration", "Impact")
+
+$tactics = $preferredOrder | Where-Object {$script:mitreMatrix[$_]}
+$html = "<div class='mitre-scroll'><table class='mitre-inner'><tr>"
+
+foreach ($t in $tactics) {$header = $t -creplace '(?<!^)([A-Z])',' $1'
+$header = $header.Trim()
+$header = $header -replace '\s+And\s+',' & '
+$html += "<th class='mitre-th'>$header</th>"}
+$html += "</tr><tr>"
+
+foreach ($t in $tactics) {$html += "<td class='mitre-td' data-tactic='$t'>"
+$bucket = $script:mitreMatrix[$t]
+if (-not $bucket) {continue}
+
+foreach ($tech in ($bucket.Keys | Sort-Object)) {$lookup = $script:MitreLookup[$tech]
+$title = if ($lookup) {Get-MitreTitle $tech} else {""}
+
+if ($tech -match '\.') {$parts = $tech -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
+else {$url = "https://attack.mitre.org/techniques/$tech"}
+
+$display = Escape-Html $tech
+
+if ($lookup) {$html += "<div class='mitre-tech' data-mitre='$display'><a href='$url' target='_blank' title='$title'>$display</a></div>"}
+else {$html += "<div class='mitre-tech' data-mitre='$display'>$display</div>"}}
+$html += "</td>"}
+$html += "</tr></table></div>"; return $html}
 
 # -------------------------- PRE-PROCESSING -------------------------------------------------------
 
@@ -426,7 +469,7 @@ if (-not $script:wikiLinks.ContainsKey($csvGuid)) {$script:wikiLinks[$csvGuid] =
 Write-Host -f green -n "`nLoaded $($script:wikiLinks.Count) wiki links from "; Write-Host -f White $csvPath}
 catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgray $_.Exception.Message}}}
 
-# GetAZCommand
+# GetAZCommand.
 if ($GetAZCommand) {Write-Host -f white "`nRun the following command in the Azure Web Shell:"; Write-host -f cyan "`naz sentinel alert-rule list --resource-group '$script:resourcegroup' --workspace-name '$script:workspacename' --subscription '$script:subscription' -o json > All_Azure_Sentinel_rules.json"; Write-Host -f white -n "`nThen download the newly created '"; Write-Host -f yellow -n "All_Azure_Sentinel_rules.json"; Write-Host -f white "' file and run AllKQLtoHTML again to process the results.`n";return}
 
 # Usage switch.
@@ -486,6 +529,9 @@ else {throw "Unsupported JSON format"}
 
 $script:rules = @()
 foreach ($rule in $rawRules) {$n = Normalize-RuleObject $rule
+$ruleId = if ($n.displayName) {$n.displayName -replace '[^a-zA-Z0-9_-]', '_'}
+else {"rule_" + [guid]::NewGuid().ToString("N")}
+$n | Add-Member -NotePropertyName RuleId -NotePropertyValue $ruleId -Force
 if (-not $n.displayName) {Write-Host -f r "BROKEN RULE (no displayName)"; continue}
 if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY: $($n.displayName)"; continue}
 $script:rules += $n}
@@ -506,19 +552,17 @@ else {throw "Unsupported JSON format in merge file"}
 
 $script:mergeRules = @()
 foreach ($rule in $mergeRaw) {$n = Normalize-RuleObject $rule
+$ruleId = if ($n.displayName) {$n.displayName -replace '[^a-zA-Z0-9_-]', '_'}
+else {"rule_" + [guid]::NewGuid().ToString("N")}
+$n | Add-Member -NotePropertyName RuleId -NotePropertyValue $ruleId -Force
 if (-not $n.displayName) {Write-Host -f red "BROKEN RULE (no displayName)"; continue}
 if ([string]::IsNullOrWhiteSpace($n.query)) {Write-Host "SKIPPED NO QUERY (MERGE): $($n.displayName)"; continue}
 $script:mergeRules += $n}}}
 loadandnormalize
 
-$script:rules = $script:rules + $script:mergeRules
-
-# Merge files.
-$script:rules = $script:rules | Group-Object name | ForEach-Object {if ($_.Count -eq 1) {$_.Group[0]}
-else {Merge-Rules $_.Group}}
-
 # Calculate statistics.
 function statistics {$script:ruleCount = $script:rules.Count
+
 $script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
 $script:nrtCount = ($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
 $script:templateVersionCount = ($script:rules | Where-Object {$_.templateVersion}).Count
@@ -529,6 +573,23 @@ $script:severityLow = ($script:rules | Where-Object {$_.severity -match '^Low$'}
 $script:severityMedium = ($script:rules | Where-Object {$_.severity -match '^Medium$'}).Count
 $script:severityHigh = ($script:rules | Where-Object {$_.severity -match '^High$'}).Count}
 statistics
+
+$script:rules = $script:rules + $script:mergeRules
+
+# Build rule to MITRE mapping.
+function Build-RuleMitreMap {$script:ruleMitreMap = @{}
+foreach ($r in $script:rules) {$ruleId = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
+else {"rule_" + [guid]::NewGuid().ToString("N")}
+if (-not $r.PSObject.Properties['RuleId']) {continue}
+$script:ruleMitreMap[$r.RuleId] = [pscustomobject]@{RuleName = $r.displayName
+Tactics = @($r.tactics)
+Techniques = @($r.techniques)
+SubTechniques = @($r.subTechniques)}}}
+Build-RuleMitreMap
+
+# Merge files.
+$script:rules = $script:rules | Group-Object name | ForEach-Object {if ($_.Count -eq 1) {$_.Group[0]}
+else {Merge-Rules $_.Group}}
 
 # Sort rules alphabetically.
 $script:rules = $script:rules | Sort-Object displayName
@@ -586,8 +647,7 @@ if ($prop.Value -is [string] -and [string]::IsNullOrWhiteSpace($prop.Value)) {co
 $ruleExportObject.properties[$prop.Name] = $prop.Value}
 $ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($ruleExportObject | ConvertTo-Json -Depth 10 -Compress)))
 $name = Escape-Html $r.displayName
-$id = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
-else {"rule_" + [guid]::NewGuid().ToString("N")}
+$id = $r.RuleId
 $qry = Escape-Html (Normalize-UnicodeDecorations $qry); $qry = Highlight-KqlComments $qry
 $descRaw = Normalize-UnicodeDecorations $r.description; $descEscaped = Escape-Html $descRaw; $desc = Convert-UrlsToLinks $descEscaped
 
@@ -616,8 +676,15 @@ if ($wikiLink) {$wikiText = $config.PrivateData.WikiIntegration.LinkText
 if (-not $wikiText) {$wikiText = "📘 Playbook"}
 $wikiHtml = "<br><a href='$wikiLink' target='_blank'>$wikiText</a>"}
 
+$mitreList = @()
+if ($r.techniques) {$mitreList += $r.techniques}
+if ($r.subTechniques) {$mitreList += $r.subTechniques}
+$mitreList = $mitreList | Where-Object {$_} | ForEach-Object {$_.Trim()} | Select-Object -Unique
+$mitreAttr = $mitreList -join ','
+$tacticAttr = @($r.tactics | Where-Object {$_}) -join ','
+
 $script:rows += @"
-<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)" data-rule-json="$ruleJson">
+<tr id="$id" data-enabled="$($r.enabled)" data-kind="$($r.kind)" data-severity="$($r.severity)" data-template-version="$($r.templateVersion)" data-tactics="$tacticAttr" data-mitre="$mitreAttr" data-rule-json="$ruleJson">
 
 <td class="rulename"><strong>$name</strong><br><br>
 <span class="description">$desc</span><br><br>
@@ -636,11 +703,47 @@ buildrows
 # Final error check.
 if (-not $script:rows) {Write-Host -f red "Nothing to write.`nExiting.`n";return}
 
-# Snapshot Date
+# Snapshot Date.
 $script:snapshotDate = (Get-Date).ToString('MM/dd/yyyy @ hh:mm:ss tt (zzz') + ' ' + (Get-TimeZone).StandardName + ')'
 
+# Get TTPS information from MITRE cache.
+function Load-MitreTacticLookup {if ($script:MitreTacticLookup) {return}
+$data = Get-Content $script:MitreCacheFile -Raw | ConvertFrom-Json
+$script:MitreTacticLookup = @{}
+foreach ($obj in $data.objects) {if ($obj.type -ne "attack-pattern") {continue}
+if (-not $obj.external_references) {continue}
+$ref = $obj.external_references | Where-Object {$_.source_name -eq "mitre-attack"} | Select-Object -First 1
+if (-not $ref.external_id) {continue}
+$id = $ref.external_id; $tactics = @()
+foreach ($phase in @($obj.kill_chain_phases)) {if ($phase.kill_chain_name -ne "mitre-attack") {continue}
+$tactics += (($phase.phase_name -replace '-',' ') -split ' ' | ForEach-Object {if ($_){$_.Substring(0,1).ToUpper() + $_.Substring(1)}}) -join ''}
+$script:MitreTacticLookup[$id] = $tactics | Select-Object -Unique}}
+Load-MitreTacticLookup
+
+# Rebuild the MITRE TTP mappings.
+function buildmitrematrix {Initialize-MitreMatrix
+
+# Get unique Techniques.
+function Get-AllMitreTechniques {$all = foreach ($r in $script:rules) {$tech = @($r.techniques); $sub  = @($r.subTechniques); @($tech + $sub)}
+$all | Where-Object {$_} | ForEach-Object {"$_"} | Sort-Object -Unique}
+
+$techList = Get-AllMitreTechniques | Select-Object -Unique
+foreach ($tech in $techList) {if ([string]::IsNullOrWhiteSpace($tech)) {continue}
+$tactics = $script:MitreTacticLookup[$tech]
+if (-not $tactics) {continue}
+foreach ($tactic in @($tactics) | Select-Object -Unique) {if ([string]::IsNullOrWhiteSpace($tactic)) {continue}
+if (-not $script:mitreMatrix.Contains($tactic)) {continue}
+$bucket = $script:mitreMatrix[$tactic]
+if ($null -eq $bucket) {continue}
+if (-not $bucket.Contains($tech)) {$bucket[$tech] = @{count = 0; tactic = $tactic}}
+$bucket[$tech].count++}}}
+buildmitrematrix
+
 # Build TOC statistics block
-function buildstats {$script:statsBlock = @"
+function buildstats {if ($script:mitreMatrix.Keys.Count -eq 0) {$mitreColumn = ""}
+else {$mitreColumn = Build-MitreMiniColumn}
+
+$script:statsBlock = @"
 <table class="stats-table" aria-hidden="false">
 <tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
 <span class="stat-green">Rule Count: $ruleCount</span><br>
@@ -657,6 +760,7 @@ function buildstats {$script:statsBlock = @"
 <span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
 <td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td>
 
+
 <td class="stats-right">
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
 <span id="reverseFilters" class="toggle reverse-filter hidden">🔄 Reverse Filters</span><br>
@@ -665,12 +769,13 @@ function buildstats {$script:statsBlock = @"
 <div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 </td>
 
+<td class="stats-mitre">$mitreColumn</td>
 </tr></table>
 "@}
 buildstats
 
 # Generate HTML and write file
-function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; $mitreBlock = Build-MitreBlock
+function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; $mitreBlock = Build-MitreMiniColumn
 
 $html = $html.Replace("{{DONUTGRADIENT}}", [string]$script:donutGradient).
 Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
