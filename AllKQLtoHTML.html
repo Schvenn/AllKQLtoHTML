@@ -75,8 +75,11 @@ td.props:hover .export-rule-btn {opacity: 1;}
 
 pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: Consolas, monospace; font-size: 12px; background: var(--bg-code); padding: 10px; border: 1px solid var(--border-main); border-radius: 6px; color: inherit;}
 
-.stats-table {width: auto; table-layout: auto; border-collapse: separate; background: none;}
-.stats-table td {border: none; padding-right: 24px; vertical-align: top; white-space: nowrap;}
+.stats-table {max-width: 100%; table-layout: auto; border-collapse: separate; background: none;}
+.stats-table td {border: none; padding-right: 10px; vertical-align: top; white-space: nowrap;}
+.stats-left {width: 180px; max-width: 180px;}
+.stats-middle {width: 160px; max-width: 160px;}
+.stats-right {width: 150px; max-width: 150px; overflow-wrap: break-word;}
 .stats-table tr:hover td {background: unset;}
 .hidden {visibility: hidden; pointer-events: none;}
 
@@ -86,6 +89,13 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .stat-red {color: var(--red);}
 .stat-gray {color: #888;}
 .stat-muted {color: var(--text-muted);}
+
+.stats-mitre {max-width: 460px;}
+.mitre-scroll {height: 155px; overflow: auto; border: 1px solid #444;}
+.mitre-inner {min-width: 450px; border-collapse: collapse; table-layout: fixed;}
+.mitre-th {width: 100px; position: sticky; top: 0; background: #111; color: #fff; font-size: 13px; font-weight: bold; padding: 6px; border: 1px solid #333; white-space: normal;}
+.mitre-td {vertical-align: top; padding: 6px; border: 1px solid #333;}
+.mitre-tech {display: block; margin-bottom: 4px; white-space: nowrap;}
 
 .filter-header {font-weight: bold; display: block; cursor: default; line-height: 1.3;}
 .reverse-filter {color: #666;}
@@ -237,39 +247,38 @@ clearHighlights(); applyFilters();}});
 /* APPLY FILTERS */
 function applyFilters() {const hasFilters = activeFilters.size > 0 || reverseMode || includeFilter !== null || excludeFilter !== null;
 clearHighlights();
-if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 
-/* SEVERITIES */
+if (!hasFilters) {rows.forEach(r => r.style.display = '');}
 else {rows.forEach(row => {let visible = true;
-activeFilters.forEach(filter => {switch (filter) {case 'disabled': if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
+
+activeFilters.forEach(filter => {switch (filter) {case 'disabled':
+if ((row.dataset.enabled || '').toLowerCase() !== 'false') visible = false; break;
 case 'nrt': if (row.dataset.kind !== 'NRT') visible = false; break;
 case 'template': if (!row.dataset.templateVersion) visible = false; break;
 case 'sev-informational': if (row.dataset.severity !== 'Informational') visible = false; break;
 case 'sev-low': if (row.dataset.severity !== 'Low') visible = false; break;
 case 'sev-medium': if (row.dataset.severity !== 'Medium') visible = false; break;
 case 'sev-high': if (row.dataset.severity !== 'High') visible = false; break;}});
-const text = row.textContent || '';
 
-/* INCLUDE FILTER (must match) */
+const text = row.textContent || '';
 if (includeFilter && !includeFilter.test(text)) {visible = false;}
-/* EXCLUDE FILTER (must NOT match) */
 if (excludeFilter && excludeFilter.test(text)) {visible = false;}
-/* REVERSE FILTER */
-if (reverseMode) visible = !visible;
+if (reverseMode) {visible = !visible;}
 row.style.display = visible ? '' : 'none';});}
 
-/* COUNT */
 if (visibleCountEl) {const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none').length; visibleCountEl.textContent = 'Visible Rules: ' + visibleRows;}
 
-/* UI STATES */
 const hasActiveFilters = activeFilters.size > 0 || includeFilter !== null || excludeFilter !== null;
+
 if (hasActiveFilters) {clearBtn.classList.remove('hidden');
 if (reverseBtn) reverseBtn.classList.remove('hidden');
 if (filterHeader) filterHeader.classList.remove('hidden');}
 else {clearBtn.classList.add('hidden');
 if (reverseBtn) reverseBtn.classList.add('hidden');
 if (filterHeader) filterHeader.classList.add('hidden');}
-syncTocWithVisibleRows();
+
+syncTocWithVisibleRows(); syncMitreVisibility();
+
 if (includeFilter) {highlightMatches(includeFilter);}}
 
 /* SEARCH OPTION */
@@ -326,6 +335,54 @@ clearHighlights(); applyFilters();});})();
 (function () {const tocToggle = document.getElementById('tocToggle'); const tocWrapper = document.querySelector('.toc-wrapper');
 if (!tocToggle || !tocWrapper) return;
 tocToggle.addEventListener('click', () => {tocWrapper.classList.toggle('toc-collapsed');});})();
+
+/* GET VISIBLE RULES */
+function getVisibleRuleNames() {return new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => r.style.display !== 'none')
+.map(r => r.id || r.dataset.ruleName || r.dataset.name)
+.filter(Boolean));}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* SET MITRE VISIBILITY */
+function syncMitreVisibility() {const visibleTechs = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
+.filter(r => getComputedStyle(r).display !== 'none')
+.flatMap(r => (r.dataset.mitre || '').split(','))
+.filter(Boolean));
+document.querySelectorAll('.mitre-tech').forEach(el => {const tech = el.dataset.mitre; el.style.display = visibleTechs.has(tech) ? '' : 'none';});}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD*/
 (function () {const link = document.getElementById('copyNavigatorPath');
