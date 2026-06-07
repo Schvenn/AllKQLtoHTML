@@ -377,7 +377,6 @@ Execution = @{}
 Persistence = @{}
 PrivilegeEscalation = @{}
 Stealth = @{}
-DefenseEvasion = @{}
 DefenseImpairment = @{}
 CredentialAccess = @{}
 Discovery = @{}
@@ -389,8 +388,7 @@ Impact = @{}}}
 
 # Built MITRE matrix output.
 function Build-MitreMiniColumn {if (-not $script:mitreMatrix -or $script:mitreMatrix.Count -eq 0) {return ""}
-$preferredOrder = @("Reconnaissance", "ResourceDevelopment", "InitialAccess", "Execution", "Persistence", "PrivilegeEscalation", "Stealth", "DefenseEvasion", 
-"DefenseImpairment", "CredentialAccess", "Discovery", "LateralMovement",  "Collection", "CommandAndControl", "Exfiltration", "Impact")
+$preferredOrder = @("Reconnaissance", "ResourceDevelopment", "InitialAccess", "Execution", "Persistence", "PrivilegeEscalation", "Stealth", "DefenseImpairment", "CredentialAccess", "Discovery", "LateralMovement",  "Collection", "CommandAndControl", "Exfiltration", "Impact")
 
 $tactics = $preferredOrder | Where-Object {$script:mitreMatrix[$_]}
 $html = "<div class='mitre-scroll'><table class='mitre-inner'><tr>"
