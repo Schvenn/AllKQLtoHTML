@@ -166,7 +166,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 06/08/2026 @ 04:15:02 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.6)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 06/08/2026 @ 04:29:44 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.6)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -240,7 +240,7 @@ An adversary may use legitimate remote access tools to establish an interactive 
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Curl dowloading a script file.</span>
 <span class="kql-structure">let</span> ScriptExtensions <span class="kql-operators">=</span> <span class="kql-data">dynamic</span><span class="kql-brackets">(</span><span class="kql-brackets">[</span>".bash", ".bat", ".cmd", ".hta", ".js", ".jse", ".ksh", ".p1", ".php", ".ps1", ".psd1", ".psm1", ".py", ".rb", ".sh", ".vbe", ".vbs", ".wsf", ".wsh", ".zsh"<span class="kql-brackets">]</span><span class="kql-brackets">)</span>;
@@ -273,7 +273,7 @@ Process: CommandLine: <span class='ent-col'>CommandLine</span></span></div> <div
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#multiple-network-discovery-commands-run-in-a-short-period-of-time' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.</span>
 <span class="kql-structure">let</span> TimeWindow <span class="kql-operators">=</span> 10m;
@@ -319,7 +319,7 @@ Host: HostName: <span class='ent-col'>Device</span></span></div> <div class='kv'
 <span>Enabled: <span class='enabled-false'>❌ false (Disabled)</span></span><br>
 <span>Severity:</span> <span class='sev-medium'><strong>🟡 Medium</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#suspicious-remote-access-tool-activity' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class="kql-structure">let</span> ReservedIPs <span class="kql-operators">=</span> <span class="kql-brackets">(</span>ip:string<span class="kql-brackets">)</span> <span class="kql-brackets">{</span>ipv4_is_match<span class="kql-brackets">(</span>ip, "10.0.0.0/8"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "100.64.0.0/10"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "127.0.0.0/8"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "169.254.0.0/16"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "172.16.0.0/12"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip,"192.168.0.0/16"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "224.0.0.0/24"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "239.0.0.0/8"<span class="kql-brackets">)</span><span class="kql-brackets">}</span>;
 <span class="kql-structure">let</span> RATs <span class="kql-operators">=</span> <span class="kql-data">_GetWatchlist</span><span class="kql-brackets">(</span>'RATs'<span class="kql-brackets">)</span> <span class="kql-pipe">|</span> <span class="kql-structure">project</span> <span class="kql-data">tolower</span><span class="kql-brackets">(</span>SearchKey<span class="kql-brackets">)</span>;
@@ -359,7 +359,7 @@ File: Name: <span class='ent-col'>InitiatingProcessFileName</span></span></div> 
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#unusual-file-creation-or-modification-process-chain' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Unusual process creation or modification process chain: find a file that was executed or loaded within 5 minutes of being created or modified.</span>
 <span class="kql-structure">let</span> lookback <span class="kql-operators">=</span> <span class="kql-data">ago</span><span class="kql-brackets">(</span>1h<span class="kql-brackets">)</span>;
