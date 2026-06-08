@@ -6,20 +6,18 @@ The generated webpage is designed to make large rule collections easier to revie
 
 * Rule statistics and severity breakdowns
 * Interactive filtering by severity, rule state, template status, MITRE ATT&CK mappings, and text searches
-* MITRE ATT&CK coverage visualization
+* Dynamic MITRE ATT&CK coverage visualization, showing enabled and disabled Techniques
 * KQL syntax highlighting
 * Query export and rule export capabilities
 * One-click query copying
 * Knowledgebase / Wiki integration
 * Rule metadata inspection
-* MITRE ATT&CK technique descriptions and direct links
+* MITRE ATT&CK technique titles, descriptions and direct links
 * Rule merging and export consolidation
 * Support for both Sentinel UI exports and Azure API exports
 * MITRE ATT&CK Navigator layer generation
 
-Check out the screenshots to see some of what it can do, or try it yourself using the sample page below, which contains several effective endpoint detection rules:
-
-Sample Sentinel Rules:
+Check out the sample page below, which contains several effective endpoint detection rules:
 https://schvenn.github.io/AllKQLtoHTML/SampleSentinelRules.html
 
 ### Usage
