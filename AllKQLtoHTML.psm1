@@ -403,16 +403,13 @@ foreach ($t in $tactics) {$html += "<td class='mitre-td' data-tactic='$t'>"
 $bucket = $script:mitreMatrix[$t]
 if (-not $bucket) {continue}
 
-foreach ($tech in ($bucket.Keys | Sort-Object)) {$lookup = $script:MitreLookup[$tech]
-$title = if ($lookup) {Get-MitreTitle $tech} else {""}
-
+foreach ($tech in ($bucket.Keys | Sort-Object)) {$lookup = $script:MitreLookup[$tech]; $title = if ($lookup) {Get-MitreTitle $tech} else {""}
 if ($tech -match '\.') {$parts = $tech -split '\.'; $url = "https://attack.mitre.org/techniques/$($parts[0])/$($parts[1])"}
 else {$url = "https://attack.mitre.org/techniques/$tech"}
-
-$display = Escape-Html $tech
-
-if ($lookup) {$html += "<div class='mitre-tech' data-mitre='$display'><a href='$url' target='_blank' title='$title'>$display</a></div>"}
-else {$html += "<div class='mitre-tech' data-mitre='$display'>$display</div>"}}
+$display = Escape-Html $tech; $coverage = $bucket[$tech]; $class = "mitre-tech"
+if (-not $coverage.Enabled -and $coverage.Disabled) {$class += " mitre-disabled-only"}
+if ($lookup) {$html += "<div class='$class' data-mitre='$display'><a href='$url' target='_blank' title='$title'>$display</a></div>"}
+else {$html += "<div class='$class' data-mitre='$display'>$display</div>"}}
 $html += "</td>"}
 $html += "</tr></table></div>"; return $html}
 
@@ -720,21 +717,18 @@ Load-MitreTacticLookup
 
 # Rebuild the MITRE TTP mappings.
 function buildmitrematrix {Initialize-MitreMatrix
-
-# Get unique Techniques.
-function Get-AllMitreTechniques {$all = foreach ($r in $script:rules) {$tech = @($r.techniques); $sub  = @($r.subTechniques); @($tech + $sub)}
-$all | Where-Object {$_} | ForEach-Object {"$_"} | Sort-Object -Unique}
-
-$techList = Get-AllMitreTechniques | Select-Object -Unique
-foreach ($tech in $techList) {if ([string]::IsNullOrWhiteSpace($tech)) {continue}
+foreach ($r in $script:rules) {$techniques = @($r.techniques) + @($r.subTechniques)
+foreach ($tech in $techniques) {if ([string]::IsNullOrWhiteSpace($tech)) {continue}
 $tactics = $script:MitreTacticLookup[$tech]
 if (-not $tactics) {continue}
-foreach ($tactic in @($tactics) | Select-Object -Unique) {if ([string]::IsNullOrWhiteSpace($tactic)) {continue}
+foreach ($tactic in ($tactics | Select-Object -Unique)) {if ([string]::IsNullOrWhiteSpace($tactic)) {continue}
 if (-not $script:mitreMatrix.Contains($tactic)) {continue}
 $bucket = $script:mitreMatrix[$tactic]
-if ($null -eq $bucket) {continue}
-if (-not $bucket.Contains($tech)) {$bucket[$tech] = @{count = 0; tactic = $tactic}}
-$bucket[$tech].count++}}}
+if (-not $bucket.Contains($tech)) {$bucket[$tech] = @{
+Enabled  = $false
+Disabled = $false}}
+if ($r.enabled -eq $true) {$bucket[$tech].Enabled = $true}
+else {$bucket[$tech].Disabled = $true}}}}}
 buildmitrematrix
 
 # Build TOC statistics block
