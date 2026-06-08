@@ -32,15 +32,11 @@ h1,h2,h3,p {margin-bottom: 10px; margin-top: 5px; padding: 0px;}
 <p>The rest of this page is a knowledgebase format example, demonstrating what the markdown text would look like if it was copied from column 1 of the first rule into a compatible wiki or knowledgebase resource.</p>
 </td></tr></table>
 <hr>
-<h3>Curl downloading a script file</h3>
-Captures curl activity that involves downloaded executable script files, which is unusual in any corporate environment.<br>
-<br>
-Enabled: <b>✅ true</b><br>
-Severity: <b>🔴 High</b><br>
-<br>
+<p><strong>Curl downloading a script file</strong></p>
+<p>Captures curl activity that involves downloaded executable script files, which is unusual in any corporate environment.</p>
+<p>Enabled: <strong>✅ true</strong><br>Severity: <strong>🔴 High</strong></p>
 <hr>
-<pre>
-// Curl dowloading a script file.
+<pre><code>// Curl dowloading a script file.
 let ScriptExtensions = dynamic([".bash", ".bat", ".cmd", ".hta", ".js", ".jse", ".ksh", ".p1", ".php", ".ps1", ".psd1", ".psm1", ".py", ".rb", ".sh", ".vbe", ".vbs", ".wsf", ".wsh", ".zsh"]);
 let DownloadProtocols = dynamic(["ftp://", "ftps://", "http://", "https://", "sftp://"]);
 union(SecurityEvent
@@ -52,54 +48,31 @@ union(SecurityEvent
 | where FileName =~ "curl.exe" and ProcessCommandLine has_any (DownloadProtocols) and ProcessCommandLine has_any (ScriptExtensions)
 | project TimeGenerated, Device = DeviceName, Account = AccountName, ParentProcess = InitiatingProcessParentFileName, Process = FileName, CommandLine = ProcessCommandLine, Source = "DeviceProcessEvents")
 | order by TimeGenerated desc
-</pre>
+</code></pre>
 <hr>
-<br>
-<b>name :</b> 76b54938-52aa-4ab1-a487-a4f55d74723c<br>
-<b>queryFrequency :</b> PT1H<br>
-<b>queryPeriod :</b> PT1H<br>
-<b>triggerOperator :</b> GreaterThan<br>
-<b>triggerThreshold :</b> 0<br>
-<b>suppressionDuration :</b> PT5H<br>
-<b>suppressionEnabled :</b> false<br>
-<b>startTimeUtc :</b> <br>
-<b>tactics :</b> CommandAndControl, Execution<br>
-<b>techniques :</b> <a href="https://attack.mitre.org/techniques/T1059">T1059</a>, <a href="https://attack.mitre.org/techniques/T1105">T1105</a><br>
-<b>subTechniques :</b>
-<b>alertRuleTemplateName :</b> <br>
-<b>incidentConfiguration :</b><br> {"createIncident":true,"groupingConfiguration":{"enabled":false,"reopenClosedIncident":false,"lookbackDuration":"PT5H","matchingMethod":"AllEntities","groupByEntities":[],"groupByAlertDetails":[],"groupByCustomDetails":[]}}<br>
-<b>eventGroupingSettings :</b> {"aggregationKind":"SingleAlert"}<br>
-<b>alertDetailsOverride :</b> <br>
-<b>customDetails :</b> <br>
-<b>sentinelEntitiesMappings :</b> <br>
-<b>entityMappings :</b> entityType=Account; fieldMappings=[identifier=Name; columnName=Account],<br>
-entityType=File; fieldMappings=[identifier=Name; columnName=Process],<br>
-entityType=Process; fieldMappings=[identifier=CommandLine; columnName=CommandLine]<br>
-<b>kind :</b> Scheduled<br>
-<br>
+<p><strong>name:</strong> 0819a73d-caa5-4c29-9b67-c1f89a4c58ad<br><strong>queryFrequency:</strong> PT1H<br><strong>queryPeriod:</strong> PT1H<br><strong>triggerOperator:</strong> GreaterThan<br><strong>triggerThreshold:</strong> 0<br><strong>suppressionDuration:</strong> PT5H<br><strong>suppressionEnabled:</strong> false<br><strong>startTimeUtc:</strong><br><strong>tactics:</strong> CommandAndControl, Execution<br><strong>techniques:</strong> <a href="https://attack.mitre.org/techniques/T1059">T1059</a>, <a href="https://attack.mitre.org/techniques/T1105">T1105</a><br><strong>subTechniques:</strong><br><strong>alertRuleTemplateName:</strong><br><strong>incidentConfiguration:</strong> createIncident: true<br>groupingConfiguration: enabled: false<br>reopenClosedIncident: false<br>lookbackDuration: PT5H<br>matchingMethod: AllEntities<br>groupByEntities: {null}<br>groupByAlertDetails: {null}<br>groupByCustomDetails: {null}<br><strong>eventGroupingSettings:</strong> aggregationKind: SingleAlert<br><strong>alertDetailsOverride:</strong><br><strong>customDetails:</strong><br><strong>Sentinel Entities Mappings:</strong><br><strong>entityMappings:</strong> Account: Name: <strong><em>Account</em></strong><br>File: Name: <strong><em>Process</em></strong><br>Process: CommandLine: <strong><em>CommandLine</em></strong><br><strong>id:</strong> /Microsoft.SecurityInsights/alertRules/0819a73d-caa5-4c29-9b67-c1f89a4c58ad<br><strong>kind:</strong> Scheduled</p>
 <hr>
-<h3>Playbook:</h3>
+<p><strong>Playbook:</strong></p>
 <ol><li>Upload the downloaded script file to VirusTotal.com and review vendor detections, behavioral indicators, and sandbox analysis results.</li>
 <li>Review the contents and logic of the downloaded script using Microsoft Copilot or another AI-assisted analysis tool in order to determine the script’s purpose and potential impact.</li>
 <li>Check the reputation of the download URL, domain, and associated IP address using VirusTotal.com and other threat intelligence sources.</li>
 <li>Determine the parent process that initiated the curl command and trace the full process chain back to the original originating process.</li>
 <li>Review the host involved for additional suspicious activity, including persistence mechanisms, follow-on execution, additional network connections, and evidence of lateral movement.</li>
 <li>Investigate the user account associated with the activity for signs of compromise, unusual authentication activity, or privilege misuse.</li></ol>
-<h3>MITRE ATT&CK Details:</h3>
-- Tactics: CommandAndControl, Execution<br>
-[T1059] Command and Scripting Interpreter<br>
-Description: Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries.<br>
-<br>
-- Tactics: CommandAndControl, Execution<br>
-[T1105] Ingress Tool Transfer<br>
-Description: Adversaries may transfer tools or other files from an external system into a compromised environment.<br>
-<br>
-<hr></hr>
-<h3>References:</h3>
-- <a href="https://attack.mitre.org/techniques/1059">https://attack.mitre.org/techniques/1059</a><br>
-- <a href="https://attack.mitre.org/techniques/1059">https://attack.mitre.org/techniques/1105</a><br>
-<br>
-<hr></hr>
+<p><strong>MITRE ATT&amp;CK Details:</strong></p>
+<ul>
+<li><p>Tactics: CommandAndControl, Execution<br>[T1059] Command and Scripting Interpreter<br>Description: Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries.</p>
+</li>
+<li><p>Tactics: CommandAndControl, Execution<br>[T1105] Ingress Tool Transfer<br>Description: Adversaries may transfer tools or other files from an external system into a compromised environment.</p>
+</li>
+</ul>
+<hr>
+<p><strong>References:</strong></p>
+<ul>
+<li><a href="https://attack.mitre.org/techniques/1059">https://attack.mitre.org/techniques/1059</a></li>
+<li><a href="https://attack.mitre.org/techniques/1105">https://attack.mitre.org/techniques/1105</a></li>
+</ul>
+<hr>
 <h3>Audit Table:</h3>
 <table>
 <tr><td><b>Created On:</b></td><td>9/1/2024</td></tr>
