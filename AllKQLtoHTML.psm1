@@ -558,15 +558,15 @@ loadandnormalize
 # Calculate statistics.
 function statistics {$script:ruleCount = $script:rules.Count
 
-$script:disabledCount = ($script:rules | Where-Object {$_.enabled -eq $false}).Count
-$script:nrtCount = ($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
-$script:templateVersionCount = ($script:rules | Where-Object {$_.templateVersion}).Count
+$script:disabledCount = @($script:rules | Where-Object {$_.enabled -eq $false}).Count
+$script:nrtCount = @($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
+$script:templateVersionCount = @($script:rules | Where-Object {$_.templateVersion}).Count
 
 # Severity counts (case-insensitive, safe for missing values)
-$script:severityInfo = ($script:rules | Where-Object {$_.severity -match '^Informational$'}).Count
-$script:severityLow = ($script:rules | Where-Object {$_.severity -match '^Low$'}).Count
-$script:severityMedium = ($script:rules | Where-Object {$_.severity -match '^Medium$'}).Count
-$script:severityHigh = ($script:rules | Where-Object {$_.severity -match '^High$'}).Count}
+$script:severityInfo = @($script:rules | Where-Object {$_.severity -match '^Informational$'}).Count
+$script:severityLow = @($script:rules | Where-Object {$_.severity -match '^Low$'}).Count
+$script:severityMedium = @($script:rules | Where-Object {$_.severity -match '^Medium$'}).Count
+$script:severityHigh = @($script:rules | Where-Object {$_.severity -match '^High$'}).Count}
 statistics
 
 $script:rules = $script:rules + $script:mergeRules
