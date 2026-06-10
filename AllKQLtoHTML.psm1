@@ -202,6 +202,15 @@ $valText = $lines -join "`n"}
 elseif ($p.Name -eq "customDetails") {$lines = foreach ($item in $val.PSObject.Properties) {$k = Escape-Html $item.Name; $v = Escape-Html $item.Value; "$k : <span class='ent-col'>$v</span>"}
 $valText = $lines -join "`n"}
 
+#----------------- INCIDENT CONFIGURATION ---------------------------------------------------------
+elseif ($p.Name -eq "incidentConfiguration") {$lines = foreach ($item in $val.PSObject.Properties) {if ($item.Name -ne "groupingConfiguration") {"$($item.Name): $(Expand-PropertyValue $item.Value)"
+continue}
+foreach ($g in $item.Value.PSObject.Properties) {if ($g.Name -eq "groupByEntities") {$entities = @($g.Value)
+$entityList = @($entities | ForEach-Object {"<span class='ent-col'>$(Escape-Html $_)</span>"}) -join ', '
+"groupByEntities: $entityList"}
+else {"$($g.Name): $(Expand-PropertyValue $g.Value)"}}}
+$valText = $lines -join "`n"}
+
 # ---------------- MITRE ENRICHMENT ---------------------------------------------------------------
 elseif ($p.Name -in @('techniques','subTechniques')) {if ($val -is [Array]) {$valText = ($val | ForEach-Object {if ($_ -match '\bT\d{4}(?:\.\d{3})?\b') {Convert-MitreToLinks $_} 
 else {Escape-Html "$_"}}) -join ', '}
