@@ -566,7 +566,6 @@ loadandnormalize
 
 # Calculate statistics.
 function statistics {$script:ruleCount = $script:rules.Count
-
 $script:disabledCount = @($script:rules | Where-Object {$_.enabled -eq $false}).Count
 $script:nrtCount = @($script:rules | Where-Object {$_.kind -eq 'NRT'}).Count
 $script:templateVersionCount = @($script:rules | Where-Object {$_.templateVersion}).Count
@@ -776,13 +775,29 @@ $script:statsBlock = @"
 buildstats
 
 # Generate HTML and write file
-function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; $mitreBlock = Build-MitreMiniColumn
+function writepage {$templatePath = Join-Path $PSScriptRoot "AllKQLtoHTML.html"; $html = Get-Content $templatePath -Raw; 
+
+$mitreDataLines = foreach ($r in $script:rules) {$ruleName = $r.displayName -replace '[^a-zA-Z0-9_-]', '_'; $techniques = @($r.techniques) + @($r.subTechniques)
+foreach ($tech in $techniques) {if (-not $tech) {continue}
+$lookup = $script:MitreLookup[$tech]
+$name = if ($lookup) {$lookup.name}
+else {$tech}
+$desc = if ($lookup) {Get-FirstSentence $lookup.description}
+else {""}
+$tactics = $script:MitreTacticLookup[$tech]
+$tacticsText = if ($tactics) {($tactics | Sort-Object) -join ", "}
+else {""}
+"$ruleName|$tacticsText|$tech|$name|$desc"}}
+
+$mitreDataBlock = $mitreDataLines -join "`n"
+$mitreBlock = Build-MitreMiniColumn
 
 $html = $html.Replace("{{DONUTGRADIENT}}", [string]$script:donutGradient).
 Replace("{{SNAPSHOTDATE}}", [string]$snapshotDate).
 Replace("{{VERSION}}", [string]$script:version).
 Replace("{{STATSBLOCK}}", [string]$statsBlock).
 Replace("{{TOC}}", [string]$script:toc).
+Replace("{{MITREDATA}}", $mitreDataBlock).
 Replace("{{MITREBLOCK}}", $mitreBlock).
 Replace("{{ROWS}}", [string]$script:rows).
 Replace("{{KQL_COMMENT}}", $script:KqlTheme.Comment).
