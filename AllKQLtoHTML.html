@@ -343,47 +343,12 @@ function getVisibleRuleNames() {return new Set(Array.from(document.querySelector
 .map(r => r.id || r.dataset.ruleName || r.dataset.name)
 .filter(Boolean));}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* SET MITRE VISIBILITY */
 function syncMitreVisibility() {const visibleTechs = new Set(Array.from(document.querySelectorAll('#rulesTable tbody tr'))
 .filter(r => getComputedStyle(r).display !== 'none')
 .flatMap(r => (r.dataset.mitre || '').split(','))
 .filter(Boolean));
 document.querySelectorAll('.mitre-tech').forEach(el => {const tech = el.dataset.mitre; el.style.display = visibleTechs.has(tech) ? '' : 'none';});}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* MITRE ATT&CK NAVIGATOR FILE TO CLIPBOARD*/
 (function () {const link = document.getElementById('copyNavigatorPath');
