@@ -91,7 +91,7 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .stat-muted {color: var(--text-muted);}
 
 .stats-mitre {max-width: 460px;}
-.mitre-scroll {height: 155px; overflow: auto; border: 1px solid #444;}
+.mitre-scroll {height: 155px; min-height: 155px; overflow: auto; border: 1px solid #444; resize: vertical;}
 .mitre-inner {min-width: 450px; border-collapse: collapse; table-layout: fixed;}
 .mitre-th {width: 100px; position: sticky; top: 0; background: #111; color: #fff; font-size: 13px; font-weight: bold; padding: 6px; border: 1px solid #333; white-space: normal;}
 .mitre-td {vertical-align: top; padding: 6px; border: 1px solid #333;}
@@ -407,7 +407,7 @@ function sanitize(name) {return (name || 'rule')
 .toLowerCase();}})();
 
 /* BUILD MITRE DESCRIPTIONS FOR MARKDOWN CREATION */
-const mitreRaw = `{{MITREBLOCK}}` || ""; const mitreByRule = {};
+const mitreRaw = `{{MITREDATA}}` || ""; const mitreByRule = {};
 if (mitreRaw) {mitreRaw.split('\n').forEach(line => {const parts = line.split('|');
 if (parts.length < 5) return;
 const rule = parts[0]; const tactic = parts[1]; const techId = parts[2]; const name = parts[3]; const desc = parts.slice(4).join('|');
@@ -483,9 +483,7 @@ const parsed = unique.map(url => {const parts = url.split('/techniques/')[1]?.sp
 return { url, tech, sub };});
 parsed.sort((a, b) => {if (a.tech !== b.tech) return a.tech - b.tech; return a.sub - b.sub;});
 const referencesBlock = parsed.map(x => `- ${x.url}`).join("\n");
-
-const ruleKey = rule?.name;
-
+const ruleKey = (rule?.properties?.displayName || "").replace(/[^a-zA-Z0-9_-]/g, "_");
 const ruleMitreRaw = mitreByRule[ruleKey] || [];
 const ruleMitre = [...ruleMitreRaw].sort((a, b) => {const aTech = parseInt((a.techId.match(/\d+/) || [9999])[0], 10); const bTech = parseInt((b.techId.match(/\d+/) || [9999])[0], 10); const aSub = (a.techId.split('.')[1] || 0); const bSub = (b.techId.split('.')[1] || 0);
 if (aTech !== bTech) return aTech - bTech; return aSub - bSub;});
