@@ -93,10 +93,15 @@ pre {white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; fon
 .stats-mitre {max-width: 460px;}
 .mitre-scroll {height: 155px; min-height: 155px; overflow: auto; border: 1px solid #444; resize: vertical;}
 .mitre-inner {min-width: 450px; border-collapse: collapse; table-layout: fixed;}
-.mitre-th {width: 100px; position: sticky; top: 0; background: #111; color: #fff; font-size: 13px; font-weight: bold; padding: 6px; border: 1px solid #333; white-space: normal;}
+.mitre-th {width: 100px; position: sticky; top: 0; background: #111; color: #fff; font-size: 13px; font-weight: bold; padding: 6px; border: 1px solid #333; white-space: normal; padding-bottom: 18px;}
 .mitre-td {vertical-align: top; padding: 6px; border: 1px solid #333;}
 .mitre-tech {display: block; margin-bottom: 4px; white-space: nowrap;}
 .mitre-disabled-only, .mitre-disabled-only a {text-decoration: line-through; opacity: 0.5;}
+.low {color: var(--red);}
+.mid {color: var(--yellow);}
+.high {color: var(--green);}
+.mitre-tactic-count {padding-top: 5px; position: absolute; bottom: 2px; right: 4px; font-weight: bold; font-size: 0.8em;}
+.mitre-traffic-light {padding-top: 5px; position: absolute; bottom: 2px; left: 4px;;}
 
 .filter-header {font-weight: bold; display: block; cursor: default; line-height: 1.3;}
 .reverse-filter {color: #666;}
@@ -166,7 +171,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 06/11/2026 @ 09:06:32 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.6)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 06/12/2026 @ 01:37:02 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.6)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -202,7 +207,7 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <div id="searchCriteriaBlock" style="font-size: 13px;" class="hidden">Search terms:<br><strong id="searchCriteriaValue" class="stat-muted"></strong></div>
 </td>
 
-<td class="stats-mitre"><div class='mitre-scroll'><table class='mitre-inner'><tr><th class='mitre-th'>Reconnaissance</th><th class='mitre-th'>Resource Development</th><th class='mitre-th'>Initial Access</th><th class='mitre-th'>Execution</th><th class='mitre-th'>Persistence</th><th class='mitre-th'>Privilege Escalation</th><th class='mitre-th'>Stealth</th><th class='mitre-th'>Defense Impairment</th><th class='mitre-th'>Credential Access</th><th class='mitre-th'>Discovery</th><th class='mitre-th'>Lateral Movement</th><th class='mitre-th'>Collection</th><th class='mitre-th'>Command & Control</th><th class='mitre-th'>Exfiltration</th><th class='mitre-th'>Impact</th></tr><tr><td class='mitre-td' data-tactic='Reconnaissance'></td><td class='mitre-td' data-tactic='ResourceDevelopment'></td><td class='mitre-td' data-tactic='InitialAccess'></td><td class='mitre-td' data-tactic='Execution'><div class='mitre-tech' data-mitre='T1059'><a href='https://attack.mitre.org/techniques/T1059' target='_blank' title='Command and Scripting Interpreter:
+<td class="stats-mitre"><div class='mitre-scroll'><table class='mitre-inner'><tr><th class='mitre-th'>Reconnaissance<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Resource Development<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Initial Access<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Execution<br><span class='mitre-traffic-light'>🟢</span><span class='mitre-tactic-count high'>2 Rules</span></th><th class='mitre-th'>Persistence<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Privilege Escalation<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Stealth<br><span class='mitre-traffic-light'>🟡</span><span class='mitre-tactic-count mid'>~1 Rule</span></th><th class='mitre-th'>Defense Impairment<br><span class='mitre-traffic-light'>🟡</span><span class='mitre-tactic-count mid'>~1 Rule</span></th><th class='mitre-th'>Credential Access<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Discovery<br><span class='mitre-traffic-light'>🟡</span><span class='mitre-tactic-count mid'>1 Rule</span></th><th class='mitre-th'>Lateral Movement<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Collection<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Command & Control<br><span class='mitre-traffic-light'>🟢</span><span class='mitre-tactic-count high'>3 Rules</span></th><th class='mitre-th'>Exfiltration<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th><th class='mitre-th'>Impact<br><span class='mitre-traffic-light'>🔴</span><span class='mitre-tactic-count low'>0 Rules</span></th></tr><tr><td class='mitre-td' data-tactic='Reconnaissance'></td><td class='mitre-td' data-tactic='ResourceDevelopment'></td><td class='mitre-td' data-tactic='InitialAccess'></td><td class='mitre-td' data-tactic='Execution'><div class='mitre-tech' data-mitre='T1059'><a href='https://attack.mitre.org/techniques/T1059' target='_blank' title='Command and Scripting Interpreter:
 Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries.'>T1059</a></div><div class='mitre-tech' data-mitre='T1574'><a href='https://attack.mitre.org/techniques/T1574' target='_blank' title='Hijack Execution Flow:
 Adversaries may execute their own malicious payloads by hijacking the way operating systems run programs.'>T1574</a></div></td><td class='mitre-td' data-tactic='Persistence'></td><td class='mitre-td' data-tactic='PrivilegeEscalation'></td><td class='mitre-td' data-tactic='Stealth'><div class='mitre-tech' data-mitre='T1218'><a href='https://attack.mitre.org/techniques/T1218' target='_blank' title='System Binary Proxy Execution:
 Adversaries may bypass process and/or signature-based defenses by proxying execution of malicious content with signed, or otherwise trusted, binaries.'>T1218</a></div><div class='mitre-tech' data-mitre='T1574'><a href='https://attack.mitre.org/techniques/T1574' target='_blank' title='Hijack Execution Flow:
@@ -240,7 +245,7 @@ An adversary may use legitimate remote access tools to establish an interactive 
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-high'><strong>🔴 High</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#curl-downloading-a-script-file' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Curl dowloading a script file.</span>
 <span class="kql-structure">let</span> ScriptExtensions <span class="kql-operators">=</span> <span class="kql-data">dynamic</span><span class="kql-brackets">(</span><span class="kql-brackets">[</span>".bash", ".bat", ".cmd", ".hta", ".js", ".jse", ".ksh", ".p1", ".php", ".ps1", ".psd1", ".psm1", ".py", ".rb", ".sh", ".vbe", ".vbs", ".wsf", ".wsh", ".zsh"<span class="kql-brackets">]</span><span class="kql-brackets">)</span>;
@@ -273,7 +278,7 @@ Process: CommandLine: <span class='ent-col'>CommandLine</span></span></div> <div
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#multiple-network-discovery-commands-run-in-a-short-period-of-time' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Detect multiple network discovery commands run on a single host, by a single user, within a short period of time; excludes common legitimate patterns and system account activity.</span>
 <span class="kql-structure">let</span> TimeWindow <span class="kql-operators">=</span> 10m;
@@ -319,7 +324,7 @@ Host: HostName: <span class='ent-col'>Device</span></span></div> <div class='kv'
 <span>Enabled: <span class='enabled-false'>❌ false (Disabled)</span></span><br>
 <span>Severity:</span> <span class='sev-medium'><strong>🟡 Medium</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#suspicious-remote-access-tool-activity' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class="kql-structure">let</span> ReservedIPs <span class="kql-operators">=</span> <span class="kql-brackets">(</span>ip:string<span class="kql-brackets">)</span> <span class="kql-brackets">{</span>ipv4_is_match<span class="kql-brackets">(</span>ip, "10.0.0.0/8"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "100.64.0.0/10"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "127.0.0.0/8"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "169.254.0.0/16"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "172.16.0.0/12"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip,"192.168.0.0/16"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "224.0.0.0/24"<span class="kql-brackets">)</span> <span class="kql-filters">or</span> ipv4_is_match<span class="kql-brackets">(</span>ip, "239.0.0.0/8"<span class="kql-brackets">)</span><span class="kql-brackets">}</span>;
 <span class="kql-structure">let</span> RATs <span class="kql-operators">=</span> <span class="kql-data">_GetWatchlist</span><span class="kql-brackets">(</span>'RATs'<span class="kql-brackets">)</span> <span class="kql-pipe">|</span> <span class="kql-structure">project</span> <span class="kql-data">tolower</span><span class="kql-brackets">(</span>SearchKey<span class="kql-brackets">)</span>;
@@ -359,7 +364,7 @@ File: Name: <span class='ent-col'>InitiatingProcessFileName</span></span></div> 
 <span>Enabled: <span class='enabled-true'>✅ true</span></span><br>
 <span>Severity:</span> <span class='sev-low'><strong>🟠 Low</strong></span>
 <br>
-
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html#unusual-file-creation-or-modification-process-chain' target='_blank'>📘 Playbook</a>
 </td>
 <td class="query"><pre><span class='kql-comment'>// Unusual process creation or modification process chain: find a file that was executed or loaded within 5 minutes of being created or modified.</span>
 <span class="kql-structure">let</span> lookback <span class="kql-operators">=</span> <span class="kql-data">ago</span><span class="kql-brackets">(</span>1h<span class="kql-brackets">)</span>;
