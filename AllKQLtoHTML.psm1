@@ -412,13 +412,15 @@ else {0}
 $count = if ($header -eq "Stealth" -and $count -le 0 -and $script:mitreTacticCounts["DefenseEvasion"] -gt 0) {$script:mitreTacticCounts["DefenseEvasion"]; $qualifier = "~"}
 elseif ($header -eq "Defense Impairment" -and $count -le 0 -and $script:mitreTacticCounts["DefenseEvasion"] -gt 0) {$script:mitreTacticCounts["DefenseEvasion"]; $qualifier = "~"}
 else {$script:mitreTacticCounts[$t]; $qualifier = ""}
+$count = if ($count -lt 0) {0}
+else {$count}
 $plural = if ($count -eq 1) {""}
 else {"s"}
 
 # Heatmap colouring.
 $percent = ($count / $ruleCount) * 100
-if ($count -le 10) {$weightclass = "low"; $prefix = "🔴"}
-elseif ($count -lt 30) {$weightclass = "mid"; $prefix = "🟡"}
+if ($percent -le 10) {$weightclass = "low"; $prefix = "🔴"}
+elseif ($percent -lt 30) {$weightclass = "mid"; $prefix = "🟡"}
 else {$weightclass = "high"; $prefix = "🟢"}
 
 # Write Header.
