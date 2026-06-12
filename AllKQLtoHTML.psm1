@@ -405,7 +405,24 @@ $html = "<div class='mitre-scroll'><table class='mitre-inner'><tr>"
 foreach ($t in $tactics) {$header = $t -creplace '(?<!^)([A-Z])',' $1'
 $header = $header.Trim()
 $header = $header -replace '\s+And\s+',' & '
-$html += "<th class='mitre-th'>$header</th>"}
+$count = if ($script:mitreTacticCounts.ContainsKey($t)) {$script:mitreTacticCounts[$t]}
+else {0}
+
+# Account for v19 conversion, wherein Defense Evasion has been split into Stealth and Defense Impairment.
+$count = if ($header -eq "Stealth" -and $count -le 0 -and $script:mitreTacticCounts["DefenseEvasion"] -gt 0) {$script:mitreTacticCounts["DefenseEvasion"]; $qualifier = "~"}
+elseif ($header -eq "Defense Impairment" -and $count -le 0 -and $script:mitreTacticCounts["DefenseEvasion"] -gt 0) {$script:mitreTacticCounts["DefenseEvasion"]; $qualifier = "~"}
+else {$script:mitreTacticCounts[$t]; $qualifier = ""}
+$plural = if ($count -eq 1) {""}
+else {"s"}
+
+# Heatmap colouring.
+$percent = ($count / $ruleCount) * 100
+if ($count -le 10) {$weightclass = "low"; $prefix = "🔴"}
+elseif ($count -lt 30) {$weightclass = "mid"; $prefix = "🟡"}
+else {$weightclass = "high"; $prefix = "🟢"}
+
+# Write Header.
+$html += "<th class='mitre-th'>$header<br><span class='mitre-traffic-light'>$prefix</span><span class='mitre-tactic-count $weightclass'>$qualifier$count Rule$plural</span></th>"}
 $html += "</tr><tr>"
 
 foreach ($t in $tactics) {$html += "<td class='mitre-td' data-tactic='$t'>"
@@ -724,11 +741,16 @@ $script:MitreTacticLookup[$id] = $tactics | Select-Object -Unique}}
 Load-MitreTacticLookup
 
 # Rebuild the MITRE TTP mappings.
-function buildmitrematrix {Initialize-MitreMatrix
-foreach ($r in $script:rules) {$techniques = @($r.techniques) + @($r.subTechniques)
+function buildmitrematrix {Initialize-MitreMatrix; $script:mitreTacticCounts = @{};
+foreach ($r in $script:rules) {$techniques = @($r.techniques) + @($r.subTechniques); $ruleTacticsSeen = @{}
 foreach ($tech in $techniques) {if ([string]::IsNullOrWhiteSpace($tech)) {continue}
 $tactics = $script:MitreTacticLookup[$tech]
 if (-not $tactics) {continue}
+$tacticList = @($r.tactics | Select-Object -Unique)
+foreach ($tactic in $tacticList) {if (-not $script:mitreTacticCounts.ContainsKey($tactic)) {$script:mitreTacticCounts[$tactic] = 0}
+if (-not $ruleTacticsSeen.ContainsKey($tactic)) {$ruleTacticsSeen[$tactic] = $true
+if (-not $script:mitreTacticCounts.ContainsKey($tactic)) {$script:mitreTacticCounts[$tactic] = 0}
+$script:mitreTacticCounts[$tactic]++}}
 foreach ($tactic in ($tactics | Select-Object -Unique)) {if ([string]::IsNullOrWhiteSpace($tactic)) {continue}
 if (-not $script:mitreMatrix.Contains($tactic)) {continue}
 $bucket = $script:mitreMatrix[$tactic]
