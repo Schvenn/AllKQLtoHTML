@@ -766,10 +766,10 @@ if ($r.enabled -eq $true) {$bucket[$tech].Enabled = $true}
 else {$bucket[$tech].Disabled = $true}}}}
 
 # ---------------- MAX MITRE COLUMN HEIGHT CALCULATION ----------------
-$rowHeight = 22; $headerHeight = 80; $buffer = 20; $maxRows = 0
+$rowHeight = 22.7; $maxRows = 0
 foreach ($tactic in $script:mitreMatrix.Keys) {$rowCount = $script:mitreMatrix[$tactic].Count
 if ($rowCount -gt $maxRows) {$maxRows = $rowCount}}
-$script:mitreMaxHeight = ($maxRows * $rowHeight) + $headerHeight + $buffer}
+$script:mitreMaxHeight = ($maxRows * $rowHeight) + 85}
 buildmitrematrix
 
 # Build TOC statistics block
