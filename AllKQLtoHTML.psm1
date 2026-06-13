@@ -400,7 +400,10 @@ function Build-MitreMiniColumn {if (-not $script:mitreMatrix -or $script:mitreMa
 $preferredOrder = @("Reconnaissance", "ResourceDevelopment", "InitialAccess", "Execution", "Persistence", "PrivilegeEscalation", "Stealth", "DefenseImpairment", "CredentialAccess", "Discovery", "LateralMovement",  "Collection", "CommandAndControl", "Exfiltration", "Impact")
 
 $tactics = $preferredOrder | Where-Object {$script:mitreMatrix[$_]}
-$html = "<div class='mitre-scroll'><table class='mitre-inner'><tr>"
+$tactics = $preferredOrder | Where-Object {$script:mitreMatrix[$_]}
+$height = if ($script:mitreMaxHeight) {" style='max-height:$($script:mitreMaxHeight)px;'"}
+else {""}
+$html = "<div class='mitre-scroll'$height><table class='mitre-inner'><tr>"
 
 foreach ($t in $tactics) {$header = $t -creplace '(?<!^)([A-Z])',' $1'
 $header = $header.Trim()
@@ -760,7 +763,13 @@ if (-not $bucket.Contains($tech)) {$bucket[$tech] = @{
 Enabled  = $false
 Disabled = $false}}
 if ($r.enabled -eq $true) {$bucket[$tech].Enabled = $true}
-else {$bucket[$tech].Disabled = $true}}}}}
+else {$bucket[$tech].Disabled = $true}}}}
+
+# ---------------- MAX MITRE COLUMN HEIGHT CALCULATION ----------------
+$rowHeight = 22; $headerHeight = 80; $buffer = 20; $maxRows = 0
+foreach ($tactic in $script:mitreMatrix.Keys) {$rowCount = $script:mitreMatrix[$tactic].Count
+if ($rowCount -gt $maxRows) {$maxRows = $rowCount}}
+$script:mitreMaxHeight = ($maxRows * $rowHeight) + $headerHeight + $buffer}
 buildmitrematrix
 
 # Build TOC statistics block
