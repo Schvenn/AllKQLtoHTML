@@ -421,7 +421,8 @@ $plural = if ($count -eq 1) {""}
 else {"s"}
 
 # Heatmap colouring.
-$percent = ($count / $ruleCount) * 100
+if ($ruleCount -le 0) {$percent = 0}
+else {$percent = ($count / $ruleCount) * 100}
 if ($percent -le 10) {$weightclass = "low"; $prefix = "🔴"}
 elseif ($percent -lt 30) {$weightclass = "mid"; $prefix = "🟡"}
 else {$weightclass = "high"; $prefix = "🟢"}
