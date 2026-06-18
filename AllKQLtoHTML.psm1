@@ -206,8 +206,9 @@ $valText = $lines -join "`n"}
 elseif ($p.Name -eq "incidentConfiguration") {$lines = foreach ($item in $val.PSObject.Properties) {if ($item.Name -ne "groupingConfiguration") {"$($item.Name): $(Expand-PropertyValue $item.Value)"
 continue}
 foreach ($g in $item.Value.PSObject.Properties) {if ($g.Name -in @("groupByEntities","groupByAlertDetails","groupByCustomDetails")) {$items = @($g.Value)
-$itemList = @($items | ForEach-Object {"<span class='ent-col'>$(Escape-Html $_)</span>"}) -join ', '
-"$($g.Name): $itemList"}
+if ($items.Count -eq 0) {"$($g.Name): {null}"}
+else {$itemList = @($items | ForEach-Object {"<span class='ent-col'>$(Escape-Html $_)</span>"}) -join ', '
+"$($g.Name): $itemList"}}
 else {"$($g.Name): $(Expand-PropertyValue $g.Value)"}}}
 $valText = $lines -join "`n"}
 
