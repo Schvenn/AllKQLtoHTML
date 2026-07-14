@@ -774,6 +774,29 @@ if ($rowCount -gt $maxRows) {$maxRows = $rowCount}}
 $script:mitreMaxHeight = ($maxRows * $rowHeight) + 85}
 buildmitrematrix
 
+# Calculate MITRE parent technique coverage.
+function Build-MitreCoverageStats {$coveredParents = New-Object System.Collections.Generic.HashSet[string]
+foreach ($r in $script:rules) {foreach ($t in @($r.techniques) + @($r.subTechniques)) {if ([string]::IsNullOrWhiteSpace($t)) {continue}
+if ($t -match '^T\d{4}') {$parent = ($t -split '\.')[0]
+$null = $coveredParents.Add($parent)}}}
+
+$totalParents = New-Object System.Collections.Generic.HashSet[string]
+$data = Get-Content $script:MitreCacheFile -Raw | ConvertFrom-Json
+foreach ($obj in $data.objects) {if ($obj.type -ne "attack-pattern") {continue}
+if (-not $obj.external_references) {continue}
+$ref = $obj.external_references | Where-Object {$_.source_name -eq "mitre-attack"} | Select-Object -First 1
+if (-not $ref.external_id) {continue}
+$id = $ref.external_id
+if ($obj.revoked -eq $true) {continue}
+if ($obj.x_mitre_deprecated -eq $true) {continue}
+if ($id -match '^T\d{4}$') {$null = $totalParents.Add($id)}}
+
+$script:coveredParentTechniqueCount = $coveredParents.Count
+$script:totalParentTechniqueCount   = $totalParents.Count
+if ($script:totalParentTechniqueCount -gt 0) {$script:ttpCoveragePercent = [Math]::Round(($script:coveredParentTechniqueCount / $script:totalParentTechniqueCount) * 100, 0)}
+else {$script:ttpCoveragePercent = 0}}
+Build-MitreCoverageStats
+
 # Build TOC statistics block
 function buildstats {if ($script:mitreMatrix.Keys.Count -eq 0) {$mitreColumn = ""}
 else {$mitreColumn = Build-MitreMiniColumn}
@@ -792,7 +815,8 @@ $script:statsBlock = @"
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: $severityLow</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br><br>
-<span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
+<span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button><br>
+<span id="ttpCoverage" class="stat-muted">TTP Coverage: $coveredParentTechniqueCount/$totalParentTechniqueCount ($ttpCoveragePercent%)</span></td>
 <td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td>
 
 
