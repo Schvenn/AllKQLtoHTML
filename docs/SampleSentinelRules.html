@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <title>Azure Sentinel Analytics Rules</title>
 
- <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke-width='20' stroke-linecap='butt'><circle cx='50' cy='50' r='40' stroke='%23d32f2f' stroke-dasharray='62.8 188.5' stroke-dashoffset='0'/><circle cx='50' cy='50' r='40' stroke='%23ffd166' stroke-dasharray='62.8 188.5' stroke-dashoffset='62.8'/><circle cx='50' cy='50' r='40' stroke='%23ff8c00' stroke-dasharray='62.8 188.5' stroke-dashoffset='125.6'/><circle cx='50' cy='50' r='40' stroke='%23ffffff' stroke-dasharray='62.8 188.5' stroke-dashoffset='188.4'/></g></svg>">
- 
 <style>
 :root {--bg-main: #ffffff; --bg-panel: #f9f9f9; --bg-header: #f1f1f1; --bg-code: #f6f6f6; --border-main: #cccccc; --text-main: #222222; --text-muted: #555555; --green: #1b7f1b; --red: #c00000; --yellow: #b8860b; --row-even: #f0f0f0; --row-hover: #e6ecff; --link-normal: #995599; --link-hover: #ff0000; --link-visited: #6b84c4; --link-active: #44ff44;}
 
@@ -173,7 +171,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 06/13/2026 @ 12:13:06 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.7)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 07/14/2026 @ 08:26:58 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.7)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -197,7 +195,8 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: 2</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: 1</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: 1</span></strong><br><br>
-<span id="visibleRuleCount" class="stat-muted"> Visible Rules: 4</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button></td>
+<span id="visibleRuleCount" class="stat-muted"> Visible Rules: 4</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button><br>
+<span id="ttpCoverage" class="stat-muted">TTP Coverage: 11/222 (5%)</span></td>
 <td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">4<br>Rules</div></div></td>
 
 
@@ -268,7 +267,7 @@ enabled: False
 reopenClosedIncident: False
 lookbackDuration: PT5H
 matchingMethod: AllEntities
-groupByEntities: 
+groupByEntities: {null}
 groupByAlertDetails: {null}
 groupByCustomDetails: {null}</span></div> <div class='kv'><strong>eventGroupingSettings: </strong><span class='val'>aggregationKind: SingleAlert</span></div> <div class='kv'><strong>alertDetailsOverride: </strong></div> <div class='kv'><strong>customDetails: </strong></div> <div class='kv'><strong>sentinelEntitiesMappings: </strong></div> <div class='kv'><strong>entityMappings: </strong><span class='val'>Account: Name: <span class='ent-col'>Account</span>
 File: Name: <span class='ent-col'>Process</span>
@@ -315,7 +314,7 @@ enabled: False
 reopenClosedIncident: False
 lookbackDuration: PT5H
 matchingMethod: AllEntities
-groupByEntities: 
+groupByEntities: {null}
 groupByAlertDetails: {null}
 groupByCustomDetails: {null}</span></div> <div class='kv'><strong>eventGroupingSettings: </strong><span class='val'>aggregationKind: SingleAlert</span></div> <div class='kv'><strong>alertDetailsOverride: </strong><span class='val'>alertDynamicProperties: {null}</span></div> <div class='kv'><strong>customDetails: </strong></div> <div class='kv'><strong>sentinelEntitiesMappings: </strong></div> <div class='kv'><strong>entityMappings: </strong><span class='val'>Account: Name: <span class='ent-col'>Account</span>
 Host: HostName: <span class='ent-col'>Device</span></span></div> <div class='kv'><strong>id: </strong><span class='val'>/Microsoft.SecurityInsights/alertRules/88211b03-c831-4195-8a53-4bb07daf14e7</span></div> <div class='kv'><strong>kind: </strong><span class='val'>Scheduled</span></div> <div class='kv'><strong>RuleId: </strong><span class='val'>Multiple_network_discovery_commands_run_in_a_short_period_of_time</span></div> </div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
@@ -355,7 +354,7 @@ enabled: True
 reopenClosedIncident: False
 lookbackDuration: PT5H
 matchingMethod: AllEntities
-groupByEntities: 
+groupByEntities: {null}
 groupByAlertDetails: {null}
 groupByCustomDetails: {null}</span></div> <div class='kv'><strong>eventGroupingSettings: </strong><span class='val'>aggregationKind: SingleAlert</span></div> <div class='kv'><strong>alertDetailsOverride: </strong></div> <div class='kv'><strong>customDetails: </strong></div> <div class='kv'><strong>sentinelEntitiesMappings: </strong></div> <div class='kv'><strong>entityMappings: </strong><span class='val'>Account: Name: <span class='ent-col'>InitiatingProcessAccountName</span>
 File: Name: <span class='ent-col'>InitiatingProcessFileName</span></span></div> <div class='kv'><strong>id: </strong><span class='val'>/Microsoft.SecurityInsights/alertRules/72fcfdd4-2949-4fa7-9ae5-67ff406ca672</span></div> <div class='kv'><strong>kind: </strong><span class='val'>Scheduled</span></div> <div class='kv'><strong>RuleId: </strong><span class='val'>Suspicious_Remote_Access_Tool_activity</span></div> </div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
@@ -412,7 +411,7 @@ enabled: False
 reopenClosedIncident: False
 lookbackDuration: PT5H
 matchingMethod: AllEntities
-groupByEntities: 
+groupByEntities: {null}
 groupByAlertDetails: {null}
 groupByCustomDetails: {null}</span></div> <div class='kv'><strong>eventGroupingSettings: </strong><span class='val'>aggregationKind: SingleAlert</span></div> <div class='kv'><strong>alertDetailsOverride: </strong></div> <div class='kv'><strong>customDetails: </strong></div> <div class='kv'><strong>sentinelEntitiesMappings: </strong></div> <div class='kv'><strong>entityMappings: </strong><span class='val'>Account: Name: <span class='ent-col'>AccountName</span>
 Host: HostName: <span class='ent-col'>DeviceName</span>
