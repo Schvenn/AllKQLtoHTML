@@ -376,7 +376,7 @@ return ($items -join ', ')}
 # Download the latest MITRE dataset if a TTP is unrecognized and the cache is at least a day old.
 function Refresh-MitreLookup {if ($script:MitreLookupRefreshAttempted) {return}
 $script:MitreLookupRefreshAttempted = $true; Write-Host -f Yellow "Refreshing MITRE STIX dataset..."
-Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
+Invoke-RestMethod -Uri $script:MitreUri -Method Get | ConvertTo-Json -Depth 100 | Set-Content -Path $script:MitreCacheFile -Encoding UTF8
 Load-MitreLookup}
 
 # Create MITRE matrix structure.
@@ -466,7 +466,7 @@ $script:MitreLookup = @{}; $script:MitreLookupLastLoadTime = $null; $script:Mitr
 if (-not (Test-Path $cacheDir)) {New-Item -ItemType Directory -Path $cacheDir | Out-Null}
 if (Test-Path $script:MitreCacheFile) {$age = (Get-Date) - (Get-Item $script:MitreCacheFile).LastWriteTime
 if ($age.Days -lt 30) {$download = $false}}
-if ($download) {Write-Host -f Cyan "Downloading MITRE ATT&CK STIX dataset..."; Invoke-RestMethod -Uri $script:MitreUri -Method Get | Set-Content -Path $cacheFile -Encoding UTF8}
+if ($download) {Write-Host -f Cyan "Downloading MITRE ATT&CK STIX dataset..."; Invoke-RestMethod -Uri $script:MitreUri -Method Get | ConvertTo-Json -Depth 100 | Set-Content -Path $script:MitreCacheFile -Encoding UTF8}
 else {Write-Host -f DarkGray "Using the cached MITRE dataset."}
 $data = Get-Content $script:MitreCacheFile -Raw | ConvertFrom-Json
 $script:MitreLookupLastLoadTime = [datetime](Get-Item $script:MitreCacheFile).LastWriteTime; $script:MitreLookup = @{}
