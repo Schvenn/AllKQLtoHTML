@@ -801,9 +801,13 @@ Build-MitreCoverageStats
 function buildstats {if ($script:mitreMatrix.Keys.Count -eq 0) {$mitreColumn = ""}
 else {$mitreColumn = Build-MitreMiniColumn}
 
+if ($ttpCoveragePercent -ge 23) {$ttpCoverageDisplay = "$coveredParentTechniqueCount/$totalParentTechniqueCount (<span class='stat-green'>$ttpCoveragePercent%</span>)"}
+else {$ttpCoverageDisplay = "$coveredParentTechniqueCount/$totalParentTechniqueCount ($ttpCoveragePercent%)"}
+
 $script:statsBlock = @"
 <table class="stats-table" aria-hidden="false">
-<tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
+<tr>
+<td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
 <span class="stat-green">Rule Count: $ruleCount</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: $disabledCount</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: $nrtCount</span><br>
@@ -816,9 +820,14 @@ $script:statsBlock = @"
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: $severityMedium</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: $severityHigh</span></strong><br><br>
 <span id="visibleRuleCount" class="stat-muted"> Visible Rules: $ruleCount</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button><br>
-<span id="ttpCoverage" class="stat-muted">TTP Coverage: $coveredParentTechniqueCount/$totalParentTechniqueCount ($ttpCoveragePercent%)</span></td>
-<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">$ruleCount<br>Rules</div></div></td>
+<span id="ttpCoverage" class="stat-muted">TTP Coverage: $ttpCoverageDisplay</span></td>
 
+<td class="stats-right">
+<div class="severity-donut">
+<div class="donut"></div>
+<div class="donut-label">$ruleCount<br>Rules</div>
+</div>
+</td>
 
 <td class="stats-right">
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
@@ -829,7 +838,8 @@ $script:statsBlock = @"
 </td>
 
 <td class="stats-mitre">$mitreColumn</td>
-</tr></table>
+</tr>
+</table>
 "@}
 buildstats
 
