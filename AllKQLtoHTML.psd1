@@ -1,5 +1,5 @@
 @{RootModule = 'AllKQLtoHTML.psm1'
-ModuleVersion = '5.7'
+ModuleVersion = '5.8
 GUID = '1717dd23-d91a-4ed2-bd4b-a03c847cc238'
 Author = 'Craig Plath'
 CompanyName = 'Plath Consulting Incorporated'
@@ -15,7 +15,7 @@ FileList = @('AllKQLtoHTML.psm1','AllKQLtoHTML.csv')
 PrivateData = @{PSData = @{Tags = @('export', 'html', 'json', 'merge', 'siem', 'sentinel')
 LicenseUri = 'https://github.com/Schvenn/AllKQLtoHTML/blob/main/license.txt'
 ProjectUri = 'https://github.com/Schvenn/AllKQLtoHTML'
-ReleaseNotes = 'Initial release.'}
+ReleaseNotes = 'Added MDE placeholders if they exist in the CSV.'}
 
 subscription   = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
 workspacename = 'LAW-<env>-<region>-<workload>'
