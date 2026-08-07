@@ -177,7 +177,7 @@ return "$Value"}
 
 # Create key/value pairs for column 3 and provide special formatting instructions for specific rows.
 function Format-Properties {param ($Properties)
-$exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion'); $out = ""
+$exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'templateVersion', 'DefenderLink'); $out = ""
 
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name; $val = $p.Value
@@ -491,9 +491,15 @@ if ($CreateLinks -or $CreateCSV) {$csvPath = Join-Path $baseModulePath "AllKQLto
 # Add Knowledgebase Links.
 if ($CreateLinks) {$script:wikiLinks = @{}
 if (Test-Path $csvPath) {try {$csv = Import-Csv $csvPath
-foreach ($entry in $csv) {if ([string]::IsNullOrWhiteSpace($entry.uid)) {continue}
-$csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
+$script:defenderPlaceholders = @()
+foreach ($entry in $csv) {if (-not [string]::IsNullOrWhiteSpace($entry.uid)) {$csvGuid = $entry.uid.ToString().Trim().Trim('{}').ToLower()
 if (-not $script:wikiLinks.ContainsKey($csvGuid)) {$script:wikiLinks[$csvGuid] = $entry.link}}
+
+# Defender-only rules: No UID, but rule name and link exist.
+if ([string]::IsNullOrWhiteSpace($entry.uid) -and -not [string]::IsNullOrWhiteSpace($entry.rulename) -and -not [string]::IsNullOrWhiteSpace($entry.link)) {$script:defenderPlaceholders += [pscustomobject]@{RuleName = $entry.rulename
+Link = $entry.link
+RuleId = ($entry.rulename -replace '[^a-zA-Z0-9_-]', '_')}}}
+
 Write-Host -f green -n "`nLoaded $($script:wikiLinks.Count) wiki links from "; Write-Host -f White $csvPath}
 catch {Write-Host -f red "Failed to load AllKQLtoHTML.csv"; Write-Host -f darkgray $_.Exception.Message}}}
 
@@ -590,6 +596,12 @@ loadandnormalize
 
 $script:rules = $script:rules + $script:mergeRules
 
+foreach ($d in $script:defenderPlaceholders) {$script:rules += [pscustomobject]@{displayName = $d.RuleName
+RuleId = $d.RuleId
+DefenderLink = $d.Link
+IsDefenderRule = $true
+description = ""}}
+
 # Build rule to MITRE mapping.
 function Build-RuleMitreMap {$script:ruleMitreMap = @{}
 foreach ($r in $script:rules) {$ruleId = if ($r.displayName) {$r.displayName -replace '[^a-zA-Z0-9_-]', '_'}
@@ -639,10 +651,11 @@ builddonut
 
 # Build rows.
 function buildrows {$script:rows = ""; $script:toc = ""; $usedMitre = @{}
+
 foreach ($r in $script:rules) {$qry = $r.query
 if (-not $qry -and $r.properties) {$qry = $r.properties.query}
 if (-not $qry -and $r.value) {$qry = $r.value.query}
-if ([string]::IsNullOrWhiteSpace($qry)) {Write-Host "SKIPPED NO QUERY: $($r.displayName)";continue}
+if ([string]::IsNullOrWhiteSpace($qry)) {$qry = "https://security.microsoft.com/v2/custom_detection"}
 
 foreach ($t in @($r.techniques + $r.subTechniques)) {if (-not $t) {continue}
 if ($usedMitre.ContainsKey($t)) {continue}
@@ -676,11 +689,13 @@ $ruleJson = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($ruleExpor
 $name = Escape-Html $r.displayName
 $id = $r.RuleId
 $qry = Escape-Html (Normalize-UnicodeDecorations $qry); $qry = Highlight-KqlComments $qry
+if ([string]::IsNullOrWhiteSpace($r.description) -and $qry -eq 'https://security.microsoft.com/v2/custom_detection') {$r.description = "This is a Microsoft Defender for Endpoint (MDE) rule.`n`nPlease navigate to https://security.microsoft.com/v2/custom_detection in order to find the logic for this rule."}
 $descRaw = Normalize-UnicodeDecorations $r.description; $descEscaped = Escape-Html $descRaw; $desc = Convert-UrlsToLinks $descEscaped
 
 $enabled = $r.enabled
 if ($enabled -eq $true) {$enabledText = "<span class='enabled-true'>✅ true</span>"}
 else {$enabledText = "<span class='enabled-false'>❌ false (Disabled)</span>"}
+if ($qry -eq "https://security.microsoft.com/v2/custom_detection") {$enabledText = "<span class='sev-info'>⚪ <b>Unknown</b></span>"}
 
 $severity = $r.severity
 switch -Regex ($severity) {'^Informational$' {$severityHtml = "<span>Severity:</span> <span class='sev-info'><strong>⚪ Informational</strong></span>"}
@@ -698,9 +713,9 @@ if ($r.templateVersion) {$tv = Escape-Html $r.templateVersion; $templateVersionH
 
 $wikiHtml = ""
 $wikiLink = Get-RuleWikiLink $r.displayName $r.name
-
 if ($wikiLink) {$wikiText = $config.PrivateData.WikiIntegration.LinkText
 if (-not $wikiText) {$wikiText = "📘 Playbook"}
+if ($qry -eq 'https://security.microsoft.com/v2/custom_detection')  {$wikiLink = $r.DefenderLink; $r.DefenderLink = ""}
 $wikiHtml = "<br><a href='$wikiLink' target='_blank'>$wikiText</a>"}
 
 $mitreList = @()
@@ -724,6 +739,7 @@ $wikiHtml
 <td class="props"><div class="props-content">$props</div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
 </tr>
 "@}
+
 $mitreJson = $usedMitre | ConvertTo-Json -Depth 5 -Compress}
 buildrows
 
