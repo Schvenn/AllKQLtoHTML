@@ -668,7 +668,7 @@ $guid = Get-RuleUID $r
 $ruleExportObject = [ordered]@{name = $guid
 location = "global"
 kind = if ($r.kind) {$r.kind} else {"Scheduled"}
-properties = [ordered]@{}}
+properties = [ordered]@{IsDefenderRule = $false}}
 
 $ruleDisplayObject = [ordered]@{}
 foreach ($prop in $r.PSObject.Properties) {if ($prop.Name -eq "name") {if ($PreserveIds -and $prop.Value) {$ruleExportObject.name = $prop.Value; $ruleDisplayObject.name = $prop.Value}
