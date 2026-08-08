@@ -171,7 +171,7 @@ a.enabled-false:active {color: var(--link-active); text-decoration: underline;}
 
 <body>
 <h1 style="margin-bottom:10px;">Azure Sentinel Analytics Rules</h1>
-<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 07/14/2026 @ 08:26:58 AM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.7)</span>
+<span class="stat-muted" style="font-size:12px; margin-left:10px;">Snapshot taken: 08/07/2026 @ 08:26:54 PM (-04:00 Eastern Standard Time) (created by AllKQLtoHTML v5.7)</span>
 
 <div id="topControls"><button id="kqlToggle" title="Toggle KQL context"><span id="kqlIcon" class="kql-icon"></span></button><button id="themeToggle" title="Toggle light/dark mode">🌙</button></div>
 
@@ -183,8 +183,9 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <span style="font-size:12px; color:var(--text-muted);">(Use in "Open Existing Layer")</span></p></div></div>
 
 <table class="stats-table" aria-hidden="false">
-<tr><td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
-<span class="stat-green">Rule Count: 4</span><br>
+<tr>
+<td class="stats-left"><strong><span class="stats-header">Rule Overview:</span><br>
+<span class="stat-green">Rule Count: 5</span><br>
 <span class="stat-red toggle" data-filter="disabled">Disabled Rules: 1</span><br>
 <span class="stat-yellow toggle" data-filter="nrt">NRT Rules: 0</span><br>
 <span class="stat-gray toggle" data-filter="template">Built from templates: 0</span><br><br>
@@ -195,10 +196,15 @@ Copy path to:<br><a href="#" id="copyNavigatorPath">report_navigator.json</a><sp
 <span class="sev-low toggle" data-filter="sev-low">🟠 Low: 2</span><br>
 <span class="sev-medium toggle" data-filter="sev-medium">🟡 Medium: 1</span><br>
 <span class="sev-high toggle" data-filter="sev-high">🔴 High: 1</span></strong><br><br>
-<span id="visibleRuleCount" class="stat-muted"> Visible Rules: 4</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button><br>
+<span id="visibleRuleCount" class="stat-muted"> Visible Rules: 5</span> <button id="exportVisibleRules" title="Export visible rules as Sentinel JSON" style="margin-left:6px; opacity:0.6; cursor:pointer;">⬇️</button><br>
 <span id="ttpCoverage" class="stat-muted">TTP Coverage: 11/222 (5%)</span></td>
-<td class="stats-right"><div class="severity-donut"><div class="donut"></div><div class="donut-label">4<br>Rules</div></div></td>
 
+<td class="stats-right">
+<div class="severity-donut">
+<div class="donut"></div>
+<div class="donut-label">5<br>Rules</div>
+</div>
+</td>
 
 <td class="stats-right">
 <span id="filterHeader" class="filter-header hidden">Filter Controls:</span>
@@ -222,11 +228,13 @@ Adversaries may attempt to find local system groups and permission settings.'>T1
 An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture.'>T1082</a></div></td><td class='mitre-td' data-tactic='LateralMovement'></td><td class='mitre-td' data-tactic='Collection'></td><td class='mitre-td' data-tactic='CommandAndControl'><div class='mitre-tech' data-mitre='T1105'><a href='https://attack.mitre.org/techniques/T1105' target='_blank' title='Ingress Tool Transfer:
 Adversaries may transfer tools or other files from an external system into a compromised environment.'>T1105</a></div><div class='mitre-tech mitre-disabled-only' data-mitre='T1219'><a href='https://attack.mitre.org/techniques/T1219' target='_blank' title='Remote Access Tools:
 An adversary may use legitimate remote access tools to establish an interactive command and control channel within a network.'>T1219</a></div></td><td class='mitre-td' data-tactic='Exfiltration'></td><td class='mitre-td' data-tactic='Impact'></td></tr></table></div></td>
-</tr></table>
+</tr>
+</table>
 
 <div class="toc-wrapper toc-collapsed"><h2 id="tocToggle" class="toc-toggle">Table of Contents <span class="toc-arrow">▼</span></h2>
 <div id="tocContent" class="toc"><ul><li data-target='Curl_downloading_a_script_file'><a href='#Curl_downloading_a_script_file'>Curl downloading a script file</a></li>
 <li data-target='Multiple_network_discovery_commands_run_in_a_short_period_of_time'><a href='#Multiple_network_discovery_commands_run_in_a_short_period_of_time'>Multiple network discovery commands run in a short period of time</a></li>
+<li data-target='Sample_MDE_Rule_Name'><a href='#Sample_MDE_Rule_Name' class='enabled-false'>Sample MDE Rule Name</a></li>
 <li data-target='Suspicious_Remote_Access_Tool_activity'><a href='#Suspicious_Remote_Access_Tool_activity' class='enabled-false'>Suspicious Remote Access Tool activity</a></li>
 <li data-target='Unusual_File_Creation_or_Modification_Process_Chain'><a href='#Unusual_File_Creation_or_Modification_Process_Chain'>Unusual File Creation or Modification Process Chain</a></li>
 </ul></div></div><br>
@@ -318,6 +326,19 @@ groupByEntities: {null}
 groupByAlertDetails: {null}
 groupByCustomDetails: {null}</span></div> <div class='kv'><strong>eventGroupingSettings: </strong><span class='val'>aggregationKind: SingleAlert</span></div> <div class='kv'><strong>alertDetailsOverride: </strong><span class='val'>alertDynamicProperties: {null}</span></div> <div class='kv'><strong>customDetails: </strong></div> <div class='kv'><strong>sentinelEntitiesMappings: </strong></div> <div class='kv'><strong>entityMappings: </strong><span class='val'>Account: Name: <span class='ent-col'>Account</span>
 Host: HostName: <span class='ent-col'>Device</span></span></div> <div class='kv'><strong>id: </strong><span class='val'>/Microsoft.SecurityInsights/alertRules/88211b03-c831-4195-8a53-4bb07daf14e7</span></div> <div class='kv'><strong>kind: </strong><span class='val'>Scheduled</span></div> <div class='kv'><strong>RuleId: </strong><span class='val'>Multiple_network_discovery_commands_run_in_a_short_period_of_time</span></div> </div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
+</tr><tr id="Sample_MDE_Rule_Name" data-enabled="" data-kind="" data-severity="" data-template-version="" data-tactics="" data-mitre="" data-rule-json="eyJuYW1lIjoiN2FhMWU0NmEtZWQ3OC00MjM5LWE1MzktMDNlMjI4MzEzNWY3IiwibG9jYXRpb24iOiJnbG9iYWwiLCJraW5kIjoiU2NoZWR1bGVkIiwicHJvcGVydGllcyI6eyJkaXNwbGF5TmFtZSI6IlNhbXBsZSBNREUgUnVsZSBOYW1lIiwiUnVsZUlkIjoiU2FtcGxlX01ERV9SdWxlX05hbWUiLCJEZWZlbmRlckxpbmsiOiJodHRwczovL3NjaHZlbm4uZ2l0aHViLmlvL0FsbEtRTHRvSFRNTC9zYW1wbGVfa2IuaHRtbCIsIklzRGVmZW5kZXJSdWxlIjp0cnVlfX0=">
+
+<td class="rulename"><strong>Sample MDE Rule Name</strong><br><br>
+<span class="description">This is a Microsoft Defender for Endpoint (MDE) rule.
+
+Please navigate to <a href="https://security.microsoft.com/v2/custom_detection" target="_blank">https://security.microsoft.com/v2/custom_detection</a> in order to find the logic for this rule.</span><br><br>
+<span>Enabled: <span class='sev-info'>⚪ <b>Unknown</b></span></span><br>
+<span>Severity:</span> <span class='sev-info'><strong>⚪ Unknown</strong></span>
+<br>
+<br><a href='https://schvenn.github.io/AllKQLtoHTML/sample_kb.html' target='_blank'>📘 Playbook</a>
+</td>
+<td class="query"><pre>https://security.microsoft.com/v2/custom_detection</pre></td>
+<td class="props"><div class="props-content"><div class='kv'><strong>RuleId: </strong><span class='val'>Sample_MDE_Rule_Name</span></div> <div class='kv'><strong>IsDefenderRule: </strong><span class='val'>True</span></div> </div><button class="export-rule-btn" title="Export rule as Sentinel JSON"> ⬇️</button></td>
 </tr><tr id="Suspicious_Remote_Access_Tool_activity" data-enabled="False" data-kind="Scheduled" data-severity="Medium" data-template-version="" data-tactics="CommandAndControl" data-mitre="T1219" data-rule-json="eyJuYW1lIjoiNzJmY2ZkZDQtMjk0OS00ZmE3LTlhZTUtNjdmZjQwNmNhNjcyIiwibG9jYXRpb24iOiJnbG9iYWwiLCJraW5kIjoiU2NoZWR1bGVkIiwicHJvcGVydGllcyI6eyJkaXNwbGF5TmFtZSI6IlN1c3BpY2lvdXMgUmVtb3RlIEFjY2VzcyBUb29sIGFjdGl2aXR5IiwiZGVzY3JpcHRpb24iOiJEZXRlY3RzIGFueSBvZiBzZXZlcmFsIGtub3duIGxlZ2l0aW1hdGUgcmVtb3RlIGFjY2VzcyBhcHBsaWNhdGlvbnMgbWFraW5nIHN1Y2Nlc3NmdWwgcmVtb3RlIHBvcnQgY29ubmVjdGlvbnMuIiwiZW5hYmxlZCI6ZmFsc2UsInNldmVyaXR5IjoiTWVkaXVtIiwicXVlcnkiOiJsZXQgUmVzZXJ2ZWRJUHMgPSAoaXA6c3RyaW5nKSB7aXB2NF9pc19tYXRjaChpcCwgXCIxMC4wLjAuMC84XCIpIG9yIGlwdjRfaXNfbWF0Y2goaXAsIFwiMTAwLjY0LjAuMC8xMFwiKSBvciBpcHY0X2lzX21hdGNoKGlwLCBcIjEyNy4wLjAuMC84XCIpIG9yIGlwdjRfaXNfbWF0Y2goaXAsIFwiMTY5LjI1NC4wLjAvMTZcIikgb3IgaXB2NF9pc19tYXRjaChpcCwgXCIxNzIuMTYuMC4wLzEyXCIpIG9yIGlwdjRfaXNfbWF0Y2goaXAsXCIxOTIuMTY4LjAuMC8xNlwiKSBvciBpcHY0X2lzX21hdGNoKGlwLCBcIjIyNC4wLjAuMC8yNFwiKSBvciBpcHY0X2lzX21hdGNoKGlwLCBcIjIzOS4wLjAuMC84XCIpfTtcclxubGV0IFJBVHMgPSBfR2V0V2F0Y2hsaXN0KCdSQVRzJykgfCBwcm9qZWN0IHRvbG93ZXIoU2VhcmNoS2V5KTtcclxubGV0IEFkbWluUkFUcyA9IF9HZXRXYXRjaGxpc3QoJ0FkbWluUkFUcycpIHwgcHJvamVjdCB0b2xvd2VyKFNlYXJjaEtleSk7XHJcbmxldCBQcml2aWxlZ2VkQWNjb3VudHMgPSBfR2V0V2F0Y2hsaXN0KCdQcml2aWxlZ2VkX0FjY291bnRzJykgfCBwcm9qZWN0IEFjY291bnQgPSB0b2xvd2VyKFNlYXJjaEtleSk7XHJcbkRldmljZU5ldHdvcmtFdmVudHNcclxufCB3aGVyZSBUaW1lR2VuZXJhdGVkID4gYWdvKDFkKVxyXG58IGV4dGVuZCBJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lID0gdG9sb3dlcihJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lKSwgSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSA9IHRvbG93ZXIoSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSlcclxuLy8gRmluZCBhbGwgUkFUIGNhcGFibGUgYXBwbGljYXRpb25zIG1ha2luZyBzdWNjZXNzZnVsIFJlbW90ZVBvcnQgY29ubmVjdGlvbnMuXHJcbnwgd2hlcmUgQWN0aW9uVHlwZSA9PSBcIkNvbm5lY3Rpb25TdWNjZXNzXCIgYW5kIGlzbm90ZW1wdHkoUmVtb3RlUG9ydCkgYW5kIChJbml0aWF0aW5nUHJvY2Vzc0ZpbGVOYW1lIGluIChSQVRzKSBvciBJbml0aWF0aW5nUHJvY2Vzc0ZpbGVOYW1lIGluIChBZG1pblJBVHMpKVxyXG4vLyBFeGNsdWRlIGNvbm5lY3Rpb25zIHRvIGludGVybmFsIGRlc3RpbmF0aW9ucy5cclxufCB3aGVyZSBub3QoUmVzZXJ2ZWRJUHMoUmVtb3RlSVApKVxyXG4vLyBBbHdheXMgaW5jbHVkZSBjb21tZXJjaWFsIFJBVHMuXHJcbnwgd2hlcmUgKEluaXRpYXRpbmdQcm9jZXNzRmlsZU5hbWUgaW4gKFJBVHMpXHJcbi8vIEV4Y2x1ZGUgdHJhZmZpYyBpbnZvbHZpbmcgY29tbW9ubHkgYXBwcm92ZWQgUkFUcywgaWYgdGhlIHRyYWZmaWMgb3JpZ2luYXRlcyBmcm9tIHByaXZpbGVnZWQgYWNjb3VudHMsXHJcbm9yIChJbml0aWF0aW5nUHJvY2Vzc0ZpbGVOYW1lIGluIChBZG1pblJBVHMpIGFuZCBub3QoKEluaXRpYXRpbmdQcm9jZXNzQWNjb3VudE5hbWUgaW4gKFByaXZpbGVnZWRBY2NvdW50cylcclxuLy8gYWxzbyBleGNsdWRlIHRyYWZmaWMgdGhhdCBvcmlnaW5hdGVzIGZyb20gV2luZG93cyBvciBjb21wdXRlciBhY2NvdW50cyxcclxub3IgSW5pdGlhdGluZ1Byb2Nlc3NBY2NvdW50TmFtZSBpbn4gKFwic3lzdGVtXCIsIFwibG9jYWwgc2VydmljZVwiLCBcIm5ldHdvcmsgc2VydmljZVwiKSBvciBJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lIGVuZHN3aXRoIFwiJFwiKVxyXG4vLyBhbmQgZXhjbHVkZSBuZXcgY29tcHV0ZXIgc2V0dXBzLlxyXG5vciAoRGV2aWNlTmFtZSBzdGFydHN3aXRoIFwiZGVza3RvcC1cIiBhbmQgSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSA9fiBcInBvd2Vyc2hlbGwuZXhlXCIpKSkpXHJcbi8vIEdyb3VwIGV2ZW50cyBieSB1c2VyLCBkZXZpY2UsIHByb2Nlc3MsIGFuZCBkYXkuXHJcbnwgc3VtbWFyaXplIEV2ZW50cyA9IGNvdW50KCksIEZpcnN0X0V2ZW50ID0gbWluKFRpbWVHZW5lcmF0ZWQpLCBMYXN0X0V2ZW50ID0gbWF4KFRpbWVHZW5lcmF0ZWQpLCBSZW1vdGVJUHMgPSBtYWtlX3NldChSZW1vdGVJUCksIERpc3RpbmN0SVBzID0gZGNvdW50KFJlbW90ZUlQKSwgUmVtb3RlUG9ydHMgPSBtYWtlX3NldChSZW1vdGVQb3J0KSwgRGlzdGluY3RQb3J0cyA9IGRjb3VudChSZW1vdGVQb3J0KSBieSBJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lLCBEZXZpY2VOYW1lLCBJbml0aWF0aW5nUHJvY2Vzc0ZpbGVOYW1lLCBEYXkgPSBiaW4oVGltZUdlbmVyYXRlZCwgMWQpIiwicXVlcnlGcmVxdWVuY3kiOiJQVDFIIiwicXVlcnlQZXJpb2QiOiJQVDFIIiwidHJpZ2dlck9wZXJhdG9yIjoiR3JlYXRlclRoYW4iLCJ0cmlnZ2VyVGhyZXNob2xkIjowLCJzdXBwcmVzc2lvbkR1cmF0aW9uIjoiUFQ1SCIsInN1cHByZXNzaW9uRW5hYmxlZCI6ZmFsc2UsInRhY3RpY3MiOlsiQ29tbWFuZEFuZENvbnRyb2wiXSwidGVjaG5pcXVlcyI6WyJUMTIxOSJdLCJzdWJUZWNobmlxdWVzIjpbXSwiaW5jaWRlbnRDb25maWd1cmF0aW9uIjp7ImNyZWF0ZUluY2lkZW50Ijp0cnVlLCJncm91cGluZ0NvbmZpZ3VyYXRpb24iOnsiZW5hYmxlZCI6dHJ1ZSwicmVvcGVuQ2xvc2VkSW5jaWRlbnQiOmZhbHNlLCJsb29rYmFja0R1cmF0aW9uIjoiUFQ1SCIsIm1hdGNoaW5nTWV0aG9kIjoiQWxsRW50aXRpZXMiLCJncm91cEJ5RW50aXRpZXMiOltdLCJncm91cEJ5QWxlcnREZXRhaWxzIjpbXSwiZ3JvdXBCeUN1c3RvbURldGFpbHMiOltdfX0sImV2ZW50R3JvdXBpbmdTZXR0aW5ncyI6eyJhZ2dyZWdhdGlvbktpbmQiOiJTaW5nbGVBbGVydCJ9LCJlbnRpdHlNYXBwaW5ncyI6W3siZW50aXR5VHlwZSI6IkFjY291bnQiLCJmaWVsZE1hcHBpbmdzIjpbeyJpZGVudGlmaWVyIjoiTmFtZSIsImNvbHVtbk5hbWUiOiJJbml0aWF0aW5nUHJvY2Vzc0FjY291bnROYW1lIn1dfSx7ImVudGl0eVR5cGUiOiJGaWxlIiwiZmllbGRNYXBwaW5ncyI6W3siaWRlbnRpZmllciI6Ik5hbWUiLCJjb2x1bW5OYW1lIjoiSW5pdGlhdGluZ1Byb2Nlc3NGaWxlTmFtZSJ9XX1dLCJpZCI6Ii9NaWNyb3NvZnQuU2VjdXJpdHlJbnNpZ2h0cy9hbGVydFJ1bGVzLzcyZmNmZGQ0LTI5NDktNGZhNy05YWU1LTY3ZmY0MDZjYTY3MiIsImtpbmQiOiJTY2hlZHVsZWQiLCJSdWxlSWQiOiJTdXNwaWNpb3VzX1JlbW90ZV9BY2Nlc3NfVG9vbF9hY3Rpdml0eSJ9fQ==">
 
 <td class="rulename"><strong>Suspicious Remote Access Tool activity</strong><br><br>
