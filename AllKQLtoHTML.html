@@ -505,7 +505,29 @@ const aParts = String(a).match(/^T(\d{4})(?:\.(\d{3}))?$/i) || []; const bParts 
 if (aTech !== bTech) return aTech - bTech; return aSub - bSub;})
 .join(', ');}
 
-return ['**' + val(p.displayName) + '**','',
+if (p.IsDefenderRule === true) {return ['**' + val(p.displayName) + '**','',
+'This is a Microsoft Defender for Endpoint (MDE) rule. Please navigate to [https://security.microsoft.com/v2/custom_detection](https://security.microsoft.com/v2/custom_detection) in order to find the logic for this rule.','',
+'Enabled: **⚪ Unknown**',
+'Severity: **⚪ Unknown**','',
+'* * *',
+'```','https://security.microsoft.com/v2/custom_detection','```',
+'* * *','',
+'**id:** ' + val(p.id),
+'**IsDefenderRule:** True','',
+'* * *','',
+'**Playbook:**','',
+'* * *','',
+'**References:**','',
+'* * *','',
+'**Audit Table:**',
+'| Created On: | ' + today + ' |',
+'|---|---|',
+'| Author: | |',
+'| Last Update: | ' + today + ' |',
+'| Updated By: | |',
+'| Tickets: | |'].join('\n')}
+
+else {return ['**' + val(p.displayName) + '**','',
 val(p.description),'',
 'Enabled: **' + enabled + '**',
 'Severity: **' + severityIcon + ' ' + val(p.severity) + '**',
@@ -551,7 +573,7 @@ referencesBlock,'',
 .replace(/\u00E2\u20AC(\u201C|\u201D)/g, '-')
 .replace(/[\u201C\u201D]/g, '"')
 .replace(/\u00E2\u20AC(\u02DC|\u2122)/g, "'")
-.replace(/\u00E2\u20AC\u00A6/g, '...');}
+.replace(/\u00E2\u20AC\u00A6/g, '...');}}
 
 /* RULE MARKDOWN COPY TO CLIPBOARD */
 function showPropsCopied(cell) {let badge = cell.querySelector('.props-copy-badge');
