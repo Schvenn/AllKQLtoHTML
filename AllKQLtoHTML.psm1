@@ -182,13 +182,19 @@ $exclude = @('displayName', 'query', 'description', 'enabled', 'severity', 'temp
 foreach ($p in $Properties.PSObject.Properties) {if ($exclude -contains $p.Name) {continue}
 $key = Escape-Html $p.Name; $val = $p.Value
 
+# ---------------- ALERTDETAILS MAPPINGS FOR FIELDS -----------------------------------------------
+# Highlight Sentinel dynamic field tokens such as {{Account}}
+function Highlight-SentinelFields {param([string]$Text)
+if ([string]::IsNullOrWhiteSpace($Text)) {return $Text}
+return [regex]::Replace($Text, '\{\{([^{}]+)\}\}', {param($m) "{{<span class='ent-col'>$($m.Groups[1].Value)</span>}}"})}
+
 # ---------------- ALERTDETAILS MAPPINGS ----------------------------------------------------------
 if ($p.Name -eq "alertDetailsOverride") {$lines = foreach ($item in $val.PSObject.Properties) {$k = Escape-Html $item.Name; $v = $item.Value
 if ($null -eq $v -or [string]::IsNullOrWhiteSpace("$v")) {$v = "{null}"}
 if ($v -is [array]) {$v = ($v | ForEach-Object {"$_"}) -join ', '}
 elseif ($v -is [psobject] -and -not ($v -is [string])) {$v = Expand-PropertyValue $v}
 if ($k -match 'Severity|ColumnName|Field|Property' -and $v -ne "{null}") {$v = "<span class='ent-col'>$v</span>"}
-$v = $v -replace '{{([^}]+)}}', "{{<span class='ent-col'>`$1</span>}}"; 
+$v = Highlight-SentinelFields $v; 
 if ($v -ne "{null}") {"$k`: <span class='alert-col'>$v</span>"}
 else {"$k`: $v"}}
 $valText = $lines -join "`n"}
@@ -221,10 +227,10 @@ else {$valText = Escape-Html "$val"}}
 elseif ($p.Name -in @('tactics','techniques','subTechniques')) {$valText = ($val | ForEach-Object {$_.ToString()}) -join ', '}
 
 # ---------------- COMPLEX OBJECT HANDLING --------------------------------------------------------
-elseif ($val -is [array] -or ($val -is [psobject] -and -not ($val -is [string]))) {$valText = Escape-Html (Expand-PropertyValue $val)}
+elseif ($val -is [array] -or ($val -is [psobject] -and -not ($val -is [string]))) {$valText = Escape-Html (Expand-PropertyValue $val); $valText = Highlight-SentinelFields $valText}
 
 # ---------------- SCALAR -------------------------------------------------------------------------
-else {$valText = Escape-Html "$val"}
+else {$valText = Escape-Html "$val"; $valText = Highlight-SentinelFields $valText}
 $out += "<div class='kv'><strong>$key`: </strong><span class='val'>$valText</span></div> "}
 return $out}
 
